@@ -1,0 +1,21 @@
+{
+  "short_name": "Congregação",
+  "name": "Aplicativo Congregacional",
+  "description": "Um aplicativo para gerenciar as atividades da congregação.",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#3b82f6",
+  "background_color": "#0f172a"
+}

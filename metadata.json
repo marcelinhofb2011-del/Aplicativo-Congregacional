@@ -1,0 +1,5 @@
+{
+  "name": "Aplicativo Congregacional",
+  "description": "Um aplicativo para gerenciar as atividades da congregação, com perfis de acesso para publicadores e servos/anciãos. Inclui painel, relatórios, assistência e outras funcionalidades administrativas.",
+  "requestFramePermissions": []
+}
