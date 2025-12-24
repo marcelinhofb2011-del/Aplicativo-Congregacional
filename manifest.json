@@ -1,36 +1,36 @@
 {
-  "id": "app.congregacao.v1",
-  "name": "Aplicativo Congregacional",
-  "short_name": "Congregação",
-  "description": "Sistema de gerenciamento congregacional.",
+  "id": "app-congregacao-cisper-v1",
+  "name": "VL Cisper - Congregacional",
+  "short_name": "VL Cisper",
+  "description": "Sistema de gerenciamento da congregação VL Cisper.",
   "lang": "pt-BR",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0f172a",
+  "background_color": "#f1f5f9",
   "theme_color": "#3b82f6",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
