@@ -1,7 +1,8 @@
-const CACHE_NAME = 'cong-v11';
+const CACHE_NAME = 'cong-v12';
+const APP_SHELL_URL = './index.html';
 const ASSETS_TO_CACHE = [
   './',
-  './index.html',
+  APP_SHELL_URL,
   './manifest.json'
 ];
 
@@ -23,17 +24,20 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Estratégia 'App Shell': para navegação (abrir o app), sempre sirva o index.html do cache primeiro.
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match('./index.html') || caches.match('./');
+      caches.match(APP_SHELL_URL).then(cachedResponse => {
+        // Retorna o app shell do cache. Se não estiver no cache por algum motivo, busca na rede como fallback.
+        return cachedResponse || fetch(APP_SHELL_URL);
       })
     );
     return;
   }
 
+  // Estratégia 'Cache First' para todos os outros recursos (JS, CSS, etc.).
   event.respondWith(
-    caches.match(event.request).then((response) => {
+    caches.match(event.request).then(response => {
       return response || fetch(event.request);
     })
   );
