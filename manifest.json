@@ -4,7 +4,7 @@
   "short_name": "VL Cisper",
   "description": "Gerenciamento teocrático de designações e atividades da congregação VL Cisper.",
   "lang": "pt-BR",
-  "start_url": "./",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
