@@ -16,11 +16,11 @@ root.render(
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // Usando caminho relativo para evitar problemas de origem em subdomínios ou proxies
-    navigator.serviceWorker.register('./service-worker.js').then(registration => {
-      console.log('ServiceWorker registration successful with scope: ', registration.scope);
+    // Usar caminho absoluto ajuda a evitar problemas de escopo em PWAs
+    navigator.serviceWorker.register('/service-worker.js').then(registration => {
+      console.log('ServiceWorker registrado com sucesso:', registration.scope);
     }).catch(err => {
-      console.warn('ServiceWorker registration failed (this is normal in some preview environments): ', err);
+      console.warn('Falha ao registrar ServiceWorker (comum em previews):', err);
     });
   });
 }

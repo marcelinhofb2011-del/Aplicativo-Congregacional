@@ -4,8 +4,8 @@
   "short_name": "VL Cisper",
   "description": "Gerenciamento teocrático de designações e atividades da congregação VL Cisper.",
   "lang": "pt-BR",
-  "start_url": "./",
-  "scope": "./",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f1f5f9",
@@ -13,28 +13,16 @@
   "categories": ["productivity", "utilities", "religious"],
   "icons": [
     {
-      "src": "https://ui-avatars.com/api/?name=VL+Cisper&background=f1f5f9&color=0f172a&size=192&bold=true&font-size=0.33",
+      "src": "https://ui-avatars.com/api/?name=VL+Cisper&background=f1f5f9&color=0f172a&size=192&bold=true",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any"
     },
     {
-      "src": "https://ui-avatars.com/api/?name=VL+Cisper&background=f1f5f9&color=0f172a&size=192&bold=true&font-size=0.33&rounded=true",
-      "type": "image/png",
-      "sizes": "192x192",
-      "purpose": "maskable"
-    },
-    {
-      "src": "https://ui-avatars.com/api/?name=VL+Cisper&background=f1f5f9&color=0f172a&size=512&bold=true&font-size=0.33",
+      "src": "https://ui-avatars.com/api/?name=VL+Cisper&background=f1f5f9&color=0f172a&size=512&bold=true",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any"
-    },
-    {
-      "src": "https://ui-avatars.com/api/?name=VL+Cisper&background=f1f5f9&color=0f172a&size=512&bold=true&font-size=0.33&rounded=true",
-      "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "maskable"
     }
   ]
 }
