@@ -1,4 +1,3 @@
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
@@ -17,10 +16,11 @@ root.render(
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js').then(registration => {
+    // Usando caminho relativo para evitar problemas de origem em subdomínios ou proxies
+    navigator.serviceWorker.register('./service-worker.js').then(registration => {
       console.log('ServiceWorker registration successful with scope: ', registration.scope);
-    }, err => {
-      console.log('ServiceWorker registration failed: ', err);
+    }).catch(err => {
+      console.warn('ServiceWorker registration failed (this is normal in some preview environments): ', err);
     });
   });
 }
