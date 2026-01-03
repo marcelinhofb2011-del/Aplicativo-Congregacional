@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { PublisherProfile, BaseRecord } from '../types';
+import { PublisherProfile, BaseRecord, PublisherStatus } from '../types';
 import { XIcon } from './icons/Icons';
 
 interface PublisherFormModalProps {
@@ -18,6 +17,7 @@ const BLANK_PUBLISHER: Omit<PublisherProfile, 'id' | keyof BaseRecord> = {
     address: '',
     phone: '',
     email: '',
+    status: PublisherStatus.ACTIVE,
     isPublisher: true,
     isUnbaptizedPublisher: false,
     isAuxiliaryPioneer: false,
@@ -106,6 +106,7 @@ const PublisherFormModal: React.FC<PublisherFormModalProps> = ({ isOpen, onClose
                 address: initialData.address,
                 phone: initialData.phone,
                 email: initialData.email,
+                status: initialData.status || PublisherStatus.ACTIVE,
                 isPublisher: initialData.isPublisher,
                 isUnbaptizedPublisher: initialData.isUnbaptizedPublisher,
                 isAuxiliaryPioneer: initialData.isAuxiliaryPioneer,
@@ -157,6 +158,7 @@ const PublisherFormModal: React.FC<PublisherFormModalProps> = ({ isOpen, onClose
             address: formData.address,
             phone: formData.phone,
             email: formData.email,
+            status: formData.status,
             isPublisher: formData.isPublisher,
             isUnbaptizedPublisher: formData.isUnbaptizedPublisher,
             isAuxiliaryPioneer: formData.isAuxiliaryPioneer,
@@ -209,14 +211,25 @@ const PublisherFormModal: React.FC<PublisherFormModalProps> = ({ isOpen, onClose
                             <CheckboxField label="Servo Min." name="isMinisterialServant" checked={formData.isMinisterialServant} onChange={handleCheckboxChange} />
                             <CheckboxField label="Ancião" name="isElder" checked={formData.isElder} onChange={handleCheckboxChange} />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Grupo de Serviço</label>
-                            <select name="group" value={formData.group} onChange={handleInputChange} required className="input-style">
-                                <option value="">Selecione</option>
-                                <option value="1">Grupo 1</option>
-                                <option value="2">Grupo 2</option>
-                                <option value="3">Grupo 3</option>
-                            </select>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Grupo de Serviço</label>
+                                <select name="group" value={formData.group} onChange={handleInputChange} required className="input-style">
+                                    <option value="">Selecione</option>
+                                    <option value="1">Grupo 1</option>
+                                    <option value="2">Grupo 2</option>
+                                    <option value="3">Grupo 3</option>
+                                </select>
+                            </div>
+                             <div>
+                                <label className="block text-sm font-medium mb-1">Status</label>
+                                <select name="status" value={formData.status} onChange={handleInputChange} className="input-style">
+                                    <option value={PublisherStatus.ACTIVE}>Ativo</option>
+                                    <option value={PublisherStatus.REGULAR}>Regular</option>
+                                    <option value={PublisherStatus.IRREGULAR}>Irregular</option>
+                                    <option value={PublisherStatus.INACTIVE}>Inativo</option>
+                                </select>
+                            </div>
                         </div>
                         <div>
                             <label className="block text-sm font-medium mb-1">Outros Privilégios</label>

@@ -1,29 +1,40 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { Assignment } from '../types';
+import { Assignment, UserRole } from '../types';
 import { getAssignments, addAssignment, updateAssignment, archiveAssignment } from '../services/firestoreService';
 import { showNewAssignmentNotification } from '../utils/notifications';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
 import AssignmentFormModal from '../components/AssignmentFormModal';
+import AssignmentDetail from '../components/details/AssignmentDetail';
 import { PlusIcon, PencilIcon, TrashIcon } from '../components/icons/Icons';
+import ScheduleAccordion from '../components/ScheduleAccordion';
 
 const Assignments: React.FC = () => {
     const { user } = useAuth();
+    const isServant = user?.role === UserRole.SERVANT;
     const [assignments, setAssignments] = useState<Assignment[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     
-    // State for the modal
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
 
     const [toastMessage, setToastMessage] = useState('');
     const [assignmentToDelete, setAssignmentToDelete] = useState<Assignment | null>(null);
+    const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+    const [allExpanded, setAllExpanded] = useState(false);
 
     useEffect(() => {
         fetchData();
     }, []);
+
+    const upcomingAssignments = useMemo(() => {
+        const today = new Date();
+        today.setUTCHours(0, 0, 0, 0);
+        return assignments
+            .filter(a => new Date(a.date) >= today)
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    }, [assignments]);
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -36,6 +47,30 @@ const Assignments: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+    
+    const toggleItem = (id: string) => {
+        setExpandedItems(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(id)) {
+                newSet.delete(id);
+            } else {
+                newSet.add(id);
+            }
+            return newSet;
+        });
+    };
+
+    const toggleAll = () => {
+        setAllExpanded(prev => {
+            const nextState = !prev;
+            if (nextState) {
+                setExpandedItems(new Set(upcomingAssignments.map(s => s.id)));
+            } else {
+                setExpandedItems(new Set());
+            }
+            return nextState;
+        });
     };
 
     const handleOpenModal = (assignment: Assignment | null) => {
@@ -89,69 +124,58 @@ const Assignments: React.FC = () => {
             }
         }
     };
-    
-    const getAssignmentSummary = (assignment: Assignment): string => {
-        const assignedRoles: string[] = [];
-        if (assignment.indicator1 || assignment.indicator2) assignedRoles.push('Indicadores');
-        if (assignment.mic1 || assignment.mic2) assignedRoles.push('Microfones');
-        if (assignment.reader) assignedRoles.push('Leitor');
-        if (assignment.audio) assignedRoles.push('Áudio');
-        if (assignment.video) assignedRoles.push('Vídeo');
-
-        if (assignedRoles.length === 0) {
-            return 'Nenhuma designação preenchida.';
-        }
-        
-        if (assignedRoles.length > 3) {
-            return `${assignedRoles.slice(0, 3).join(', ')} e mais...`;
-        }
-        
-        return assignedRoles.join(', ');
-    };
 
     return (
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Designações de Plataforma</h2>
-                <button
-                    onClick={() => handleOpenModal(null)}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-dark"
-                >
-                    <PlusIcon className="h-5 w-5 mr-2" />
-                    Criar
-                </button>
+                {isServant && (
+                    <button
+                        onClick={() => handleOpenModal(null)}
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-dark"
+                    >
+                        <PlusIcon className="h-5 w-5 mr-2" />
+                        Criar
+                    </button>
+                )}
             </div>
+            
+            {upcomingAssignments.length > 0 && (
+                <div className="mb-4">
+                    <button onClick={toggleAll} className="px-4 py-2 text-sm font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600">
+                        {allExpanded ? 'Ocultar Programação' : 'Mostrar Programação'}
+                    </button>
+                </div>
+            )}
             
             {isLoading ? (
                 <p className="text-center p-6">Carregando designações...</p>
             ) : (
                 <div className="space-y-4">
-                     {assignments.length > 0 ? assignments.map(assignment => {
-                        const assignmentDate = new Date(assignment.date);
-                        const today = new Date();
-                        assignmentDate.setUTCHours(0,0,0,0);
-                        today.setUTCHours(0,0,0,0);
-                        const isFuture = assignmentDate >= today;
-
-                        return (
-                            <div key={assignment.id} className={`bg-white dark:bg-slate-800 shadow-md rounded-lg p-4 flex justify-between items-center transition-opacity ${!isFuture ? 'opacity-60' : ''}`}>
-                                <div>
-                                    <p className="font-bold text-lg text-slate-900 dark:text-white">
-                                        {new Date(assignment.date).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', timeZone: 'UTC' })}
-                                    </p>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                                        {getAssignmentSummary(assignment)}
-                                    </p>
-                                </div>
-                                <div className="flex items-center space-x-2 flex-shrink-0">
-                                    <button onClick={() => handleOpenModal(assignment)} className="p-2 text-slate-500 hover:text-amber-500"><PencilIcon className="h-5 w-5" /></button>
-                                    <button onClick={() => handleDelete(assignment)} className="p-2 text-slate-500 hover:text-red-500"><TrashIcon className="h-5 w-5" /></button>
-                                </div>
-                            </div>
-                        )
-                     }) : (
-                        <div className="p-6 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 rounded-lg">
-                            Nenhuma designação encontrada.
+                     {upcomingAssignments.length > 0 ? upcomingAssignments.map(assignment => (
+                        <ScheduleAccordion
+                            key={assignment.id}
+                            isOpen={expandedItems.has(assignment.id)}
+                            onToggle={() => toggleItem(assignment.id)}
+                            title={
+                                <p className="font-bold text-lg text-slate-900 dark:text-white">
+                                    {new Date(assignment.date).toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}
+                                </p>
+                            }
+                            footer={
+                                isServant && (
+                                    <div className="p-3 flex justify-end items-center space-x-2">
+                                        <button onClick={() => handleOpenModal(assignment)} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
+                                        <button onClick={() => handleDelete(assignment)} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
+                                    </div>
+                                )
+                            }
+                        >
+                            <AssignmentDetail assignment={assignment} />
+                        </ScheduleAccordion>
+                     )) : (
+                        <div className="p-6 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 rounded-lg shadow-md">
+                            Nenhuma designação futura encontrada.
                         </div>
                      )}
                 </div>

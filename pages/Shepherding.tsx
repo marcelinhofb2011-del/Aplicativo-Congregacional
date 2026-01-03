@@ -1,17 +1,19 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { ShepherdingVisit } from '../types';
+import { ShepherdingVisit, DashboardSchedule, UserRole } from '../types';
 import { getShepherdingVisits, addShepherdingVisit, updateShepherdingVisit, archiveShepherdingVisit } from '../services/firestoreService';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
 import ShepherdingFormModal from '../components/ShepherdingFormModal';
 import { PencilIcon, TrashIcon, PlusIcon } from '../components/icons/Icons';
 import DetailedScheduleModal from '../components/ScheduleDetailModal';
-import { DashboardSchedule } from './Dashboard';
 
 const Shepherding: React.FC = () => {
     const { user } = useAuth();
+    const isServant = user?.role === UserRole.SERVANT;
+
     const [visits, setVisits] = useState<ShepherdingVisit[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -100,10 +102,12 @@ const Shepherding: React.FC = () => {
         <div>
              <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Registros de Pastoreio</h2>
-                <button onClick={() => handleOpenModal(null)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark">
-                    <PlusIcon className="h-5 w-5 mr-2" />
-                    Criar
-                </button>
+                {isServant && (
+                    <button onClick={() => handleOpenModal(null)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark">
+                        <PlusIcon className="h-5 w-5 mr-2" />
+                        Criar
+                    </button>
+                )}
             </div>
             
             {isLoading ? (
@@ -129,10 +133,12 @@ const Shepherding: React.FC = () => {
                                 </div>
                                 {visit.notes && <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 italic truncate">Obs: {visit.notes}</p>}
                             </div>
-                             <div className="flex items-center space-x-2 flex-shrink-0 border-t border-slate-100 dark:border-slate-700/50 px-4 py-2 justify-end">
-                                <button onClick={() => handleOpenModal(visit)} className="p-2 text-slate-500 hover:text-amber-500"><PencilIcon className="h-5 w-5" /></button>
-                                <button onClick={() => handleDelete(visit)} className="p-2 text-slate-500 hover:text-red-500"><TrashIcon className="h-5 w-5" /></button>
-                            </div>
+                            {isServant && (
+                                <div className="flex items-center space-x-2 flex-shrink-0 border-t border-slate-100 dark:border-slate-700/50 px-4 py-2 justify-end">
+                                    <button onClick={() => handleOpenModal(visit)} className="p-2 text-slate-500 hover:text-amber-500"><PencilIcon className="h-5 w-5" /></button>
+                                    <button onClick={() => handleDelete(visit)} className="p-2 text-slate-500 hover:text-red-500"><TrashIcon className="h-5 w-5" /></button>
+                                </div>
+                            )}
                         </div>
                     )}) : (
                         <div className="p-6 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 rounded-lg">

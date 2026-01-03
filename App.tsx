@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { HashRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -63,9 +64,7 @@ const AppContent: React.FC = () => {
                     <Route path="dashboard" element={<Dashboard />} />
                     <Route path="relatorio" element={<Report />} />
                     <Route path="assistencia" element={<Attendance />} />
-                </Route>
-                
-                <Route element={<ProtectedRoute roles={[UserRole.SERVANT]} />}>
+                    {/* Moved from SERVANT-only block to allow viewing for all roles */}
                     <Route path="menu" element={<Menu />} />
                     <Route path="resumo" element={<Resumo />} />
                     <Route path="vida-e-ministerio" element={<LifeMinistry />} />
@@ -74,13 +73,17 @@ const AppContent: React.FC = () => {
                     <Route path="secretario" element={<Secretario />} />
                     <Route path="secretario/relatorios" element={<ReportList />} />
                     <Route path="secretario/assistencia" element={<AttendanceList />} />
-                    <Route path="publicadores" element={<Publishers />} />
                     <Route path="dirigentes" element={<Conductors />} />
                     <Route path="pastoreio" element={<Shepherding />} />
                     <Route path="discurso-publico" element={<PublicTalk />} />
                     <Route path="territorios" element={<Territories />} />
                     <Route path="passagens" element={<Passages />} />
                     <Route path="configuracoes" element={<Settings />} />
+                </Route>
+                
+                <Route element={<ProtectedRoute roles={[UserRole.SERVANT]} />}>
+                    {/* Publisher data is sensitive and remains SERVANT-only */}
+                    <Route path="publicadores" element={<Publishers />} />
                 </Route>
             </Route>
 

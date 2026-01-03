@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { PublisherProfile } from '../../types';
+import { PublisherProfile, PublisherStatus } from '../../types';
 import { XIcon, PencilIcon } from '../icons/Icons';
 
 interface PublisherDetailModalProps {
@@ -9,6 +8,13 @@ interface PublisherDetailModalProps {
     onEdit: (publisher: PublisherProfile) => void;
     publisher: PublisherProfile;
 }
+
+const statusConfig: Record<PublisherStatus, { label: string, style: string }> = {
+    [PublisherStatus.ACTIVE]: { label: 'Ativo', style: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' },
+    [PublisherStatus.REGULAR]: { label: 'Regular', style: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' },
+    [PublisherStatus.IRREGULAR]: { label: 'Irregular', style: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300' },
+    [PublisherStatus.INACTIVE]: { label: 'Inativo', style: 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300' },
+};
 
 const DetailSection: React.FC<{ title: string, children: React.ReactNode, className?: string }> = ({ title, children, className = '' }) => (
     <div className={`p-6 rounded-lg shadow ${className}`}>
@@ -58,6 +64,9 @@ const PublisherDetailModal: React.FC<PublisherDetailModalProps> = ({ isOpen, onC
         publisher.isPublisher && 'Publicador',
         publisher.isUnbaptizedPublisher && 'Publicador não Batizado',
     ].filter(Boolean).join(', ');
+    
+    const statusInfo = statusConfig[publisher.status || PublisherStatus.ACTIVE];
+
 
     return (
         <div className="fixed inset-0 bg-light dark:bg-dark z-50 overflow-y-auto">
@@ -94,8 +103,13 @@ const PublisherDetailModal: React.FC<PublisherDetailModalProps> = ({ isOpen, onC
                     </DetailSection>
 
                     <DetailSection title="Designação Teocrática" className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <DetailItem label="Grupo de Serviço" value={publisher.group} />
+                            <DetailItem label="Status" value={
+                                <span className={`text-sm font-semibold px-2 py-1 rounded-full ${statusInfo.style}`}>
+                                    {statusInfo.label}
+                                </span>
+                            } />
                             <DetailItem label="Designações" value={theocraticRoles} />
                         </div>
                         <DetailItem label="Outros Privilégios" value={publisher.privileges} />

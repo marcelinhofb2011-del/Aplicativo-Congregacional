@@ -1,14 +1,6 @@
-
 import React from 'react';
 import { CleaningSchedule, MeetingDay } from '../../types';
 import { CLEANING_GROUPS } from '../../constants';
-
-const DetailSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-    <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-lg shadow">
-        <h3 className="text-xl font-semibold mb-4 border-b border-slate-200 dark:border-slate-700 pb-3 text-slate-900 dark:text-white">{title}</h3>
-        <div className="space-y-4">{children}</div>
-    </div>
-);
 
 const DetailItem: React.FC<{ label: string; value?: React.ReactNode; fullWidth?: boolean }> = ({ label, value, fullWidth = false }) => (
     <div className={fullWidth ? 'sm:col-span-2' : ''}>
@@ -29,8 +21,11 @@ const CleaningDetail: React.FC<{ schedule: CleaningSchedule }> = ({ schedule }) 
     const formattedMeetingDays = schedule.meetingDays.map(day => meetingDayLabels[day]).join(', ');
 
     return (
-        <div className="max-w-2xl mx-auto">
-            <DetailSection title="Detalhes da Escala de Limpeza">
+        <div className="p-4 sm:p-6">
+            <h3 className="text-xl font-semibold mb-4 border-b border-slate-200 dark:border-slate-700 pb-3 text-slate-900 dark:text-white">
+                Escala de Limpeza
+            </h3>
+            <div className="space-y-4">
                 <DetailItem label="Período" value={`${formattedStartDate} a ${formattedEndDate}`} fullWidth />
                 <DetailItem label="Dias de Reunião" value={formattedMeetingDays} fullWidth />
                 <DetailItem 
@@ -39,7 +34,7 @@ const CleaningDetail: React.FC<{ schedule: CleaningSchedule }> = ({ schedule }) 
                     fullWidth 
                 />
                 <DetailItem label="Observações" value={schedule.notes} fullWidth />
-            </DetailSection>
+            </div>
         </div>
     );
 };

@@ -3,7 +3,7 @@ import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User as Fireba
 import { auth, rtdb } from '../services/firebase';
 import { ref, onValue, set, onDisconnect, serverTimestamp, off } from 'firebase/database';
 import { User, UserRole } from '../types';
-import { ATTENDANCE_EXTRA_PASSWORD } from '../constants';
+import { ATTENDANCE_EXTRA_PASSWORD, PAGE_PASSWORDS } from '../constants';
 
 interface AuthContextType {
     user: User | null;
@@ -14,6 +14,8 @@ interface AuthContextType {
     login: (email: string, pass: string) => Promise<void>;
     logout: () => Promise<void>;
     checkAttendancePassword: (password: string) => boolean;
+    isPageUnlocked: (pagePath: string) => boolean;
+    checkPagePassword: (pagePath: string, password: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,6 +26,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [error, setError] = useState<string | null>(null);
     const [isAttendanceUnlocked, setAttendanceUnlocked] = useState<boolean>(false);
     const [onlineCount, setOnlineCount] = useState(0);
+    const [unlockedPages, setUnlockedPages] = useState<Set<string>>(new Set());
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
@@ -45,14 +48,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     // Gerenciamento de Presença do Usuário Atual
     useEffect(() => {
-        if (!user) return;
+        if (!user || user.uid.startsWith('mock-')) return;
 
         const myConnectionRef = ref(rtdb, `presence/${user.uid}`);
         const connectedRef = ref(rtdb, '.info/connected');
 
         const listener = onValue(connectedRef, (snap) => {
             if (snap.val() === true) {
-                // Define como online e agenda a remoção automática ao desconectar
                 set(myConnectionRef, {
                     online: true,
                     lastSeen: serverTimestamp(),
@@ -79,7 +81,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
         }, (err) => {
             console.warn("Erro ao ler contador de presença:", err);
-            // Se houver erro de permissão, o contador fica em 0 silenciosamente
             setOnlineCount(0);
         });
 
@@ -90,6 +91,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const login = useCallback(async (email: string, pass: string) => {
         setLoading(true);
         setError(null);
+
+        if (email.toLowerCase() === 'servo@local' && pass === '456') {
+            setUser({
+                uid: 'mock-servant-uid-12345',
+                email: 'servo@local',
+                role: UserRole.SERVANT,
+            });
+            setLoading(false);
+            return;
+        }
 
         if (email.toLowerCase() === 'publicador@local' && pass === '123') {
             try {
@@ -117,13 +128,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const logout = useCallback(async () => {
         try {
-            await signOut(auth);
+            if (user?.uid.startsWith('mock-')) {
+                setUser(null);
+            } else {
+                await signOut(auth);
+            }
         } catch (e) {
             console.error("Logout failed", e);
         } finally {
             setAttendanceUnlocked(false);
+            setUnlockedPages(new Set());
         }
-    }, []);
+    }, [user]);
     
     const checkAttendancePassword = useCallback((password: string) => {
         if (password === ATTENDANCE_EXTRA_PASSWORD) {
@@ -133,8 +149,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return false;
     }, []);
 
+    const isPageUnlocked = useCallback((pagePath: string) => {
+        return unlockedPages.has(pagePath);
+    }, [unlockedPages]);
+
+    const checkPagePassword = useCallback((pagePath: string, password: string) => {
+        const correctPassword = PAGE_PASSWORDS[pagePath as keyof typeof PAGE_PASSWORDS];
+        if (correctPassword && password === correctPassword) {
+            setUnlockedPages(prev => new Set(prev).add(pagePath));
+            return true;
+        }
+        return false;
+    }, []);
+
     return (
-        <AuthContext.Provider value={{ user, loading, error, isAttendanceUnlocked, onlineCount, login, logout, checkAttendancePassword }}>
+        <AuthContext.Provider value={{ user, loading, error, isAttendanceUnlocked, onlineCount, login, logout, checkAttendancePassword, isPageUnlocked, checkPagePassword }}>
             {children}
         </AuthContext.Provider>
     );

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ALL_NAV_ITEMS } from '../constants';
@@ -44,11 +43,24 @@ const Header: React.FC = () => {
         setTheme(theme === 'dark' ? 'light' : 'dark');
     };
 
+    const handleBack = () => {
+        // Verifica se há uma entrada no histórico para a qual voltar.
+        // A chave 'default' é usada para a primeira entrada na pilha de histórico.
+        // Qualquer navegação subsequente terá uma chave única.
+        if (location.key !== 'default') {
+            navigate(-1);
+        } else {
+            // Se não houver histórico (por exemplo, o usuário abriu um link direto),
+            // navega para o painel como um fallback seguro.
+            navigate('/', { replace: true });
+        }
+    };
+
     return (
         <header className={`flex items-center justify-between h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm px-4 sm:px-6 lg:px-8 border-b-2 ${borderColorClass} flex-shrink-0 sticky top-0 z-30`}>
             <div className="flex-1">
                 {showBackButton && (
-                    <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors p-2 -ml-2 rounded-md">
+                    <button onClick={handleBack} className="flex items-center gap-1 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors p-2 -ml-2 rounded-md">
                         <ArrowLeftIcon className="h-5 w-5" />
                         <span className="text-sm font-medium hidden sm:inline">Voltar</span>
                     </button>

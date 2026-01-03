@@ -1,15 +1,22 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import { ReportIcon, AttendanceIcon, ChevronRightIcon, UsersIcon } from '../components/icons/Icons';
+import { UserRole } from '../types';
 
 const Secretario: React.FC = () => {
-    const menuItems = [
+    const { user } = useAuth();
+    const isServant = user?.role === UserRole.SERVANT;
+
+    const baseMenuItems = [
         { path: '/secretario/relatorios', label: 'Relatórios de Serviço', icon: ReportIcon, color: 'text-blue-500' },
         { path: '/secretario/assistencia', label: 'Registros de Assistência', icon: AttendanceIcon, color: 'text-emerald-500' },
-        { path: '/publicadores', label: 'Pasta de Publicadores', icon: UsersIcon, color: 'text-rose-500' },
     ];
 
+    const menuItems = isServant
+        ? [...baseMenuItems, { path: '/publicadores', label: 'Pasta de Publicadores', icon: UsersIcon, color: 'text-rose-500' }]
+        : baseMenuItems;
+        
     return (
         <div>
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Painel do Secretário</h2>

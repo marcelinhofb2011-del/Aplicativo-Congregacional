@@ -244,6 +244,13 @@ export interface PublicTalkSchedule extends BaseRecord {
 }
 
 // Types for Publisher Profiles
+export enum PublisherStatus {
+    ACTIVE = 'ACTIVE',
+    REGULAR = 'REGULAR',
+    IRREGULAR = 'IRREGULAR',
+    INACTIVE = 'INACTIVE',
+}
+
 export interface PublisherProfile extends BaseRecord {
     // Personal Info
     name: string;
@@ -255,6 +262,7 @@ export interface PublisherProfile extends BaseRecord {
     email: string;
 
     // Theocratic Info
+    status?: PublisherStatus;
     isPublisher: boolean;
     isUnbaptizedPublisher: boolean;
     isAuxiliaryPioneer: boolean;
@@ -267,4 +275,14 @@ export interface PublisherProfile extends BaseRecord {
     emergencyContactName: string;
     emergencyContactPhone: string;
     notes?: string;
+}
+
+// Type for Detailed Schedule Modal
+export interface DashboardSchedule {
+    id: string;
+    type: string;
+    title: string;
+    date: string;
+    details: string;
+    fullData: LifeMinistrySchedule | Assignment | CleaningSchedule | ConductorMeeting | PublicTalkSchedule | ShepherdingVisit;
 }

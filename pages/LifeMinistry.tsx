@@ -1,25 +1,38 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { LifeMinistrySchedule } from '../types';
+import { LifeMinistrySchedule, UserRole } from '../types';
 import { getSchedules, addSchedule, updateSchedule, archiveSchedule } from '../services/firestoreService';
 import LifeMinistryFormModal from '../components/LifeMinistryFormModal';
 import ConfirmationModal from '../components/ConfirmationModal';
 import Toast from '../components/Toast';
 import { PlusIcon, PencilIcon, TrashIcon, ShareIcon } from '../components/icons/Icons';
+import LifeMinistryDetail from '../components/details/LifeMinistryDetail';
+import ScheduleAccordion from '../components/ScheduleAccordion';
 
 const LifeMinistry: React.FC = () => {
     const { user } = useAuth();
+    const isServant = user?.role === UserRole.SERVANT;
+
     const [schedules, setSchedules] = useState<LifeMinistrySchedule[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSchedule, setEditingSchedule] = useState<LifeMinistrySchedule | null>(null);
     const [scheduleToDelete, setScheduleToDelete] = useState<LifeMinistrySchedule | null>(null);
     const [toastMessage, setToastMessage] = useState('');
+    const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+    const [allExpanded, setAllExpanded] = useState(false);
 
     useEffect(() => {
         fetchSchedules();
     }, []);
+    
+    const upcomingSchedules = useMemo(() => {
+        const today = new Date();
+        today.setUTCHours(0, 0, 0, 0);
+        return schedules
+            .filter(s => new Date(s.date) >= today)
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    }, [schedules]);
 
     const fetchSchedules = async () => {
         setIsLoading(true);
@@ -34,6 +47,30 @@ const LifeMinistry: React.FC = () => {
         }
     };
     
+    const toggleItem = (id: string) => {
+        setExpandedItems(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(id)) {
+                newSet.delete(id);
+            } else {
+                newSet.add(id);
+            }
+            return newSet;
+        });
+    };
+
+    const toggleAll = () => {
+        setAllExpanded(prev => {
+            const nextState = !prev;
+            if (nextState) {
+                setExpandedItems(new Set(upcomingSchedules.map(s => s.id)));
+            } else {
+                setExpandedItems(new Set());
+            }
+            return nextState;
+        });
+    };
+
     const handleOpenModal = (schedule: LifeMinistrySchedule | null) => {
         setEditingSchedule(schedule);
         setIsModalOpen(true);
@@ -134,9 +171,7 @@ const LifeMinistry: React.FC = () => {
                 setToastMessage('Programação copiada para a área de transferência!');
             }
         } catch (err: any) {
-            if (err.name === 'AbortError') {
-                console.log('Share canceled by user.');
-            } else {
+            if (err.name !== 'AbortError') {
                 console.error("Erro ao compartilhar:", err);
                 setToastMessage('Não foi possível compartilhar a programação.');
             }
@@ -147,34 +182,57 @@ const LifeMinistry: React.FC = () => {
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Vida e Ministério</h2>
-                <button
-                    onClick={() => handleOpenModal(null)}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-dark"
-                >
-                    <PlusIcon className="h-5 w-5 mr-2" />
-                    Criar
-                </button>
+                {isServant && (
+                    <button
+                        onClick={() => handleOpenModal(null)}
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-dark"
+                    >
+                        <PlusIcon className="h-5 w-5 mr-2" />
+                        Criar
+                    </button>
+                )}
             </div>
+            
+             {upcomingSchedules.length > 0 && (
+                <div className="mb-4">
+                    <button onClick={toggleAll} className="px-4 py-2 text-sm font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600">
+                        {allExpanded ? 'Ocultar Programação' : 'Mostrar Programação'}
+                    </button>
+                </div>
+            )}
 
             {isLoading ? <p>Carregando...</p> : (
                  <div className="space-y-4">
-                    {schedules.map(schedule => (
-                        <div key={schedule.id} className="bg-white dark:bg-slate-800 shadow-md rounded-lg p-4 flex justify-between items-center">
-                            <div>
-                                <p className="font-bold text-lg text-slate-900 dark:text-white">
-                                    {schedule.week}
-                                </p>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">
-                                    Presidente: {schedule.president}
-                                </p>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <button onClick={() => handleShare(schedule)} className="p-2 text-slate-500 hover:text-sky-500"><ShareIcon className="h-5 w-5" /></button>
-                                <button onClick={() => handleOpenModal(schedule)} className="p-2 text-slate-500 hover:text-amber-500"><PencilIcon className="h-5 w-5" /></button>
-                                <button onClick={() => handleDeleteClick(schedule)} className="p-2 text-slate-500 hover:text-red-500"><TrashIcon className="h-5 w-5" /></button>
-                            </div>
+                    {upcomingSchedules.length > 0 ? upcomingSchedules.map(schedule => (
+                        <ScheduleAccordion
+                            key={schedule.id}
+                            isOpen={expandedItems.has(schedule.id)}
+                            onToggle={() => toggleItem(schedule.id)}
+                            title={
+                                <div>
+                                    <p className="font-bold text-lg text-slate-900 dark:text-white">{schedule.week}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Presidente: {schedule.president}</p>
+                                </div>
+                            }
+                            footer={
+                                <div className="p-4 flex justify-end items-center space-x-2">
+                                    <button onClick={() => handleShare(schedule)} className="p-2 text-slate-500 hover:text-sky-500" aria-label="Compartilhar"><ShareIcon className="h-5 w-5" /></button>
+                                    {isServant && (
+                                        <>
+                                            <button onClick={() => handleOpenModal(schedule)} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
+                                            <button onClick={() => handleDeleteClick(schedule)} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
+                                        </>
+                                    )}
+                                </div>
+                            }
+                        >
+                            <LifeMinistryDetail schedule={schedule} />
+                        </ScheduleAccordion>
+                    )) : (
+                         <div className="p-6 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 rounded-lg shadow-md">
+                            Nenhuma programação futura encontrada.
                         </div>
-                    ))}
+                    )}
                 </div>
             )}
 

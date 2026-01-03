@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { PublisherProfile } from '../types';
+import { PublisherProfile, PublisherStatus } from '../types';
 import { getPublisherProfiles, addPublisherProfile, updatePublisherProfile, archivePublisherProfile } from '../services/firestoreService';
 import { PlusIcon, PencilIcon, TrashIcon, DocumentTextIcon } from '../components/icons/Icons';
 import Toast from '../components/Toast';
@@ -9,6 +8,14 @@ import ConfirmationModal from '../components/ConfirmationModal';
 import PublisherFormModal from '../components/PublisherFormModal';
 import PublisherDetailModal from '../components/details/PublisherDetailModal';
 import PublisherPDFModal from '../components/PublisherPDFModal';
+
+
+const statusConfig: Record<PublisherStatus, { label: string, style: string }> = {
+    [PublisherStatus.ACTIVE]: { label: 'Ativo', style: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' },
+    [PublisherStatus.REGULAR]: { label: 'Regular', style: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' },
+    [PublisherStatus.IRREGULAR]: { label: 'Irregular', style: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300' },
+    [PublisherStatus.INACTIVE]: { label: 'Inativo', style: 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300' },
+};
 
 
 const Publishers: React.FC = () => {
@@ -129,18 +136,27 @@ const Publishers: React.FC = () => {
             ) : (
                 <div className="bg-white dark:bg-slate-800 shadow-md rounded-lg overflow-hidden">
                     <ul className="divide-y divide-slate-200 dark:divide-slate-700">
-                        {publishers.length > 0 ? publishers.map(pub => (
+                        {publishers.length > 0 ? publishers.map(pub => {
+                             const config = statusConfig[pub.status || PublisherStatus.ACTIVE];
+                             return (
                             <li key={pub.id} className="p-4 flex justify-between items-center">
                                 <div onClick={() => handleViewDetails(pub)} className="cursor-pointer flex-grow">
                                     <p className="font-semibold text-slate-900 dark:text-white">{pub.name}</p>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">Grupo: {pub.group}</p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                         <p className="text-sm text-slate-500 dark:text-slate-400">Grupo: {pub.group}</p>
+                                         {config && (
+                                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${config.style}`}>
+                                                {config.label}
+                                            </span>
+                                         )}
+                                    </div>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <button onClick={() => handleEditClick(pub)} className="p-2 text-slate-500 hover:text-amber-500"><PencilIcon className="h-5 w-5" /></button>
                                     <button onClick={() => handleDeleteClick(pub)} className="p-2 text-slate-500 hover:text-red-500"><TrashIcon className="h-5 w-5" /></button>
                                 </div>
                             </li>
-                        )) : (
+                        )}) : (
                             <li className="p-6 text-center text-slate-500">Nenhum publicador cadastrado.</li>
                         )}
                     </ul>

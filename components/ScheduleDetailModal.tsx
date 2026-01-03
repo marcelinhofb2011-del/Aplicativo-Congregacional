@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { LifeMinistrySchedule, Assignment, CleaningSchedule, ConductorMeeting, PublicTalkSchedule, ShepherdingVisit, BaseRecord } from '../types';
+// FIX: Import DashboardSchedule from types.ts and remove the incorrect import.
+import { LifeMinistrySchedule, Assignment, CleaningSchedule, ConductorMeeting, PublicTalkSchedule, ShepherdingVisit, BaseRecord, DashboardSchedule } from '../types';
 import { ArrowLeftIcon } from './icons/Icons';
 import LifeMinistryDetail from './details/LifeMinistryDetail';
 import AssignmentDetail from './details/AssignmentDetail';
@@ -8,7 +9,6 @@ import CleaningDetail from './details/CleaningDetail';
 import ConductorDetail from './details/ConductorDetail';
 import PublicTalkDetail from './details/PublicTalkDetail';
 import ShepherdingDetail from './details/ShepherdingDetail';
-import { DashboardSchedule } from '../pages/Dashboard';
 
 interface DetailedScheduleModalProps {
     schedule: DashboardSchedule | null;
@@ -27,7 +27,7 @@ const DetailedScheduleModal: React.FC<DetailedScheduleModalProps> = ({ schedule,
                 return <AssignmentDetail assignment={fullData as Assignment} />;
             case 'Limpeza':
                 return <CleaningDetail schedule={fullData as CleaningSchedule} />;
-            case 'Dirigentes':
+            case 'Serviço de Campo':
                  return <ConductorDetail schedule={fullData as ConductorMeeting} />;
             case 'Pastoreio':
                 return <ShepherdingDetail schedule={fullData as ShepherdingVisit} />;

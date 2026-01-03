@@ -1,7 +1,5 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { ChurchIcon } from '../components/icons/Icons';
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -13,22 +11,39 @@ const Login: React.FC = () => {
         login(email, password);
     };
 
+    // Este URL é o mesmo do manifest.json, garantindo consistência visual.
+    const appIconUrl = "https://ui-avatars.com/api/?name=VL+Cisper&background=f1f5f9&color=0f172a&size=128&bold=true";
+
     return (
-        <div className="flex items-center justify-center min-h-screen bg-slate-100 dark:bg-slate-900 px-4 sm:px-6 lg:px-8">
-            <div className="w-full max-w-md space-y-8">
-                <div>
-                    <div className="flex justify-center">
-                       <ChurchIcon className="h-12 w-auto text-primary text-5xl" />
+        <div className="flex items-center justify-center min-h-screen w-full bg-slate-100 dark:bg-slate-900 px-4 sm:px-6 lg:px-8">
+            {/* Fundo gradiente sofisticado */}
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 dark:from-slate-800 dark:via-slate-900 dark:to-black"></div>
+
+            <div className="relative w-full max-w-md space-y-6 bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 overflow-hidden">
+                <div className="p-8 sm:p-10">
+                    <div className="text-center mb-6">
+                        <img 
+                            src={appIconUrl} 
+                            alt="Logo da Congregação VL Cisper" 
+                            className="mx-auto h-20 w-20 rounded-2xl shadow-md mb-4" 
+                        />
+                        <div className="mb-5">
+                            <h1 className="text-xs font-medium tracking-[0.2em] text-slate-500 dark:text-slate-400 uppercase">
+                                Congregação
+                            </h1>
+                            <p className="text-lg font-bold tracking-wider text-slate-700 dark:text-slate-200 uppercase">
+                                Vila Cisper
+                            </p>
+                        </div>
+                        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+                            Acesse sua conta
+                        </h2>
+                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                            Bem-vindo ao portal da congregação
+                        </p>
                     </div>
-                    <h2 className="mt-6 text-center text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
-                        Acesse sua conta
-                    </h2>
-                    <p className="mt-2 text-center text-sm text-slate-600 dark:text-slate-400">
-                        Bem-vindo ao portal da congregação
-                    </p>
-                </div>
-                <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-                    <div className="rounded-md shadow-sm -space-y-px">
+
+                    <form className="space-y-4" onSubmit={handleSubmit}>
                         <div>
                             <label htmlFor="email-address" className="sr-only">Email</label>
                             <input
@@ -39,7 +54,7 @@ const Login: React.FC = () => {
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="appearance-none rounded-none relative block w-full px-3 py-3 border border-slate-300 dark:border-slate-600 placeholder-slate-500 text-slate-900 dark:text-white bg-white dark:bg-slate-800 rounded-t-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-base"
+                                className="input-style bg-white/50 dark:bg-slate-900/50 border-slate-300 dark:border-slate-600 placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary"
                                 placeholder="Email"
                             />
                         </div>
@@ -53,29 +68,30 @@ const Login: React.FC = () => {
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="appearance-none rounded-none relative block w-full px-3 py-3 border border-slate-300 dark:border-slate-600 placeholder-slate-500 text-slate-900 dark:text-white bg-white dark:bg-slate-800 rounded-b-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-base"
+                                className="input-style bg-white/50 dark:bg-slate-900/50 border-slate-300 dark:border-slate-600 placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary"
                                 placeholder="Senha"
                             />
                         </div>
-                    </div>
-                    
-                    {error && <div className="text-red-500 text-sm text-center">{error}</div>}
+                        
+                        {error && <div className="text-red-500 dark:text-red-400 text-sm font-medium text-center pt-1">{error}</div>}
 
+                        <div className="pt-2">
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="group relative w-full flex justify-center py-3 px-6 border border-transparent font-semibold rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-dark disabled:bg-primary/60 disabled:cursor-not-allowed text-base transition-colors"
+                            >
+                                {loading ? 'Entrando...' : 'Entrar'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div className="bg-slate-100/70 dark:bg-slate-900/70 p-4 border-t border-slate-200/80 dark:border-slate-700/80 text-center text-sm text-slate-500 dark:text-slate-400">
                     <div>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="group relative w-full flex justify-center py-3 px-6 border border-transparent font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-dark disabled:bg-primary/50 text-base"
-                        >
-                            {loading ? 'Entrando...' : 'Entrar'}
-                        </button>
+                        <span className="font-semibold">Publicador:</span>
+                        <span> Email: <b>publicador@local</b> | Senha: <b>123</b></span>
                     </div>
-                </form>
-                <div className="text-center text-sm text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 pt-4">
-                    <p className="font-semibold">Acesso Limitado (Publicador):</p>
-                    <p className="mb-2">Email: <b>publicador@local</b> / Senha: <b>123</b></p>
-                    <p className="font-semibold">Acesso Total (Servo/Ancião):</p>
-                    <p>Use seu email e senha cadastrados.</p>
                 </div>
             </div>
         </div>

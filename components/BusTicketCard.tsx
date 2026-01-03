@@ -1,7 +1,7 @@
-
 import React from 'react';
-import { BusTicket, BusTicketStatus } from '../types';
+import { BusTicket, BusTicketStatus, UserRole } from '../types';
 import { PencilIcon, TrashIcon } from './icons/Icons';
+import { useAuth } from '../hooks/useAuth';
 
 interface BusTicketCardProps {
     ticket: BusTicket;
@@ -17,6 +17,8 @@ const statusConfig = {
 };
 
 const BusTicketCard: React.FC<BusTicketCardProps> = ({ ticket, onEdit, onViewReceipt, onDelete }) => {
+    const { user } = useAuth();
+    const isServant = user?.role === UserRole.SERVANT;
     const config = statusConfig[ticket.status];
     
     return (
@@ -40,8 +42,12 @@ const BusTicketCard: React.FC<BusTicketCardProps> = ({ ticket, onEdit, onViewRec
                     <button onClick={onViewReceipt} className="px-3 py-1 text-sm bg-primary/10 text-primary rounded-md hover:bg-primary/20">
                         Recibo
                     </button>
-                    <button onClick={onEdit} className="p-2 text-slate-500 hover:text-amber-500"><PencilIcon className="h-5 w-5" /></button>
-                    <button onClick={onDelete} className="p-2 text-slate-500 hover:text-red-500"><TrashIcon className="h-5 w-5" /></button>
+                    {isServant && (
+                        <>
+                            <button onClick={onEdit} className="p-2 text-slate-500 hover:text-amber-500"><PencilIcon className="h-5 w-5" /></button>
+                            <button onClick={onDelete} className="p-2 text-slate-500 hover:text-red-500"><TrashIcon className="h-5 w-5" /></button>
+                        </>
+                    )}
                 </div>
             </div>
         </div>

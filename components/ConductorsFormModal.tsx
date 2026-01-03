@@ -63,7 +63,7 @@ const ConductorsFormModal: React.FC<ConductorsFormModalProps> = ({ isOpen, onClo
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-3xl font-bold text-slate-900 dark:text-white">
-                            {initialData ? 'Editar Dirigente' : 'Adicionar Dirigente'}
+                            {initialData ? 'Editar Reunião' : 'Adicionar Reunião'}
                         </h2>
                         <button type="button" onClick={onClose} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
                             <XIcon className="h-6 w-6" />
@@ -76,7 +76,7 @@ const ConductorsFormModal: React.FC<ConductorsFormModalProps> = ({ isOpen, onClo
                             {dayOfWeek && <p className="text-xs text-slate-500 mt-1">{dayOfWeek}</p>}
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nome do Dirigente</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Dirigente</label>
                             <input type="text" name="conductorName" value={formData.conductorName} onChange={handleInputChange} required className="input-style" />
                         </div>
                         <div>

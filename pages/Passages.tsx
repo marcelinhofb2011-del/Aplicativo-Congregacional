@@ -1,8 +1,8 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import * as XLSX from 'xlsx';
-import { BusTicket, BusTicketStatus } from '../types';
+import { BusTicket, BusTicketStatus, UserRole } from '../types';
 import { getBusTickets, addBusTicket, updateBusTicket, deleteBusTicket } from '../services/firestoreService';
+import { useAuth } from '../hooks/useAuth';
 import { PlusIcon } from '../components/icons/Icons';
 import BusTicketCard from '../components/BusTicketCard';
 import BusTicketFormModal from '../components/BusTicketFormModal';
@@ -11,6 +11,8 @@ import ConfirmationModal from '../components/ConfirmationModal';
 import Toast from '../components/Toast';
 
 const Passages: React.FC = () => {
+    const { user } = useAuth();
+    const isServant = user?.role === UserRole.SERVANT;
     const [tickets, setTickets] = useState<BusTicket[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [editingTicket, setEditingTicket] = useState<BusTicket | null>(null);
@@ -116,15 +118,17 @@ const Passages: React.FC = () => {
         <div>
             <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Gerenciamento de Passagens</h2>
-                <div className="flex gap-2">
-                     <button onClick={handleExportExcel} className="px-4 py-3 text-sm font-medium text-emerald-700 bg-emerald-100 rounded-md hover:bg-emerald-200">
-                        Exportar Excel
-                    </button>
-                    <button onClick={() => handleOpenForm(null)} className="inline-flex items-center px-4 py-3 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary-dark">
-                        <PlusIcon className="h-5 w-5 mr-2" />
-                        Adicionar
-                    </button>
-                </div>
+                {isServant && (
+                    <div className="flex gap-2">
+                         <button onClick={handleExportExcel} className="px-4 py-3 text-sm font-medium text-emerald-700 bg-emerald-100 rounded-md hover:bg-emerald-200">
+                            Exportar Excel
+                        </button>
+                        <button onClick={() => handleOpenForm(null)} className="inline-flex items-center px-4 py-3 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary-dark">
+                            <PlusIcon className="h-5 w-5 mr-2" />
+                            Adicionar
+                        </button>
+                    </div>
+                )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">

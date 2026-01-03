@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import html2canvas from 'html2canvas';
 import { PublisherProfile } from '../types';
@@ -63,9 +62,9 @@ const PublisherPDFModal: React.FC<PublisherPDFModalProps> = ({ isOpen, onClose, 
                  setToastMessage('Compartilhamento de arquivos não suportado neste navegador.');
             }
         } catch (error) {
-            console.error("Error sharing report:", error);
             if ((error as Error).name !== 'AbortError') {
-                 setToastMessage('Erro ao compartilhar relatório.');
+                console.error("Error sharing report:", error);
+                setToastMessage('Erro ao compartilhar relatório.');
             }
         }
     };

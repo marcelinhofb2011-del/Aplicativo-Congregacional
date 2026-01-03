@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AttendanceRecord } from '../types';
+import { AttendanceRecord, UserRole } from '../types';
 import { getAttendanceRecords, updateAttendanceRecord, archiveAttendanceRecord } from '../services/firestoreService';
 import { useAuth } from '../hooks/useAuth';
 import Toast from '../components/Toast';
@@ -9,6 +9,7 @@ import { PencilIcon, TrashIcon } from '../components/icons/Icons';
 
 const AttendanceList: React.FC = () => {
     const { user } = useAuth();
+    const isServant = user?.role === UserRole.SERVANT;
     const [records, setRecords] = useState<AttendanceRecord[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     
@@ -115,8 +116,12 @@ const AttendanceList: React.FC = () => {
                                             </div>
                                         </div>
                                         <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => handleEdit(record)} className="p-2 text-slate-500 hover:text-amber-500"><PencilIcon className="h-5 w-5" /></button>
-                                            <button onClick={() => handleDelete(record)} className="p-2 text-slate-500 hover:text-red-500"><TrashIcon className="h-5 w-5" /></button>
+                                            {isServant && (
+                                                <>
+                                                    <button onClick={() => handleEdit(record)} className="p-2 text-slate-500 hover:text-amber-500"><PencilIcon className="h-5 w-5" /></button>
+                                                    <button onClick={() => handleDelete(record)} className="p-2 text-slate-500 hover:text-red-500"><TrashIcon className="h-5 w-5" /></button>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
