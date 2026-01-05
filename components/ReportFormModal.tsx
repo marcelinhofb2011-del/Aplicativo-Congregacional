@@ -44,7 +44,8 @@ const ReportFormModal: React.FC<ReportFormModalProps> = ({ isOpen, onClose, onSa
             const publisherMatch = allPublishers.find(p => p.id === initialData.publisherId);
             setSelectedPublisher(publisherMatch || { id: initialData.publisherId, name: initialData.publisherName } as PublisherProfile);
             setGroup(initialData.group);
-            setDate(new Date(initialData.date).toISOString().split('T')[0]);
+            const reportDate = new Date(initialData.date);
+            setDate(`${reportDate.getUTCFullYear()}-${String(reportDate.getUTCMonth() + 1).padStart(2, '0')}`);
             setPrivilege(initialData.privilege);
             setHasParticipated(initialData.hasParticipated || false);
             setHours(initialData.hours ?? '');
@@ -69,11 +70,14 @@ const ReportFormModal: React.FC<ReportFormModalProps> = ({ isOpen, onClose, onSa
             return;
         }
 
+        const [year, month] = date.split('-').map(Number);
+        const reportDate = new Date(Date.UTC(year, month - 1, 1));
+
         const reportData: Partial<FieldServiceReport> = {
             publisherId: selectedPublisher.id,
             publisherName: selectedPublisher.name,
             group: group,
-            date: new Date(date).toISOString(),
+            date: reportDate.toISOString(),
             privilege,
             notes,
             ...(privilege === 'PIONEER' 
@@ -123,10 +127,10 @@ const ReportFormModal: React.FC<ReportFormModalProps> = ({ isOpen, onClose, onSa
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Data</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Mês do Relatório</label>
                             <div className="relative">
-                                <input type="date" value={date} onChange={e => setDate(e.target.value)} required className="input-style pr-10" />
-                                <CalendarDaysIcon className="h-5 w-5 text-slate-400 absolute top-1/2 right-3 -translate-y-1/2" />
+                                <input type="month" value={date} onChange={e => setDate(e.target.value)} required className="input-style pr-10" />
+                                <CalendarDaysIcon className="h-5 w-5 text-slate-400 absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none" />
                             </div>
                         </div>
 

@@ -1,6 +1,7 @@
 
 
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { ShepherdingVisit, DashboardSchedule, UserRole } from '../types';
 import { getShepherdingVisits, addShepherdingVisit, updateShepherdingVisit, archiveShepherdingVisit } from '../services/firestoreService';
@@ -12,7 +13,9 @@ import DetailedScheduleModal from '../components/ScheduleDetailModal';
 
 const Shepherding: React.FC = () => {
     const { user } = useAuth();
+    const location = useLocation();
     const isServant = user?.role === UserRole.SERVANT;
+    const isReadOnly = location.state?.fromDashboard === true;
 
     const [visits, setVisits] = useState<ShepherdingVisit[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -102,7 +105,7 @@ const Shepherding: React.FC = () => {
         <div>
              <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Registros de Pastoreio</h2>
-                {isServant && (
+                {!isReadOnly && isServant && (
                     <button onClick={() => handleOpenModal(null)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark">
                         <PlusIcon className="h-5 w-5 mr-2" />
                         Criar

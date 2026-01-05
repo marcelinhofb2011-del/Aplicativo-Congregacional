@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { ConductorMeeting, UserRole } from '../types';
 import { getConductorMeetings, addConductorMeeting, updateConductorMeeting, archiveConductorMeeting } from '../services/firestoreService';
@@ -11,7 +12,9 @@ import ScheduleAccordion from '../components/ScheduleAccordion';
 
 const Conductors: React.FC = () => {
     const { user } = useAuth();
+    const location = useLocation();
     const isServant = user?.role === UserRole.SERVANT;
+    const isReadOnly = location.state?.fromDashboard === true;
 
     const [meetings, setMeetings] = useState<ConductorMeeting[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -123,7 +126,7 @@ const Conductors: React.FC = () => {
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Serviço de Campo</h2>
-                {isServant && (
+                {!isReadOnly && isServant && (
                     <button onClick={() => handleOpenModal(null)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark">
                         <PlusIcon className="h-5 w-5 mr-2" />
                         Criar

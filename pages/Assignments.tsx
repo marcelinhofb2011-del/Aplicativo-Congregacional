@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Assignment, UserRole } from '../types';
 import { getAssignments, addAssignment, updateAssignment, archiveAssignment } from '../services/firestoreService';
@@ -12,7 +13,9 @@ import ScheduleAccordion from '../components/ScheduleAccordion';
 
 const Assignments: React.FC = () => {
     const { user } = useAuth();
+    const location = useLocation();
     const isServant = user?.role === UserRole.SERVANT;
+    const isReadOnly = location.state?.fromDashboard === true;
     const [assignments, setAssignments] = useState<Assignment[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     
@@ -129,7 +132,7 @@ const Assignments: React.FC = () => {
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Designações de Plataforma</h2>
-                {isServant && (
+                {!isReadOnly && isServant && (
                     <button
                         onClick={() => handleOpenModal(null)}
                         className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-dark"

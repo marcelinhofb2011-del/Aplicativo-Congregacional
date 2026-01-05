@@ -13,7 +13,10 @@ const Report: React.FC = () => {
     const [allPublishers, setAllPublishers] = useState<PublisherProfile[]>([]);
     const [selectedPublisher, setSelectedPublisher] = useState<PublisherProfile | null>(null);
     const [group, setGroup] = useState<'1' | '2' | '3' | ''>('');
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [date, setDate] = useState(() => {
+        const today = new Date();
+        return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    });
     const [privilege, setPrivilege] = useState<'PIONEER' | 'PUBLISHER'>('PUBLISHER');
     const [hasParticipated, setHasParticipated] = useState<boolean>(false);
     const [hours, setHours] = useState<number | ''>('');
@@ -40,7 +43,10 @@ const Report: React.FC = () => {
     const resetForm = () => {
         setSelectedPublisher(null);
         setGroup('');
-        setDate(new Date().toISOString().split('T')[0]);
+        setDate(() => {
+            const today = new Date();
+            return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+        });
         setPrivilege('PUBLISHER');
         setHasParticipated(false);
         setHours('');
@@ -63,11 +69,14 @@ const Report: React.FC = () => {
             return;
         }
 
+        const [year, month] = date.split('-').map(Number);
+        const reportDate = new Date(Date.UTC(year, month - 1, 1));
+
         const reportData: Omit<FieldServiceReport, 'id'> = {
             publisherId: selectedPublisher.id,
             publisherName: selectedPublisher.name,
             group: group,
-            date: new Date(date).toISOString(),
+            date: reportDate.toISOString(),
             privilege,
             notes,
             submittedAt: new Date().toISOString(),
@@ -122,10 +131,10 @@ const Report: React.FC = () => {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Data</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Mês do Relatório</label>
                     <div className="relative">
-                        <input type="date" value={date} onChange={e => setDate(e.target.value)} required className="input-style pr-10" />
-                        <CalendarDaysIcon className="h-5 w-5 text-slate-400 absolute top-1/2 right-3 -translate-y-1/2" />
+                        <input type="month" value={date} onChange={e => setDate(e.target.value)} required className="input-style pr-10" />
+                        <CalendarDaysIcon className="h-5 w-5 text-slate-400 absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none" />
                     </div>
                 </div>
 

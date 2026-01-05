@@ -15,7 +15,7 @@ const DashboardWindow: React.FC<DashboardWindowProps> = ({ title, icon: Icon, co
     const bgColorClass = colorClass.replace('text-', 'bg-');
 
     return (
-        <Link to={path} className="relative block p-6 bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl shadow-lg border border-white/50 dark:border-slate-700/50 transition-transform transform hover:-translate-y-1 hover:shadow-2xl">
+        <Link to={path} state={{ fromDashboard: true }} className="relative block p-6 bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl shadow-lg border border-white/50 dark:border-slate-700/50 transition-transform transform hover:-translate-y-1 hover:shadow-2xl">
             <div className="flex justify-between items-start">
                 <div className={`flex items-center justify-center h-12 w-12 rounded-xl ${bgColorClass}`}>
                     <Icon className="h-7 w-7 text-white" />

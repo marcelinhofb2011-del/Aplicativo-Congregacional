@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { CleaningSchedule, UserRole } from '../types';
 import { getCleaningSchedules, addCleaningSchedule, updateCleaningSchedule, archiveCleaningSchedule } from '../services/firestoreService';
@@ -12,7 +13,9 @@ import { CLEANING_GROUPS } from '../constants';
 
 const Cleaning: React.FC = () => {
     const { user } = useAuth();
+    const location = useLocation();
     const isServant = user?.role === UserRole.SERVANT;
+    const isReadOnly = location.state?.fromDashboard === true;
     
     const [schedules, setSchedules] = useState<CleaningSchedule[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -126,7 +129,7 @@ const Cleaning: React.FC = () => {
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Escala de Limpeza</h2>
-                 {isServant && (
+                 {!isReadOnly && isServant && (
                     <button
                         onClick={() => handleOpenModal(null)}
                         className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark"
