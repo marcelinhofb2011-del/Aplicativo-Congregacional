@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '../services/firebase';
+import { EyeIcon, EyeSlashIcon } from '../components/icons/Icons';
 
 const Register: React.FC = () => {
     const [name, setName] = useState('');
@@ -10,12 +11,17 @@ const Register: React.FC = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [accessCode, setAccessCode] = useState('');
     const [error, setError] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [showAccessCode, setShowAccessCode] = useState(false);
     const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        setSuccessMessage('');
 
         if (password !== confirmPassword) {
             setError('As senhas não coincidem.');
@@ -29,12 +35,20 @@ const Register: React.FC = () => {
         setLoading(true);
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            // After creating the user, update their profile with the name.
             await updateProfile(userCredential.user, { displayName: name });
             
-            // The onAuthStateChanged listener in AuthContext will handle setting the user state
-            // and the app will automatically redirect to the dashboard.
-            navigate('/');
+            setSuccessMessage('Cadastro realizado com sucesso! Redirecionando...');
+            
+            // Clear form fields
+            setName('');
+            setEmail('');
+            setPassword('');
+            setConfirmPassword('');
+            setAccessCode('');
+
+            setTimeout(() => {
+                navigate('/');
+            }, 2000);
 
         } catch (err: any) {
             if (err.code === 'auth/email-already-in-use') {
@@ -45,8 +59,7 @@ const Register: React.FC = () => {
                 setError('Falha ao criar a conta. Tente novamente.');
                 console.error("Registration failed:", err);
             }
-        } finally {
-            setLoading(false);
+            setLoading(false); // Stop loading only on error
         }
     };
 
@@ -67,17 +80,36 @@ const Register: React.FC = () => {
                     </p>
                 </div>
                 <form className="space-y-4" onSubmit={handleSubmit}>
-                    <input name="name" type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="Nome Completo" className="input-style"/>
-                    <input name="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="Email" className="input-style"/>
-                    <input name="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required placeholder="Senha" className="input-style"/>
-                    <input name="confirmPassword" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required placeholder="Confirmar Senha" className="input-style"/>
-                    <input name="accessCode" type="password" value={accessCode} onChange={e => setAccessCode(e.target.value)} required placeholder="Senha de Acesso" className="input-style"/>
+                    <input name="name" type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="Nome Completo" className="input-style" disabled={loading || !!successMessage} />
+                    <input name="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="Email" className="input-style" disabled={loading || !!successMessage} />
+                    
+                    <div className="relative">
+                        <input name="password" type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required placeholder="Senha" className="input-style pr-10" disabled={loading || !!successMessage} />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"} disabled={loading || !!successMessage}>
+                            {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                        </button>
+                    </div>
 
-                    {error && <div className="text-red-500 dark:text-red-400 text-sm font-medium text-center pt-1">{error}</div>}
+                    <div className="relative">
+                        <input name="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required placeholder="Confirmar Senha" className="input-style pr-10" disabled={loading || !!successMessage} />
+                        <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" aria-label={showConfirmPassword ? "Ocultar senha" : "Mostrar senha"} disabled={loading || !!successMessage}>
+                            {showConfirmPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                        </button>
+                    </div>
+
+                    <div className="relative">
+                        <input name="accessCode" type={showAccessCode ? 'text' : 'password'} value={accessCode} onChange={e => setAccessCode(e.target.value)} required placeholder="Senha de Acesso" className="input-style pr-10" disabled={loading || !!successMessage} />
+                        <button type="button" onClick={() => setShowAccessCode(!showAccessCode)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" aria-label={showAccessCode ? "Ocultar senha de acesso" : "Mostrar senha de acesso"} disabled={loading || !!successMessage}>
+                            {showAccessCode ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                        </button>
+                    </div>
+
+                    {error && !successMessage && <div className="text-red-500 dark:text-red-400 text-sm font-medium text-center pt-1">{error}</div>}
+                    {successMessage && <div className="text-green-600 dark:text-green-400 text-sm font-medium text-center pt-1">{successMessage}</div>}
 
                     <div className="pt-2">
-                        <button type="submit" disabled={loading} className="w-full flex justify-center py-3 px-6 font-semibold rounded-md text-white bg-primary hover:bg-primary-dark disabled:bg-primary/60">
-                            {loading ? 'Cadastrando...' : 'Cadastrar'}
+                        <button type="submit" disabled={loading || !!successMessage} className="w-full flex justify-center py-3 px-6 font-semibold rounded-md text-white bg-primary hover:bg-primary-dark disabled:bg-primary/60 disabled:cursor-not-allowed">
+                            {loading ? 'Cadastrando...' : (successMessage ? 'Sucesso!' : 'Cadastrar')}
                         </button>
                     </div>
                 </form>
