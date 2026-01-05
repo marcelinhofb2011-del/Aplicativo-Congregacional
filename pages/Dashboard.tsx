@@ -126,7 +126,7 @@ const Dashboard: React.FC = () => {
         loadDashboardData();
     }, []);
 
-    const welcomeMessage = `Olá, ${user?.email?.split('@')[0] || 'irmão'}!`;
+    const welcomeMessage = `Olá, ${user?.displayName || user?.email?.split('@')[0] || 'irmão'}!`;
     
     const hasAnyNewItem = sections.some(s => s.hasNewItem);
 

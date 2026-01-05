@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 const Login: React.FC = () => {
@@ -85,6 +86,13 @@ const Login: React.FC = () => {
                             </button>
                         </div>
                     </form>
+
+                     <div className="text-center mt-6 text-sm">
+                        <span className="text-slate-600 dark:text-slate-400">Não tem uma conta? </span>
+                        <Link to="/cadastro" className="font-medium text-primary hover:text-primary-dark">
+                            Cadastre-se
+                        </Link>
+                    </div>
                 </div>
                 
                 <div className="bg-slate-100/70 dark:bg-slate-900/70 p-4 border-t border-slate-200/80 dark:border-slate-700/80 text-center text-sm text-slate-500 dark:text-slate-400">

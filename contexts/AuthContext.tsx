@@ -35,6 +35,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 setUser({
                     uid: firebaseUser.uid,
                     email: isAnon ? 'publicador@local' : firebaseUser.email,
+                    displayName: firebaseUser.displayName,
                     role: isAnon ? UserRole.PUBLISHER : UserRole.SERVANT,
                 });
             } else {
@@ -91,16 +92,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const login = useCallback(async (email: string, pass: string) => {
         setLoading(true);
         setError(null);
-
-        if (email.toLowerCase() === 'servo@local' && pass === '456') {
-            setUser({
-                uid: 'mock-servant-uid-12345',
-                email: 'servo@local',
-                role: UserRole.SERVANT,
-            });
-            setLoading(false);
-            return;
-        }
 
         if (email.toLowerCase() === 'publicador@local' && pass === '123') {
             try {

@@ -5,6 +5,7 @@ import { HashRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext'; // Import ThemeProvider
 import Login from './pages/Login';
+import Register from './pages/Register'; // Import the new Register page
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Report from './pages/Report';
@@ -57,6 +58,7 @@ const AppContent: React.FC = () => {
     return (
         <Routes>
             <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
+            <Route path="/cadastro" element={!user ? <Register /> : <Navigate to="/" />} />
             <Route path="/" element={user ? <Layout /> : <Navigate to="/login" />} >
                 <Route index element={<Dashboard />} />
                 
