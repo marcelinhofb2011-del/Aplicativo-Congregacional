@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { PublicTalkSchedule, BaseRecord } from '../types';
 import { XIcon } from './icons/Icons';
@@ -8,6 +9,7 @@ interface PublicTalkFormModalProps {
     onClose: () => void;
     onSave: (formData: Omit<PublicTalkSchedule, 'id' | keyof BaseRecord>) => void;
     initialData: PublicTalkSchedule | null;
+    defaultType?: 'local' | 'away';
 }
 
 const BLANK_TALK: Omit<PublicTalkSchedule, 'id' | keyof BaseRecord> = {
@@ -32,7 +34,7 @@ const FormSection: React.FC<{ title: string, children: React.ReactNode }> = ({ t
 );
 
 
-const PublicTalkFormModal: React.FC<PublicTalkFormModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
+const PublicTalkFormModal: React.FC<PublicTalkFormModalProps> = ({ isOpen, onClose, onSave, initialData, defaultType }) => {
     const [formData, setFormData] = useState(BLANK_TALK);
     const [outlineNumber, setOutlineNumber] = useState('');
     const [outlineWarning, setOutlineWarning] = useState('');
@@ -55,11 +57,14 @@ const PublicTalkFormModal: React.FC<PublicTalkFormModalProps> = ({ isOpen, onClo
             setOutlineNumber('');
             setOutlineWarning('');
         } else {
-            setFormData(BLANK_TALK);
+            setFormData({
+                ...BLANK_TALK,
+                type: defaultType || 'local',
+            });
             setOutlineNumber('');
             setOutlineWarning('');
         }
-    }, [initialData, isOpen]);
+    }, [initialData, isOpen, defaultType]);
     
     useEffect(() => {
         if (!outlineNumber) {
@@ -94,6 +99,10 @@ const PublicTalkFormModal: React.FC<PublicTalkFormModalProps> = ({ isOpen, onClo
     
     const handleTypeChange = (type: 'local' | 'away') => {
         setFormData(prev => ({ ...prev, type }));
+    };
+
+    const handleHasImageChange = (value: boolean) => {
+        setFormData(prev => ({ ...prev, hasImage: value }));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -170,6 +179,13 @@ const PublicTalkFormModal: React.FC<PublicTalkFormModalProps> = ({ isOpen, onClo
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Hora</label>
                                     <input type="time" name="time" value={formData.time} onChange={handleInputChange} required className="input-style" />
+                                </div>
+                            </div>
+                             <div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Usará Imagens?</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button type="button" onClick={() => handleHasImageChange(true)} className={`px-4 py-2.5 rounded-md text-sm font-medium ${formData.hasImage ? 'bg-primary text-white shadow' : 'bg-slate-200 dark:bg-slate-700'}`}>Sim</button>
+                                    <button type="button" onClick={() => handleHasImageChange(false)} className={`px-4 py-2.5 rounded-md text-sm font-medium ${!formData.hasImage ? 'bg-primary text-white shadow' : 'bg-slate-200 dark:bg-slate-700'}`}>Não</button>
                                 </div>
                             </div>
                             <div>

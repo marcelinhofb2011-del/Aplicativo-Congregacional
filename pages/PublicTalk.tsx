@@ -9,7 +9,7 @@ import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
 import PublicTalkFormModal from '../components/PublicTalkFormModal';
 import PublicTalkDetail from '../components/details/PublicTalkDetail';
-import { PlusIcon, ShareIcon, PencilIcon, TrashIcon } from '../components/icons/Icons';
+import { PlusIcon, ShareIcon, PencilIcon, TrashIcon, WhatsAppIcon } from '../components/icons/Icons';
 import ScheduleAccordion from '../components/ScheduleAccordion';
 import { REVERSE_PUBLIC_TALK_THEMES } from '../utils/publicTalksHelper';
 
@@ -129,28 +129,44 @@ const PublicTalk: React.FC = () => {
         }
     };
 
+    const textFallback = (schedule: PublicTalkSchedule) => {
+        const formattedDate = new Date(schedule.date).toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+        const outlineNumber = REVERSE_PUBLIC_TALK_THEMES[schedule.theme] || 'N/A';
+
+        let text = `*DESIGNAÇÃO DE DISCURSO PÚBLICO*\n`;
+        text += `Congregação Vila Cisper\n\n`;
+        text += `----------------------------------\n\n`;
+        text += `*ORADOR:*\n${schedule.speakerName}\n\n`;
+        text += `*TEMA:*\n${schedule.theme}\n(Esboço Nº ${outlineNumber})\n\n`;
+        text += `----------------------------------\n\n`;
+        text += `*EVENTO:*\n`;
+        text += `*Congregação:* ${schedule.congregation}\n`;
+        text += `*Data:* ${formattedDate}\n`;
+        text += `*Hora:* ${schedule.time}\n`;
+        if (schedule.address) {
+            text += `*Local:* ${schedule.address}\n`;
+        }
+        text += `\n`;
+        if (schedule.phone) {
+            text += `*Contato:* ${schedule.phone}\n\n`;
+        }
+        if (schedule.notes) {
+            text += `*Observações:* ${schedule.notes}\n\n`;
+        }
+        text += `----------------------------------`;
+        return text;
+    };
+    
     const handleShare = async (schedule: PublicTalkSchedule) => {
         const shareElement = document.getElementById(`talk-card-content-${schedule.id}`);
         if (!shareElement) {
             setToastMessage("Erro ao gerar imagem da designação.");
             return;
         }
-
-        const textFallback = () => {
-            const formattedDate = new Date(schedule.date).toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
-            const fullDateStringForShare = `${formattedDate} às ${schedule.time}`;
-            const outlineNumber = REVERSE_PUBLIC_TALK_THEMES[schedule.theme] || 'N/A';
-    
-            let text = `----------------------------------\n`;
-            text += `DESIGNAÇÃO DE DISCURSO\n\n`;
-            text += `[ Seção 1 — Identificação ]\n...`; // Abridged for brevity
-            text += `----------------------------------`;
-            return text;
-        };
         
         setIsSharing(true);
         try {
-            const canvas = await html2canvas(shareElement, { scale: 2, useCORS: true, backgroundColor: null });
+            const canvas = await html2canvas(shareElement, { scale: 2, useCORS: true, backgroundColor: document.documentElement.classList.contains('dark') ? '#0f172a' : '#ffffff' });
             const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
             if (!blob) throw new Error("Falha ao criar imagem da designação.");
 
@@ -160,7 +176,7 @@ const PublicTalk: React.FC = () => {
             if (navigator.canShare && navigator.canShare(shareData)) {
                 await navigator.share(shareData);
             } else {
-                const text = textFallback();
+                const text = textFallback(schedule);
                 await navigator.clipboard.writeText(text);
                 setToastMessage('Designação copiada para a área de transferência!');
             }
@@ -168,7 +184,7 @@ const PublicTalk: React.FC = () => {
             if ((err as Error).name !== 'AbortError') {
                 console.error("Erro ao compartilhar:", err);
                 setToastMessage('Falha ao compartilhar. Designação copiada como texto.');
-                await navigator.clipboard.writeText(textFallback());
+                await navigator.clipboard.writeText(textFallback(schedule));
             }
         } finally {
             setIsSharing(false);
@@ -235,13 +251,14 @@ const PublicTalk: React.FC = () => {
                                         <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{talk.speakerName} - {talk.theme}</p>
                                     </div>
                                 }
-                                footer={
-                                    <div className="p-3 flex justify-end items-center space-x-2">
-                                        <button onClick={() => handleShare(talk)} disabled={isSharing} className="p-2 text-slate-500 hover:text-sky-500 disabled:opacity-50" aria-label="Compartilhar"><ShareIcon className="h-5 w-5" /></button>
+                                headerActions={
+                                    <div className="flex items-center">
+                                        <button onClick={(e) => { e.stopPropagation(); handleShare(talk); }} className="p-2 text-slate-500 hover:text-green-500" aria-label="Compartilhar no WhatsApp"><WhatsAppIcon className="h-5 w-5" /></button>
+                                        <button onClick={(e) => { e.stopPropagation(); handleShare(talk); }} disabled={isSharing} className="p-2 text-slate-500 hover:text-sky-500 disabled:opacity-50" aria-label="Compartilhar"><ShareIcon className="h-5 w-5" /></button>
                                         {isServant && (
                                             <>
-                                                <button onClick={() => handleOpenFormModal(talk)} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
-                                                <button onClick={() => handleDelete(talk)} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleOpenFormModal(talk); }} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleDelete(talk); }} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
                                             </>
                                         )}
                                     </div>
@@ -264,6 +281,7 @@ const PublicTalk: React.FC = () => {
                     onClose={handleCloseFormModal}
                     onSave={handleSaveTalk}
                     initialData={editingTalk}
+                    defaultType={activeTab}
                 />
             )}
             

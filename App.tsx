@@ -1,5 +1,6 @@
 
 
+
 import React from 'react';
 import { HashRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -76,7 +77,6 @@ const AppContent: React.FC = () => {
                     <Route path="secretario/relatorios" element={<ReportList />} />
                     <Route path="secretario/assistencia" element={<AttendanceList />} />
                     <Route path="dirigentes" element={<Conductors />} />
-                    <Route path="pastoreio" element={<Shepherding />} />
                     <Route path="discurso-publico" element={<PublicTalk />} />
                     <Route path="territorios" element={<Territories />} />
                     <Route path="passagens" element={<Passages />} />
@@ -86,6 +86,7 @@ const AppContent: React.FC = () => {
                 <Route element={<ProtectedRoute roles={[UserRole.SERVANT]} />}>
                     {/* Publisher data is sensitive and remains SERVANT-only */}
                     <Route path="publicadores" element={<Publishers />} />
+                    <Route path="pastoreio" element={<Shepherding />} />
                 </Route>
             </Route>
 

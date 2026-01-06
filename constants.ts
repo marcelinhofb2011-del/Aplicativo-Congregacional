@@ -1,8 +1,7 @@
 
-
 import React from 'react';
 import { UserRole } from './types';
-import { DashboardIcon, ReportIcon, AttendanceIcon, LifeMinistryIcon, AssignmentsIcon, CleaningIcon, FieldServiceIcon, PublicTalkIcon, TerritoriesIcon, BusIcon, SettingsIcon, ConductorIcon, ShepherdingIcon, Squares2X2Icon, ChartBarIcon, UsersIcon, BookOpenIcon } from './components/icons/Icons';
+import { DashboardIcon, ReportIcon, AttendanceIcon, LifeMinistryIcon, AssignmentsIcon, CleaningIcon, FieldServiceIcon, PublicTalkIcon, TerritoriesIcon, BusIcon, SettingsIcon, ConductorIcon, ShepherdingIcon, Squares2X2Icon, ChartBarIcon, UsersIcon, BookOpenIcon, DocumentTextIcon } from './components/icons/Icons';
 
 export interface NavItem {
     path: string;
@@ -21,17 +20,17 @@ export const BOTTOM_NAV_ITEMS: NavItem[] = [
 
 // For Secondary Menu (Servant/Elder only)
 export const SECONDARY_NAV_ITEMS: NavItem[] = [
-    { path: '/vida-e-ministerio', label: 'Vida e Ministério', icon: LifeMinistryIcon, roles: [UserRole.SERVANT], color: 'text-green-500' },
-    { path: '/designacoes', label: 'Designações', icon: AssignmentsIcon, roles: [UserRole.SERVANT], color: 'text-orange-500' },
-    { path: '/limpeza', label: 'Limpeza', icon: CleaningIcon, roles: [UserRole.SERVANT], color: 'text-purple-500' },
-    { path: '/secretario', label: 'Secretário', icon: FieldServiceIcon, roles: [UserRole.SERVANT], color: 'text-emerald-600' },
+    { path: '/vida-e-ministerio', label: 'Vida e Ministério', icon: LifeMinistryIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-green-500' },
+    { path: '/designacoes', label: 'Designações', icon: AssignmentsIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-orange-500' },
+    { path: '/limpeza', label: 'Limpeza', icon: CleaningIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-purple-500' },
+    { path: '/secretario', label: 'Secretário', icon: DocumentTextIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-emerald-600' },
     { path: '/publicadores', label: 'Publicadores', icon: BookOpenIcon, roles: [UserRole.SERVANT], color: 'text-rose-500' },
-    { path: '/dirigentes', label: 'Serviço de Campo', icon: ConductorIcon, roles: [UserRole.SERVANT], color: 'text-cyan-500' },
+    { path: '/dirigentes', label: 'Serviço de Campo', icon: ConductorIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-cyan-500' },
     { path: '/pastoreio', label: 'Pastoreio', icon: ShepherdingIcon, roles: [UserRole.SERVANT], color: 'text-pink-500' },
-    { path: '/discurso-publico', label: 'Discurso Público', icon: PublicTalkIcon, roles: [UserRole.SERVANT], color: 'text-indigo-600' },
-    { path: '/territorios', label: 'Territórios', icon: TerritoriesIcon, roles: [UserRole.SERVANT], color: 'text-lime-500' },
-    { path: '/passagens', label: 'Passagens', icon: BusIcon, roles: [UserRole.SERVANT], color: 'text-yellow-400' },
-    { path: '/configuracoes', label: 'Configurações', icon: SettingsIcon, roles: [UserRole.SERVANT], color: 'text-slate-500' },
+    { path: '/discurso-publico', label: 'Discurso Público', icon: PublicTalkIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-indigo-600' },
+    { path: '/territorios', label: 'Territórios', icon: TerritoriesIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-lime-500' },
+    { path: '/passagens', label: 'Passagens', icon: BusIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-yellow-400' },
+    { path: '/configuracoes', label: 'Configurações', icon: SettingsIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-slate-500' },
 ];
 
 // Nav Item for the menu page itself (for Header title)
