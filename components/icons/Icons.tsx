@@ -241,3 +241,15 @@ export const WhatsAppIcon: React.FC<{ className?: string }> = ({ className }) =>
         <path d="M16.6,14.2l-1.5-0.8c-0.4-0.2-0.7-0.1-0.9,0.2l-0.6,0.7c-0.2,0.2-0.5,0.3-0.8,0.2C11.8,14,11,13.2,10,12.2 c-0.9-0.9-1.8-1.7-2.2-2.8c-0.1-0.3,0-0.6,0.2-0.8l0.6-0.6c0.2-0.2,0.3-0.5,0.2-0.9l-0.8-1.5c-0.2-0.4-0.6-0.6-1-0.6H5.4 C5,6,4.8,6.1,4.7,6.3c-0.6,1.2-0.3,2.8,0.8,4.3c1.7,2.4,4.2,4.9,7,6.6c1.5,0.8,3,1.1,4.4,0.5c0.2-0.1,0.3-0.3,0.3-0.5v-0.8 C17.2,14.8,17,14.4,16.6,14.2z M12,2C6.5,2,2,6.5,2,12s4.5,10,10,10c5.5,0,10-4.5,10-10S17.5,2,12,2z M12,20c-4.4,0-8-3.6-8-8 s3.6-8,8-8s8,3.6,8,8S16.4,20,12,20z"/>
     </svg>
 );
+
+export const DocumentChartBarIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5m3-1.5v1.5m3-1.5v1.5M12 1.5v9" />
+  </svg>
+);
+
+export const ArrowDownTrayIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+    </svg>
+);
