@@ -135,32 +135,32 @@ const Publishers: React.FC = () => {
 
     return (
         <>
-            <div className="sticky top-0 z-10 bg-[#65a30d] p-4 sm:p-6 lg:p-8">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h2 className="text-2xl font-bold text-white">Pasta de Publicadores</h2>
-                        <p className="mt-1 text-lime-100">Gerencie os perfis de todos os publicadores. Total: {publishers.length}</p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <button
-                            onClick={() => setIsPdfModalOpen(true)}
-                            className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md shadow-sm text-white bg-white/20 hover:bg-white/30"
-                        >
-                            <DocumentTextIcon className="h-5 w-5 mr-2" />
-                            Gerar PDF
-                        </button>
-                        <button
-                            onClick={handleAddClick}
-                            className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md shadow-sm text-white bg-white/20 hover:bg-white/30"
-                        >
-                            <PlusIcon className="h-5 w-5 mr-2" />
-                            Adicionar
-                        </button>
+            <div className="sticky top-0 z-10">
+                <div className="bg-[#65a30d] p-4 sm:p-6 lg:p-8">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h2 className="text-2xl font-bold text-white">Pasta de Publicadores</h2>
+                            <p className="mt-1 text-lime-100">Gerencie os perfis de todos os publicadores. Total: {publishers.length}</p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <button
+                                onClick={() => setIsPdfModalOpen(true)}
+                                className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md shadow-sm text-white bg-white/20 hover:bg-white/30"
+                            >
+                                <DocumentTextIcon className="h-5 w-5 mr-2" />
+                                Gerar PDF
+                            </button>
+                            <button
+                                onClick={handleAddClick}
+                                className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md shadow-sm text-white bg-white/20 hover:bg-white/30"
+                            >
+                                <PlusIcon className="h-5 w-5 mr-2" />
+                                Adicionar
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div className="p-4 sm:p-6 lg:p-8">
-                 <div className="mb-4">
+                <div className="bg-slate-100/80 dark:bg-slate-800/80 backdrop-blur-sm p-4 border-b border-slate-200 dark:border-slate-700">
                     <div className="relative">
                         <MagnifyingGlassIcon className="h-5 w-5 text-slate-400 absolute top-1/2 left-3 -translate-y-1/2" />
                         <input 
@@ -168,10 +168,12 @@ const Publishers: React.FC = () => {
                             placeholder="Buscar por nome..."
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800"
+                            className="w-full pl-10 pr-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700"
                         />
                     </div>
                 </div>
+            </div>
+            <div className="p-4 sm:p-6 lg:p-8">
                 {isLoading ? (
                     <p>Carregando...</p>
                 ) : (
