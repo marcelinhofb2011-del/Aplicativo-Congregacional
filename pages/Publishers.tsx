@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { PublisherProfile, PublisherStatus } from '../types';
 import { getPublisherProfiles, addPublisherProfile, updatePublisherProfile, archivePublisherProfile } from '../services/firestoreService';
-import { PlusIcon, PencilIcon, TrashIcon, DocumentTextIcon } from '../components/icons/Icons';
+import { PlusIcon, PencilIcon, TrashIcon, DocumentTextIcon, MagnifyingGlassIcon } from '../components/icons/Icons';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
 import PublisherFormModal from '../components/PublisherFormModal';
@@ -23,6 +23,7 @@ const Publishers: React.FC = () => {
     const { user } = useAuth();
     const [publishers, setPublishers] = useState<PublisherProfile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
@@ -46,6 +47,28 @@ const Publishers: React.FC = () => {
             setIsLoading(false);
         }
     };
+
+    const isProfileIncomplete = (pub: PublisherProfile): boolean => {
+        // Essential fields for everyone
+        if (!pub.birthDate || !pub.address || !pub.phone || !pub.emergencyContactName || !pub.emergencyContactPhone) {
+            return true;
+        }
+        // Baptism date is required unless they are an unbaptized publisher
+        if (!pub.isUnbaptizedPublisher && !pub.baptismDate) {
+            return true;
+        }
+        return false;
+    };
+    
+    const filteredPublishers = useMemo(() => {
+        if (!searchTerm) {
+            return publishers;
+        }
+        return publishers.filter(p =>
+            p.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [publishers, searchTerm]);
+
 
     const handleAddClick = () => {
         setSelectedPublisher(null);
@@ -116,7 +139,7 @@ const Publishers: React.FC = () => {
                 <div className="flex justify-between items-center">
                     <div>
                         <h2 className="text-2xl font-bold text-white">Pasta de Publicadores</h2>
-                        <p className="mt-1 text-lime-100">Gerencie os perfis de todos os publicadores.</p>
+                        <p className="mt-1 text-lime-100">Gerencie os perfis de todos os publicadores. Total: {publishers.length}</p>
                     </div>
                     <div className="flex items-center space-x-2">
                         <button
@@ -137,24 +160,46 @@ const Publishers: React.FC = () => {
                 </div>
             </div>
             <div className="p-4 sm:p-6 lg:p-8">
+                 <div className="mb-4">
+                    <div className="relative">
+                        <MagnifyingGlassIcon className="h-5 w-5 text-slate-400 absolute top-1/2 left-3 -translate-y-1/2" />
+                        <input 
+                            type="text"
+                            placeholder="Buscar por nome..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800"
+                        />
+                    </div>
+                </div>
                 {isLoading ? (
                     <p>Carregando...</p>
                 ) : (
                     <div className="bg-white dark:bg-slate-800 shadow-md rounded-lg overflow-hidden">
                         <ul className="divide-y divide-slate-200 dark:divide-slate-700">
-                            {publishers.length > 0 ? publishers.map(pub => {
+                            {filteredPublishers.length > 0 ? filteredPublishers.map(pub => {
                                  const config = statusConfig[pub.status || PublisherStatus.ACTIVE];
+                                 const profileIncomplete = isProfileIncomplete(pub);
+                                 const isBaptized = pub.baptismDate && !pub.isUnbaptizedPublisher;
                                  return (
                                 <li key={pub.id} className="p-4 flex justify-between items-center">
                                     <div onClick={() => handleViewDetails(pub)} className="cursor-pointer flex-grow">
                                         <p className="font-semibold text-slate-900 dark:text-white">{pub.name}</p>
-                                        <div className="flex items-center gap-2 mt-1">
+                                        <div className="flex items-center flex-wrap gap-2 mt-1">
                                              <p className="text-sm text-slate-500 dark:text-slate-400">Grupo: {pub.group}</p>
                                              {config && (
                                                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${config.style}`}>
                                                     {config.label}
                                                 </span>
                                              )}
+                                              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isBaptized ? 'bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300' : 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300'}`}>
+                                                {isBaptized ? 'Batizado' : 'Não Batizado'}
+                                            </span>
+                                            {profileIncomplete && (
+                                                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300">
+                                                    Incompleto
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="flex items-center space-x-2">
@@ -163,7 +208,9 @@ const Publishers: React.FC = () => {
                                     </div>
                                 </li>
                             )}) : (
-                                <li className="p-6 text-center text-slate-500">Nenhum publicador cadastrado.</li>
+                                <li className="p-6 text-center text-slate-500">
+                                    {searchTerm ? `Nenhum publicador encontrado para "${searchTerm}".` : 'Nenhum publicador cadastrado.'}
+                                </li>
                             )}
                         </ul>
                     </div>
