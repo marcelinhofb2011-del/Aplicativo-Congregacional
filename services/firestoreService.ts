@@ -1,5 +1,7 @@
-import { db } from './firebase';
+
+import { db, rtdb } from './firebase';
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, query, orderBy, Timestamp, where } from 'firebase/firestore';
+import { ref, push, serverTimestamp } from 'firebase/database';
 import { 
     LifeMinistrySchedule, FieldServiceReport, AttendanceRecord, Territory, BusTicket, Assignment, 
     CleaningSchedule, FieldServiceMeeting, ConductorMeeting, ShepherdingVisit, PublicTalkSchedule, BaseRecord, PublisherProfile 
@@ -36,6 +38,20 @@ const updateMetadata = (data: any, userId: string) => ({
     updatedBy: userId,
 });
 
+// --- Real-time Notification Helper ---
+const pushNotification = (payload: { type: string, title: string, body: string, link: string }, userId: string) => {
+    try {
+        const notificationsRef = ref(rtdb, 'notifications');
+        push(notificationsRef, {
+            ...payload,
+            timestamp: serverTimestamp(),
+            createdBy: userId,
+        });
+    } catch (error) {
+        console.error("Failed to push notification to RTDB:", error);
+    }
+};
+
 
 // --- Life & Ministry ---
 const schedulesCollection = collection(db, 'programacoes');
@@ -48,7 +64,14 @@ export const getSchedules = async (): Promise<LifeMinistrySchedule[]> => {
 };
 export const addSchedule = async (schedule: Omit<LifeMinistrySchedule, 'id' | keyof BaseRecord>, userId: string) => {
     const data = { ...schedule, date: Timestamp.fromDate(new Date(schedule.date)) };
-    return addDoc(schedulesCollection, addMetadata(data, userId));
+    const result = await addDoc(schedulesCollection, addMetadata(data, userId));
+    pushNotification({
+        type: 'NEW_LIFE_MINISTRY',
+        title: 'Nova Programação V&M',
+        body: `A programação para a semana de ${schedule.week} foi criada.`,
+        link: '/vida-e-ministerio'
+    }, userId);
+    return result;
 };
 export const updateSchedule = async (id: string, schedule: Partial<LifeMinistrySchedule>, userId: string) => {
     const data: any = { ...schedule };
@@ -145,7 +168,14 @@ export const getAssignments = async (): Promise<Assignment[]> => {
 };
 export const addAssignment = async (assignment: Omit<Assignment, 'id' | keyof BaseRecord>, userId: string) => {
     const data = { ...assignment, date: Timestamp.fromDate(new Date(assignment.date)) };
-    return addDoc(assignmentsCollection, addMetadata(data, userId));
+    const result = await addDoc(assignmentsCollection, addMetadata(data, userId));
+    pushNotification({
+        type: 'NEW_ASSIGNMENT',
+        title: 'Nova Designação de Plataforma',
+        body: `Designações para ${new Date(assignment.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})} foram criadas.`,
+        link: '/designacoes'
+    }, userId);
+    return result;
 };
 export const updateAssignment = async (id: string, assignment: Partial<Assignment>, userId: string) => {
     const data: any = { ...assignment };
@@ -169,7 +199,14 @@ export const addCleaningSchedule = async (schedule: Omit<CleaningSchedule, 'id' 
         date: Timestamp.fromDate(new Date(schedule.date)),
         endDate: Timestamp.fromDate(new Date(schedule.endDate)),
     };
-    return addDoc(cleaningCollection, addMetadata(data, userId));
+    const result = await addDoc(cleaningCollection, addMetadata(data, userId));
+    pushNotification({
+        type: 'NEW_CLEANING',
+        title: 'Nova Escala de Limpeza',
+        body: `Uma nova escala para o ${schedule.group} foi adicionada.`,
+        link: '/limpeza'
+    }, userId);
+    return result;
 };
 export const updateCleaningSchedule = async (id: string, schedule: Partial<CleaningSchedule>, userId: string) => {
     const data: any = { ...schedule };
@@ -210,7 +247,14 @@ export const getConductorMeetings = async (): Promise<ConductorMeeting[]> => {
 };
 export const addConductorMeeting = async (meeting: Omit<ConductorMeeting, 'id' | keyof BaseRecord>, userId: string) => {
     const data = { ...meeting, date: Timestamp.fromDate(new Date(meeting.date)) };
-    return addDoc(conductorsCollection, addMetadata(data, userId));
+    const result = await addDoc(conductorsCollection, addMetadata(data, userId));
+    pushNotification({
+        type: 'NEW_CONDUCTOR',
+        title: 'Novo Dirigente Adicionado',
+        body: `${meeting.conductorName} foi adicionado como dirigente para ${new Date(meeting.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}.`,
+        link: '/dirigentes'
+    }, userId);
+    return result;
 };
 export const updateConductorMeeting = async (id: string, meeting: Partial<ConductorMeeting>, userId: string) => {
     const data: any = { ...meeting };
@@ -230,7 +274,14 @@ export const getShepherdingVisits = async (): Promise<ShepherdingVisit[]> => {
 };
 export const addShepherdingVisit = async (visit: Omit<ShepherdingVisit, 'id' | keyof BaseRecord>, userId: string) => {
     const data = { ...visit, date: Timestamp.fromDate(new Date(visit.date)) };
-    return addDoc(shepherdingCollection, addMetadata(data, userId));
+    const result = await addDoc(shepherdingCollection, addMetadata(data, userId));
+    pushNotification({
+        type: 'NEW_SHEPHERDING',
+        title: 'Nova Visita de Pastoreio',
+        body: `Uma visita para ${visit.brotherName} foi agendada.`,
+        link: '/pastoreio'
+    }, userId);
+    return result;
 };
 export const updateShepherdingVisit = async (id: string, visit: Partial<ShepherdingVisit>, userId: string) => {
     const data: any = { ...visit };
@@ -250,7 +301,14 @@ export const getPublicTalks = async (): Promise<PublicTalkSchedule[]> => {
 };
 export const addPublicTalk = async (talk: Omit<PublicTalkSchedule, 'id' | keyof BaseRecord>, userId: string) => {
     const data = { ...talk, date: Timestamp.fromDate(new Date(talk.date)) };
-    return addDoc(publicTalksCollection, addMetadata(data, userId));
+    const result = await addDoc(publicTalksCollection, addMetadata(data, userId));
+    pushNotification({
+        type: 'NEW_PUBLIC_TALK',
+        title: 'Novo Discurso Agendado',
+        body: `Discurso "${talk.theme}" agendado para ${talk.speakerName}.`,
+        link: '/discurso-publico'
+    }, userId);
+    return result;
 };
 export const updatePublicTalk = async (id: string, talk: Partial<PublicTalkSchedule>, userId: string) => {
     const data: any = { ...talk };
@@ -269,22 +327,33 @@ export const getPublisherProfiles = async (): Promise<PublisherProfile[]> => {
         .sort((a, b) => a.name.localeCompare(b.name));
 };
 export const addPublisherProfile = async (profile: Omit<PublisherProfile, 'id' | keyof BaseRecord>, userId: string) => {
-    const data: any = { 
-        ...profile, 
-        birthDate: Timestamp.fromDate(new Date(profile.birthDate)),
-        ...(profile.baptismDate && { baptismDate: Timestamp.fromDate(new Date(profile.baptismDate)) })
-    };
+    const data: any = { ...profile };
+    if (profile.birthDate) {
+        data.birthDate = Timestamp.fromDate(new Date(profile.birthDate));
+    } else {
+        delete data.birthDate;
+    }
+    if (profile.baptismDate) {
+        data.baptismDate = Timestamp.fromDate(new Date(profile.baptismDate));
+    } else {
+        delete data.baptismDate;
+    }
     return addDoc(publishersCollection, addMetadata(data, userId));
 };
 export const updatePublisherProfile = async (id: string, profile: Partial<PublisherProfile>, userId: string) => {
     const data: any = { ...profile };
-    if (profile.birthDate) data.birthDate = Timestamp.fromDate(new Date(profile.birthDate));
     
-    // Handle optional baptismDate correctly
+    // Handle optional birthDate
+    if (profile.birthDate) {
+        data.birthDate = Timestamp.fromDate(new Date(profile.birthDate));
+    } else if (profile.hasOwnProperty('birthDate')) {
+        data.birthDate = null;
+    }
+    
+    // Handle optional baptismDate
     if (profile.baptismDate) {
         data.baptismDate = Timestamp.fromDate(new Date(profile.baptismDate));
     } else if (profile.hasOwnProperty('baptismDate')) {
-        // This allows clearing the date by passing undefined or null
         data.baptismDate = null;
     }
 

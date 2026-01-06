@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { PublisherProfile, BaseRecord, PublisherStatus } from '../types';
 import { XIcon } from './icons/Icons';
@@ -102,10 +103,10 @@ const PublisherFormModal: React.FC<PublisherFormModalProps> = ({ isOpen, onClose
                 name: initialData.name,
                 birthDate: isoToDDMMYYYY(initialData.birthDate),
                 baptismDate: isoToDDMMYYYY(initialData.baptismDate),
-                group: initialData.group,
-                address: initialData.address,
-                phone: initialData.phone,
-                email: initialData.email,
+                group: initialData.group || '',
+                address: initialData.address || '',
+                phone: initialData.phone || '',
+                email: initialData.email || '',
                 status: initialData.status || PublisherStatus.ACTIVE,
                 isPublisher: initialData.isPublisher,
                 isUnbaptizedPublisher: initialData.isUnbaptizedPublisher,
@@ -114,8 +115,8 @@ const PublisherFormModal: React.FC<PublisherFormModalProps> = ({ isOpen, onClose
                 isMinisterialServant: initialData.isMinisterialServant,
                 isElder: initialData.isElder,
                 privileges: initialData.privileges || '',
-                emergencyContactName: initialData.emergencyContactName,
-                emergencyContactPhone: initialData.emergencyContactPhone,
+                emergencyContactName: initialData.emergencyContactName || '',
+                emergencyContactPhone: initialData.emergencyContactPhone || '',
                 notes: initialData.notes || '',
             });
         } else {
@@ -138,15 +139,20 @@ const PublisherFormModal: React.FC<PublisherFormModalProps> = ({ isOpen, onClose
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         
+        if (!formData.name.trim()) {
+            alert('Por favor, informe o nome do publicador.');
+            return;
+        }
+
         const birthDateISO = ddmmyyyyToISO(formData.birthDate);
-        if (birthDateISO === 'invalid' || !birthDateISO) {
-            alert('Data de Nascimento inválida. Use o formato DD/MM/AAAA.');
+        if (birthDateISO === 'invalid') {
+            alert('Data de Nascimento inválida. Use o formato DD/MM/AAAA ou deixe o campo em branco.');
             return;
         }
         
         const baptismDateISO = ddmmyyyyToISO(formData.baptismDate);
         if (baptismDateISO === 'invalid') {
-            alert('Data de Batismo inválida. Use o formato DD/MM/AAAA.');
+            alert('Data de Batismo inválida. Use o formato DD/MM/AAAA ou deixe o campo em branco.');
             return;
         }
 
@@ -154,7 +160,7 @@ const PublisherFormModal: React.FC<PublisherFormModalProps> = ({ isOpen, onClose
             name: formData.name,
             birthDate: birthDateISO,
             baptismDate: baptismDateISO,
-            group: formData.group,
+            group: formData.group || '',
             address: formData.address,
             phone: formData.phone,
             email: formData.email,
@@ -189,7 +195,7 @@ const PublisherFormModal: React.FC<PublisherFormModalProps> = ({ isOpen, onClose
                     <FormSection title="Contato Pessoal" className="bg-emerald-50 dark:bg-emerald-900/40 text-emerald-900 dark:text-emerald-100 border border-emerald-200 dark:border-emerald-800">
                         <FormField label="Nome Completo" name="name" value={formData.name} onChange={handleInputChange} required />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField label="Telefone" name="phone" type="tel" value={formData.phone} onChange={handleInputChange} required />
+                            <FormField label="Telefone" name="phone" type="tel" value={formData.phone} onChange={handleInputChange} />
                             <FormField label="Email" name="email" type="email" value={formData.email} onChange={handleInputChange} />
                         </div>
                         <FormField label="Endereço" name="address" value={formData.address} onChange={handleInputChange} />
@@ -197,7 +203,7 @@ const PublisherFormModal: React.FC<PublisherFormModalProps> = ({ isOpen, onClose
 
                     <FormSection title="Datas Importantes" className="bg-white dark:bg-slate-800">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField label="Data de Nascimento" name="birthDate" type="text" value={formData.birthDate} onChange={handleInputChange} required placeholder="DD/MM/AAAA" />
+                            <FormField label="Data de Nascimento" name="birthDate" type="text" value={formData.birthDate} onChange={handleInputChange} placeholder="DD/MM/AAAA" />
                             <FormField label="Data de Batismo" name="baptismDate" type="text" value={formData.baptismDate || ''} onChange={handleInputChange} placeholder="DD/MM/AAAA" />
                         </div>
                     </FormSection>
@@ -214,7 +220,7 @@ const PublisherFormModal: React.FC<PublisherFormModalProps> = ({ isOpen, onClose
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium mb-1">Grupo de Serviço</label>
-                                <select name="group" value={formData.group} onChange={handleInputChange} required className="input-style">
+                                <select name="group" value={formData.group} onChange={handleInputChange} className="input-style">
                                     <option value="">Selecione</option>
                                     <option value="1">Grupo 1</option>
                                     <option value="2">Grupo 2</option>
@@ -239,8 +245,8 @@ const PublisherFormModal: React.FC<PublisherFormModalProps> = ({ isOpen, onClose
 
                     <FormSection title="Contato de Emergência" className="bg-rose-50 dark:bg-rose-900/40 text-rose-900 dark:text-rose-100 border border-rose-200 dark:border-rose-800">
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField label="Nome do Contato" name="emergencyContactName" value={formData.emergencyContactName} onChange={handleInputChange} required />
-                            <FormField label="Telefone do Contato" name="emergencyContactPhone" type="tel" value={formData.emergencyContactPhone} onChange={handleInputChange} required />
+                            <FormField label="Nome do Contato" name="emergencyContactName" value={formData.emergencyContactName} onChange={handleInputChange} />
+                            <FormField label="Telefone do Contato" name="emergencyContactPhone" type="tel" value={formData.emergencyContactPhone} onChange={handleInputChange} />
                         </div>
                     </FormSection>
 

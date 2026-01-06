@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { UserRole } from './types';
-import { DashboardIcon, ReportIcon, AttendanceIcon, LifeMinistryIcon, AssignmentsIcon, CleaningIcon, FieldServiceIcon, PublicTalkIcon, TerritoriesIcon, BusIcon, SettingsIcon, ConductorIcon, ShepherdingIcon, Squares2X2Icon, ChartBarIcon, UsersIcon } from './components/icons/Icons';
+import { DashboardIcon, ReportIcon, AttendanceIcon, LifeMinistryIcon, AssignmentsIcon, CleaningIcon, FieldServiceIcon, PublicTalkIcon, TerritoriesIcon, BusIcon, SettingsIcon, ConductorIcon, ShepherdingIcon, Squares2X2Icon, ChartBarIcon, UsersIcon, BookOpenIcon } from './components/icons/Icons';
 
 export interface NavItem {
     path: string;
@@ -25,7 +25,7 @@ export const SECONDARY_NAV_ITEMS: NavItem[] = [
     { path: '/designacoes', label: 'Designações', icon: AssignmentsIcon, roles: [UserRole.SERVANT], color: 'text-orange-500' },
     { path: '/limpeza', label: 'Limpeza', icon: CleaningIcon, roles: [UserRole.SERVANT], color: 'text-purple-500' },
     { path: '/secretario', label: 'Secretário', icon: FieldServiceIcon, roles: [UserRole.SERVANT], color: 'text-emerald-600' },
-    { path: '/publicadores', label: 'Publicadores', icon: UsersIcon, roles: [UserRole.SERVANT], color: 'text-rose-500' },
+    { path: '/publicadores', label: 'Publicadores', icon: BookOpenIcon, roles: [UserRole.SERVANT], color: 'text-rose-500' },
     { path: '/dirigentes', label: 'Serviço de Campo', icon: ConductorIcon, roles: [UserRole.SERVANT], color: 'text-cyan-500' },
     { path: '/pastoreio', label: 'Pastoreio', icon: ShepherdingIcon, roles: [UserRole.SERVANT], color: 'text-pink-500' },
     { path: '/discurso-publico', label: 'Discurso Público', icon: PublicTalkIcon, roles: [UserRole.SERVANT], color: 'text-indigo-600' },
@@ -52,13 +52,14 @@ export const ALL_NAV_ITEMS = [
     MENU_NAV_ITEM,
     RESUMO_NAV_ITEM,
     REPORT_LIST_NAV_ITEM,
-    ATTENDANCE_LIST_NAV_ITEM
+    ATTENDANCE_LIST_NAV_ITEM,
 ];
 
 export const ATTENDANCE_EXTRA_PASSWORD = '4567'; // In a real app, this would not be hardcoded.
 
 export const PAGE_PASSWORDS: Record<string, string> = {
   '/vida-e-ministerio': 'hmv123',
+  '/designacoes': 'hm123',
   '/limpeza': 'hm123',
   '/secretario': 'hmd123',
   '/discurso-publico': 'hms123',
@@ -71,4 +72,20 @@ export const CLEANING_GROUPS: Record<string, string> = {
     'Grupo 1': 'Samuel/Geovane/Hugo',
     'Grupo 2': 'Airton/Dhiego',
     'Grupo 3': 'Danilo/Vilson/Kleber',
+};
+
+export const MENU_ITEM_GRADIENTS: { [key: string]: string } = {
+    'text-blue-500': 'from-blue-500 to-blue-600',
+    'text-indigo-500': 'from-indigo-500 to-indigo-600',
+    'text-green-500': 'from-green-500 to-green-600',
+    'text-orange-500': 'from-orange-500 to-orange-600',
+    'text-purple-500': 'from-purple-500 to-purple-600',
+    'text-emerald-600': 'from-emerald-500 to-emerald-700',
+    'text-rose-500': 'from-rose-500 to-rose-600',
+    'text-cyan-500': 'from-cyan-400 to-cyan-600',
+    'text-pink-500': 'from-pink-500 to-pink-600',
+    'text-indigo-600': 'from-indigo-500 to-indigo-700',
+    'text-lime-500': 'from-lime-400 to-lime-600',
+    'text-yellow-400': 'from-yellow-400 to-yellow-500',
+    'text-slate-500': 'from-slate-500 to-slate-700',
 };

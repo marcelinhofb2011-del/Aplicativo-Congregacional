@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -14,35 +15,24 @@ const Login: React.FC = () => {
         login(email, password);
     };
 
-    // Este URL é o mesmo do manifest.json, garantindo consistência visual.
-    const appIconUrl = "https://ui-avatars.com/api/?name=VL+Cisper&background=f1f5f9&color=0f172a&size=128&bold=true";
-
     return (
-        <div className="flex items-center justify-center min-h-screen w-full bg-slate-100 dark:bg-slate-900 px-4 sm:px-6 lg:px-8">
-            {/* Fundo gradiente sofisticado */}
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 dark:from-slate-800 dark:via-slate-900 dark:to-black"></div>
+        <div className="relative flex items-center justify-center min-h-screen w-full bg-slate-100 dark:bg-slate-900 px-4 sm:px-6 lg:px-8 overflow-hidden">
+            {/* Colorful background effect */}
+            <div className="absolute inset-0 z-0">
+                <div className="absolute bottom-0 left-[-20%] right-[-10%] top-[-10%] h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle_farthest-side,rgba(168,85,247,0.2),rgba(255,255,255,0))]"></div>
+                <div className="absolute bottom-[-10%] right-[5%] top-[-20%] h-[600px] w-[500px] rounded-full bg-[radial-gradient(circle_farthest-side,rgba(132,204,22,0.2),rgba(255,255,255,0))]"></div>
+                <div className="absolute bottom-[20%] right-[-20%] top-[-10%] h-[400px] w-[500px] rounded-full bg-[radial-gradient(circle_farthest-side,rgba(59,130,246,0.1),rgba(255,255,255,0))]"></div>
+            </div>
 
-            <div className="relative w-full max-w-md space-y-6 bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 overflow-hidden">
+            <div className="relative w-full max-w-md space-y-6 bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 overflow-hidden animate-fade-in">
                 <div className="p-8 sm:p-10">
-                    <div className="text-center mb-6">
-                        <img 
-                            src={appIconUrl} 
-                            alt="Logo da Congregação VL Cisper" 
-                            className="mx-auto h-20 w-20 rounded-2xl shadow-md mb-4" 
-                        />
-                        <div className="mb-5">
-                            <h1 className="text-xs font-medium tracking-[0.2em] text-slate-500 dark:text-slate-400 uppercase">
-                                Congregação
-                            </h1>
-                            <p className="text-lg font-bold tracking-wider text-slate-700 dark:text-slate-200 uppercase">
-                                Vila Cisper
-                            </p>
+                    <div className="text-center mb-8">
+                        {/* Reusing the Publisher Dashboard logo style */}
+                        <div className="mx-auto mb-4 w-20 h-20 bg-[#65a30d] rounded-full flex items-center justify-center shadow-lg">
+                            <span className="text-white font-bold text-3xl tracking-wider">VC</span>
                         </div>
-                        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-                            Acesse sua conta
-                        </h2>
-                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                            Bem-vindo ao portal da congregação
+                        <p className="text-sm font-bold tracking-[0.3em] text-slate-800 dark:text-slate-200">
+                            VILA CISPER
                         </p>
                     </div>
 
@@ -57,7 +47,7 @@ const Login: React.FC = () => {
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="input-style bg-white/50 dark:bg-slate-900/50 border-slate-300 dark:border-slate-600 placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary"
+                                className="input-style bg-white/50 dark:bg-slate-900/50 border-slate-300 dark:border-slate-600 placeholder-slate-500 dark:placeholder-slate-400 focus:border-[#65a30d] focus:ring-[#65a30d]"
                                 placeholder="Email"
                             />
                         </div>
@@ -71,7 +61,7 @@ const Login: React.FC = () => {
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="input-style bg-white/50 dark:bg-slate-900/50 border-slate-300 dark:border-slate-600 placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary pr-10"
+                                className="input-style bg-white/50 dark:bg-slate-900/50 border-slate-300 dark:border-slate-600 placeholder-slate-500 dark:placeholder-slate-400 focus:border-[#65a30d] focus:ring-[#65a30d] pr-10"
                                 placeholder="Senha"
                             />
                              <button
@@ -94,7 +84,7 @@ const Login: React.FC = () => {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="group relative w-full flex justify-center py-3 px-6 border border-transparent font-semibold rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-dark disabled:bg-primary/60 disabled:cursor-not-allowed text-base transition-colors"
+                                className="group relative w-full flex justify-center py-3 px-6 border border-transparent font-semibold rounded-md text-white bg-[#65a30d] hover:bg-[#588d0b] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#588d0b] disabled:bg-lime-500/60 disabled:cursor-not-allowed text-base transition-colors"
                             >
                                 {loading ? 'Entrando...' : 'Entrar'}
                             </button>
@@ -103,7 +93,7 @@ const Login: React.FC = () => {
 
                      <div className="text-center mt-6 text-sm">
                         <span className="text-slate-600 dark:text-slate-400">Não tem uma conta? </span>
-                        <Link to="/cadastro" className="font-medium text-primary hover:text-primary-dark">
+                        <Link to="/cadastro" className="font-medium text-[#65a30d] hover:text-[#588d0b]">
                             Cadastre-se
                         </Link>
                     </div>

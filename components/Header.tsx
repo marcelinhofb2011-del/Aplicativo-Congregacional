@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ALL_NAV_ITEMS } from '../constants';
@@ -27,10 +28,6 @@ const Header: React.FC = () => {
 
     const currentNavItem = findNavItem(location.pathname);
     const title = currentNavItem ? currentNavItem.label : 'Painel';
-    const colorClass = currentNavItem?.color || 'text-primary';
-    
-    // Convert text-color-500 to border-color-500
-    const borderColorClass = colorClass.replace('text-', 'border-');
 
     const showBackButton = location.pathname !== '/' && location.pathname !== '/dashboard';
     
@@ -57,30 +54,30 @@ const Header: React.FC = () => {
     };
 
     return (
-        <header className={`flex items-center justify-between h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm px-4 sm:px-6 lg:px-8 border-b-2 ${borderColorClass} flex-shrink-0 sticky top-0 z-30`}>
+        <header className={`flex items-center justify-between h-16 bg-[#65a30d] px-4 sm:px-6 lg:px-8 flex-shrink-0 sticky top-0 z-30 shadow-md`}>
             <div className="flex-1">
                 {showBackButton && (
-                    <button onClick={handleBack} className="flex items-center gap-1 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors p-2 -ml-2 rounded-md">
+                    <button onClick={handleBack} className="flex items-center gap-1 text-green-100 hover:text-white transition-colors p-2 -ml-2 rounded-md">
                         <ArrowLeftIcon className="h-5 w-5" />
                         <span className="text-sm font-medium hidden sm:inline">Voltar</span>
                     </button>
                 )}
             </div>
             <div className="flex-1 text-center">
-                <h1 className="text-xl font-semibold text-slate-900 dark:text-white truncate">{title}</h1>
+                <h1 className="text-xl font-semibold text-white truncate">{title}</h1>
             </div>
             <div className="flex-1 flex justify-end items-center space-x-2">
                 <OnlineIndicator />
                 <button
                     onClick={toggleTheme}
-                    className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                    className="p-2 rounded-full text-green-100 hover:text-white hover:bg-white/10 transition-colors"
                     aria-label="Alterar tema"
                 >
                     {theme === 'dark' ? <SunIcon className="h-6 w-6" /> : <MoonIcon className="h-6 w-6" />}
                 </button>
                 <button
                     onClick={handleLogout}
-                    className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                    className="p-2 rounded-full text-green-100 hover:text-white hover:bg-white/10 transition-colors"
                     aria-label="Sair"
                 >
                     <LogoutIcon className="h-6 w-6" />

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
@@ -63,15 +64,15 @@ const Register: React.FC = () => {
         }
     };
 
-    const appIconUrl = "https://ui-avatars.com/api/?name=VL+Cisper&background=f1f5f9&color=0f172a&size=128&bold=true";
-
     return (
          <div className="flex items-center justify-center min-h-screen w-full bg-slate-100 dark:bg-slate-900 px-4 sm:px-6 lg:px-8">
             <div className="absolute inset-0 bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 dark:from-slate-800 dark:via-slate-900 dark:to-black"></div>
 
             <div className="relative w-full max-w-md space-y-6 bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 p-8 sm:p-10">
                 <div className="text-center mb-6">
-                    <img src={appIconUrl} alt="Logo" className="mx-auto h-20 w-20 rounded-2xl shadow-md mb-4" />
+                    <div className="mx-auto mb-4 w-20 h-20 bg-[#65a30d] rounded-full flex items-center justify-center shadow-lg">
+                        <span className="text-white font-bold text-3xl tracking-wider">VC</span>
+                    </div>
                     <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
                         Cadastro de Administrador
                     </h2>

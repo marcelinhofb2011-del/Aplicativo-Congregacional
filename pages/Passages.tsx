@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import { BusTicket, BusTicketStatus, UserRole } from '../types';
@@ -115,41 +116,45 @@ const Passages: React.FC = () => {
     }, [tickets]);
 
     return (
-        <div>
-            <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Gerenciamento de Passagens</h2>
-                {isServant && (
-                    <div className="flex gap-2">
-                         <button onClick={handleExportExcel} className="px-4 py-3 text-sm font-medium text-emerald-700 bg-emerald-100 rounded-md hover:bg-emerald-200">
-                            Exportar Excel
-                        </button>
-                        <button onClick={() => handleOpenForm(null)} className="inline-flex items-center px-4 py-3 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary-dark">
-                            <PlusIcon className="h-5 w-5 mr-2" />
-                            Adicionar
-                        </button>
+        <>
+            <div className="bg-[#65a30d] p-4 sm:p-6 lg:p-8">
+                <div className="flex flex-wrap justify-between items-center gap-4">
+                    <h2 className="text-2xl font-bold text-white">Gerenciamento de Passagens</h2>
+                    {isServant && (
+                        <div className="flex gap-2">
+                             <button onClick={handleExportExcel} className="px-4 py-2 text-sm font-medium rounded-md bg-white/20 hover:bg-white/30 text-white">
+                                Exportar Excel
+                            </button>
+                            <button onClick={() => handleOpenForm(null)} className="inline-flex items-center px-4 py-2 bg-white/20 hover:bg-white/30 text-white text-sm font-medium rounded-md">
+                                <PlusIcon className="h-5 w-5 mr-2" />
+                                Adicionar
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <div className="p-4 sm:p-6 lg:p-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow"><p className="text-sm text-slate-500">Total de Passagens</p><p className="text-2xl font-bold">{summary.totalSold}</p></div>
+                    <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow"><p className="text-sm text-slate-500">Valor Total</p><p className="text-2xl font-bold">R$ {summary.totalAmount.toFixed(2)}</p></div>
+                    <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow"><p className="text-sm text-slate-500">Total Recebido</p><p className="text-2xl font-bold">R$ {summary.totalPaid.toFixed(2)}</p></div>
+                </div>
+
+                {isLoading ? <p>Carregando passagens...</p> : (
+                    <div className="space-y-4">
+                        {tickets.map(ticket => (
+                            <BusTicketCard 
+                                key={ticket.id} 
+                                ticket={ticket} 
+                                onEdit={() => handleOpenForm(ticket)}
+                                onViewReceipt={() => setViewingReceipt(ticket)}
+                                onDelete={() => handleDeleteClick(ticket)}
+                            />
+                        ))}
                     </div>
                 )}
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow"><p className="text-sm text-slate-500">Total de Passagens</p><p className="text-2xl font-bold">{summary.totalSold}</p></div>
-                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow"><p className="text-sm text-slate-500">Valor Total</p><p className="text-2xl font-bold">R$ {summary.totalAmount.toFixed(2)}</p></div>
-                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow"><p className="text-sm text-slate-500">Total Recebido</p><p className="text-2xl font-bold">R$ {summary.totalPaid.toFixed(2)}</p></div>
-            </div>
-
-            {isLoading ? <p>Carregando passagens...</p> : (
-                <div className="space-y-4">
-                    {tickets.map(ticket => (
-                        <BusTicketCard 
-                            key={ticket.id} 
-                            ticket={ticket} 
-                            onEdit={() => handleOpenForm(ticket)}
-                            onViewReceipt={() => setViewingReceipt(ticket)}
-                            onDelete={() => handleDeleteClick(ticket)}
-                        />
-                    ))}
-                </div>
-            )}
 
             {isFormOpen && (
                 <BusTicketFormModal
@@ -175,7 +180,7 @@ const Passages: React.FC = () => {
             />
 
             <Toast message={toastMessage} onClear={() => setToastMessage('')}/>
-        </div>
+        </>
     );
 };
 

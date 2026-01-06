@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import html2canvas from 'html2canvas';
@@ -177,7 +178,7 @@ const PublicTalk: React.FC = () => {
     const TabButton: React.FC<{ tabId: 'local' | 'away', label: string }> = ({ tabId, label }) => (
         <button
             onClick={() => setActiveTab(tabId)}
-            className={`px-4 py-2 text-sm font-medium rounded-md ${
+            className={`px-3 py-1.5 text-sm font-medium rounded-md ${
                 activeTab === tabId
                     ? 'bg-primary text-white shadow'
                     : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -188,70 +189,74 @@ const PublicTalk: React.FC = () => {
     );
 
     return (
-        <div>
-            <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                    {isServant ? 'Discursos Públicos' : 'Discursos Locais'}
-                </h2>
-                {!isReadOnly && isServant && (
-                    <button onClick={() => handleOpenFormModal(null)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark">
-                        <PlusIcon className="h-5 w-5 mr-2" />
-                        Agendar
-                    </button>
-                )}
-            </div>
-            
-            {isServant && (
-                <div className="mb-6 flex space-x-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                    <TabButton tabId="local" label="Discurso Local" />
-                    <TabButton tabId="away" label="Discurso Fora" />
-                </div>
-            )}
-
-            {upcomingTalks.length > 0 && (
-                <div className="mb-4">
-                    <button onClick={toggleAll} className="px-4 py-2 text-sm font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600">
-                        {allExpanded ? 'Ocultar Programação' : 'Mostrar Programação'}
-                    </button>
-                </div>
-            )}
-            
-            {isLoading ? (
-                <p className="text-center p-6">Carregando discursos...</p>
-            ) : (
-                <div className="space-y-4">
-                    {upcomingTalks.length > 0 ? upcomingTalks.map(talk => (
-                        <ScheduleAccordion
-                            key={talk.id}
-                            isOpen={expandedItems.has(talk.id)}
-                            onToggle={() => toggleItem(talk.id)}
-                            title={
-                                <div>
-                                    <p className="font-bold text-lg text-slate-900 dark:text-white">{new Date(talk.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'UTC' })}</p>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{talk.speakerName} - {talk.theme}</p>
-                                </div>
-                            }
-                            footer={
-                                <div className="p-3 flex justify-end items-center space-x-2">
-                                    <button onClick={() => handleShare(talk)} disabled={isSharing} className="p-2 text-slate-500 hover:text-sky-500 disabled:opacity-50" aria-label="Compartilhar"><ShareIcon className="h-5 w-5" /></button>
-                                    {isServant && (
-                                        <>
-                                            <button onClick={() => handleOpenFormModal(talk)} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
-                                            <button onClick={() => handleDelete(talk)} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
-                                        </>
-                                    )}
-                                </div>
-                            }
-                        >
-                            <PublicTalkDetail schedule={talk} />
-                        </ScheduleAccordion>
-                    )) : (
-                        <div className="p-6 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 rounded-lg shadow-md">
-                            Nenhuma programação futura encontrada para esta categoria.
-                        </div>
+        <>
+            <div className="bg-[#65a30d] p-4 sm:p-6 lg:p-8">
+                <div className="flex justify-between items-center">
+                    <h2 className="text-2xl font-bold text-white">
+                        {isServant ? 'Discursos Públicos' : 'Discursos Locais'}
+                    </h2>
+                    {!isReadOnly && isServant && (
+                        <button onClick={() => handleOpenFormModal(null)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-white/20 hover:bg-white/30">
+                            <PlusIcon className="h-5 w-5 mr-2" />
+                            Agendar
+                        </button>
                     )}
                 </div>
-            )}
+            </div>
+            
+            <div className="p-4 sm:p-6 lg:p-8">
+                {isServant && (
+                    <div className="mb-6 flex space-x-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg w-fit">
+                        <TabButton tabId="local" label="Discurso Local" />
+                        <TabButton tabId="away" label="Discurso Fora" />
+                    </div>
+                )}
+
+                {upcomingTalks.length > 0 && (
+                    <div className="mb-4">
+                        <button onClick={toggleAll} className="px-4 py-2 text-sm font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600">
+                            {allExpanded ? 'Ocultar Programação' : 'Mostrar Programação'}
+                        </button>
+                    </div>
+                )}
+                
+                {isLoading ? (
+                    <p className="text-center p-6">Carregando discursos...</p>
+                ) : (
+                    <div className="space-y-4">
+                        {upcomingTalks.length > 0 ? upcomingTalks.map(talk => (
+                            <ScheduleAccordion
+                                key={talk.id}
+                                isOpen={expandedItems.has(talk.id)}
+                                onToggle={() => toggleItem(talk.id)}
+                                title={
+                                    <div>
+                                        <p className="font-bold text-lg text-slate-900 dark:text-white">{new Date(talk.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'UTC' })}</p>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{talk.speakerName} - {talk.theme}</p>
+                                    </div>
+                                }
+                                footer={
+                                    <div className="p-3 flex justify-end items-center space-x-2">
+                                        <button onClick={() => handleShare(talk)} disabled={isSharing} className="p-2 text-slate-500 hover:text-sky-500 disabled:opacity-50" aria-label="Compartilhar"><ShareIcon className="h-5 w-5" /></button>
+                                        {isServant && (
+                                            <>
+                                                <button onClick={() => handleOpenFormModal(talk)} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
+                                                <button onClick={() => handleDelete(talk)} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
+                                            </>
+                                        )}
+                                    </div>
+                                }
+                            >
+                                <PublicTalkDetail schedule={talk} />
+                            </ScheduleAccordion>
+                        )) : (
+                            <div className="p-6 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 rounded-lg shadow-md">
+                                Nenhuma programação futura encontrada para esta categoria.
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
             
             {isFormModalOpen && (
                 <PublicTalkFormModal
@@ -270,7 +275,7 @@ const PublicTalk: React.FC = () => {
                 title="Confirmar Arquivamento"
                 message={`Você tem certeza que deseja arquivar o discurso "${talkToDelete?.theme}"?`}
             />
-        </div>
+        </>
     );
 };
 

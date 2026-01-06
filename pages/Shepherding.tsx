@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -102,54 +101,60 @@ const Shepherding: React.FC = () => {
     };
 
     return (
-        <div>
-             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Registros de Pastoreio</h2>
-                {!isReadOnly && isServant && (
-                    <button onClick={() => handleOpenModal(null)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark">
-                        <PlusIcon className="h-5 w-5 mr-2" />
-                        Criar
-                    </button>
-                )}
-            </div>
-            
-            {isLoading ? (
-                <p className="text-center p-6">Carregando registros...</p>
-            ) : (
-                <div className="space-y-4">
-                    {visits.length > 0 ? visits.map(visit => {
-                        const visitDate = new Date(visit.date);
-                        const today = new Date();
-                        visitDate.setUTCHours(0,0,0,0);
-                        today.setUTCHours(0,0,0,0);
-                        const isPast = visitDate < today;
-                        return (
-                        <div key={visit.id} className={`bg-white dark:bg-slate-800 shadow-md rounded-lg transition-opacity ${isPast ? 'opacity-60' : ''}`}>
-                            <div className="p-4 cursor-pointer" onClick={() => handleViewDetails(visit)}>
-                                <p className="font-bold text-lg text-slate-900 dark:text-white">{visit.brotherName}</p>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">
-                                    {new Date(visit.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'UTC' })} às {visit.time}
-                                </p>
-                                <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                                    <p>Resp: {visit.responsibleElder1}</p>
-                                    {visit.responsibleElder2 && <p>Resp 2: {visit.responsibleElder2}</p>}
-                                </div>
-                                {visit.notes && <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 italic truncate">Obs: {visit.notes}</p>}
-                            </div>
-                            {isServant && (
-                                <div className="flex items-center space-x-2 flex-shrink-0 border-t border-slate-100 dark:border-slate-700/50 px-4 py-2 justify-end">
-                                    <button onClick={() => handleOpenModal(visit)} className="p-2 text-slate-500 hover:text-amber-500"><PencilIcon className="h-5 w-5" /></button>
-                                    <button onClick={() => handleDelete(visit)} className="p-2 text-slate-500 hover:text-red-500"><TrashIcon className="h-5 w-5" /></button>
-                                </div>
-                            )}
-                        </div>
-                    )}) : (
-                        <div className="p-6 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 rounded-lg">
-                            Nenhum registro de pastoreio encontrado.
-                        </div>
+        <>
+            <div className="bg-[#65a30d] p-4 sm:p-6 lg:p-8">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h2 className="text-2xl font-bold text-white">Registros de Pastoreio</h2>
+                        <p className="mt-1 text-lime-100">Agende e acompanhe as visitas de pastoreio.</p>
+                    </div>
+                    {!isReadOnly && isServant && (
+                        <button onClick={() => handleOpenModal(null)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-white/20 hover:bg-white/30">
+                            <PlusIcon className="h-5 w-5 mr-2" />
+                            Criar
+                        </button>
                     )}
                 </div>
-            )}
+            </div>
+            <div className="p-4 sm:p-6 lg:p-8">
+                {isLoading ? (
+                    <p className="text-center p-6">Carregando registros...</p>
+                ) : (
+                    <div className="space-y-4">
+                        {visits.length > 0 ? visits.map(visit => {
+                            const visitDate = new Date(visit.date);
+                            const today = new Date();
+                            visitDate.setUTCHours(0,0,0,0);
+                            today.setUTCHours(0,0,0,0);
+                            const isPast = visitDate < today;
+                            return (
+                            <div key={visit.id} className={`bg-white dark:bg-slate-800 shadow-md rounded-lg transition-opacity ${isPast ? 'opacity-60' : ''}`}>
+                                <div className="p-4 cursor-pointer" onClick={() => handleViewDetails(visit)}>
+                                    <p className="font-bold text-lg text-slate-900 dark:text-white">{visit.brotherName}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                        {new Date(visit.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'UTC' })} às {visit.time}
+                                    </p>
+                                    <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                                        <p>Resp: {visit.responsibleElder1}</p>
+                                        {visit.responsibleElder2 && <p>Resp 2: {visit.responsibleElder2}</p>}
+                                    </div>
+                                    {visit.notes && <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 italic truncate">Obs: {visit.notes}</p>}
+                                </div>
+                                {isServant && (
+                                    <div className="flex items-center space-x-2 flex-shrink-0 border-t border-slate-100 dark:border-slate-700/50 px-4 py-2 justify-end">
+                                        <button onClick={() => handleOpenModal(visit)} className="p-2 text-slate-500 hover:text-amber-500"><PencilIcon className="h-5 w-5" /></button>
+                                        <button onClick={() => handleDelete(visit)} className="p-2 text-slate-500 hover:text-red-500"><TrashIcon className="h-5 w-5" /></button>
+                                    </div>
+                                )}
+                            </div>
+                        )}) : (
+                            <div className="p-6 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 rounded-lg">
+                                Nenhum registro de pastoreio encontrado.
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
 
             {isModalOpen && (
                 <ShepherdingFormModal
@@ -173,7 +178,7 @@ const Shepherding: React.FC = () => {
                 title="Confirmar Arquivamento"
                 message={`Você tem certeza que deseja arquivar o registro de pastoreio para ${visitToDelete?.brotherName} de ${visitToDelete ? new Date(visitToDelete.date).toLocaleDateString('pt-BR', {timeZone:'UTC'}) : ''}?`}
             />
-        </div>
+        </>
     );
 };
 

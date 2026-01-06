@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -129,60 +130,64 @@ const Assignments: React.FC = () => {
     };
 
     return (
-        <div>
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Designações de Plataforma</h2>
-                {!isReadOnly && isServant && (
-                    <button
-                        onClick={() => handleOpenModal(null)}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-dark"
-                    >
-                        <PlusIcon className="h-5 w-5 mr-2" />
-                        Criar
-                    </button>
+        <>
+            <div className="bg-[#65a30d] p-4 sm:p-6 lg:p-8">
+                <div className="flex justify-between items-center">
+                    <h2 className="text-2xl font-bold text-white">Designações de Plataforma</h2>
+                    {!isReadOnly && isServant && (
+                        <button
+                            onClick={() => handleOpenModal(null)}
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-white/20 hover:bg-white/30"
+                        >
+                            <PlusIcon className="h-5 w-5 mr-2" />
+                            Criar
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            <div className="p-4 sm:p-6 lg:p-8">
+                {upcomingAssignments.length > 0 && (
+                    <div className="mb-4">
+                        <button onClick={toggleAll} className="px-4 py-2 text-sm font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600">
+                            {allExpanded ? 'Ocultar Programação' : 'Mostrar Programação'}
+                        </button>
+                    </div>
+                )}
+                
+                {isLoading ? (
+                    <p className="text-center p-6">Carregando designações...</p>
+                ) : (
+                    <div className="space-y-4">
+                         {upcomingAssignments.length > 0 ? upcomingAssignments.map(assignment => (
+                            <ScheduleAccordion
+                                key={assignment.id}
+                                isOpen={expandedItems.has(assignment.id)}
+                                onToggle={() => toggleItem(assignment.id)}
+                                title={
+                                    <p className="font-bold text-lg text-slate-900 dark:text-white">
+                                        {new Date(assignment.date).toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}
+                                    </p>
+                                }
+                                footer={
+                                    isServant && (
+                                        <div className="p-3 flex justify-end items-center space-x-2">
+                                            <button onClick={() => handleOpenModal(assignment)} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
+                                            <button onClick={() => handleDelete(assignment)} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
+                                        </div>
+                                    )
+                                }
+                            >
+                                <AssignmentDetail assignment={assignment} />
+                            </ScheduleAccordion>
+                         )) : (
+                            <div className="p-6 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 rounded-lg shadow-md">
+                                Nenhuma designação futura encontrada.
+                            </div>
+                         )}
+                    </div>
                 )}
             </div>
-            
-            {upcomingAssignments.length > 0 && (
-                <div className="mb-4">
-                    <button onClick={toggleAll} className="px-4 py-2 text-sm font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600">
-                        {allExpanded ? 'Ocultar Programação' : 'Mostrar Programação'}
-                    </button>
-                </div>
-            )}
-            
-            {isLoading ? (
-                <p className="text-center p-6">Carregando designações...</p>
-            ) : (
-                <div className="space-y-4">
-                     {upcomingAssignments.length > 0 ? upcomingAssignments.map(assignment => (
-                        <ScheduleAccordion
-                            key={assignment.id}
-                            isOpen={expandedItems.has(assignment.id)}
-                            onToggle={() => toggleItem(assignment.id)}
-                            title={
-                                <p className="font-bold text-lg text-slate-900 dark:text-white">
-                                    {new Date(assignment.date).toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}
-                                </p>
-                            }
-                            footer={
-                                isServant && (
-                                    <div className="p-3 flex justify-end items-center space-x-2">
-                                        <button onClick={() => handleOpenModal(assignment)} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
-                                        <button onClick={() => handleDelete(assignment)} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
-                                    </div>
-                                )
-                            }
-                        >
-                            <AssignmentDetail assignment={assignment} />
-                        </ScheduleAccordion>
-                     )) : (
-                        <div className="p-6 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 rounded-lg shadow-md">
-                            Nenhuma designação futura encontrada.
-                        </div>
-                     )}
-                </div>
-            )}
             
             {isModalOpen && (
                 <AssignmentFormModal
@@ -202,7 +207,7 @@ const Assignments: React.FC = () => {
                 title="Confirmar Arquivamento"
                 message={`Você tem certeza que deseja arquivar as designações de ${assignmentToDelete ? new Date(assignmentToDelete.date).toLocaleDateString('pt-BR', {timeZone:'UTC'}) : ''}?`}
             />
-        </div>
+        </>
     );
 };
 

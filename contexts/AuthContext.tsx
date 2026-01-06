@@ -1,9 +1,11 @@
+
 import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback } from 'react';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User as FirebaseUser, signInAnonymously } from 'firebase/auth';
 import { auth, rtdb } from '../services/firebase';
-import { ref, onValue, set, onDisconnect, serverTimestamp, off } from 'firebase/database';
+import { ref, onValue, set, onDisconnect, serverTimestamp, off, query, orderByChild, startAt, onChildAdded } from 'firebase/database';
 import { User, UserRole } from '../types';
 import { ATTENDANCE_EXTRA_PASSWORD, PAGE_PASSWORDS } from '../constants';
+import { hasNotificationPermission } from '../utils/notifications';
 
 interface AuthContextType {
     user: User | null;
@@ -87,6 +89,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         return () => unsubscribe();
     }, []);
+
+    // Listener de Notificações em Tempo Real
+    useEffect(() => {
+        if (user?.role !== UserRole.SERVANT) return;
+
+        const notificationsRef = ref(rtdb, 'notifications');
+        const recentNotificationsQuery = query(notificationsRef, orderByChild('timestamp'), startAt(Date.now()));
+
+        const unsubscribe = onChildAdded(recentNotificationsQuery, (snapshot) => {
+            const notification = snapshot.val();
+            // Evita notificar o próprio usuário que criou o evento
+            if (notification && notification.createdBy !== user.uid) {
+                if (hasNotificationPermission()) {
+                    navigator.serviceWorker.ready.then(registration => {
+                        registration.showNotification(notification.title, {
+                            body: notification.body,
+                            icon: '/icon-192.svg',
+                            badge: '/icon-192.svg',
+                            data: { url: notification.link || '/' } // Passa a URL para o service worker
+                        });
+                    });
+                }
+            }
+        });
+
+        return () => unsubscribe();
+    }, [user]);
 
 
     const login = useCallback(async (email: string, pass: string) => {

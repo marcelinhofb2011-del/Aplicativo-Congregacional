@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { PublisherProfile, PublisherStatus } from '../../types';
 import { XIcon, PencilIcon } from '../icons/Icons';
@@ -96,7 +97,7 @@ const PublisherDetailModal: React.FC<PublisherDetailModalProps> = ({ isOpen, onC
 
                      <DetailSection title="Datas Importantes" className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                             <DetailItem label="Data de Nascimento" value={new Date(publisher.birthDate).toLocaleDateString('pt-BR', {timeZone: 'UTC'})} />
+                             <DetailItem label="Data de Nascimento" value={publisher.birthDate ? new Date(publisher.birthDate).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : 'Não informado'} />
                              <DetailItem label="Data de Batismo" value={publisher.baptismDate ? new Date(publisher.baptismDate).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : 'Não informado'} />
                             <DetailItem label="Tempo de Batismo" value={calculateTimeSince(publisher.baptismDate)} />
                         </div>

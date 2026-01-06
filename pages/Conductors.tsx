@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -123,58 +124,64 @@ const Conductors: React.FC = () => {
     };
 
     return (
-        <div>
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Serviço de Campo</h2>
-                {!isReadOnly && isServant && (
-                    <button onClick={() => handleOpenModal(null)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark">
-                        <PlusIcon className="h-5 w-5 mr-2" />
-                        Criar
-                    </button>
-                )}
-            </div>
-
-            {upcomingMeetings.length > 0 && (
-                <div className="mb-4">
-                    <button onClick={toggleAll} className="px-4 py-2 text-sm font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600">
-                        {allExpanded ? 'Ocultar Programação' : 'Mostrar Programação'}
-                    </button>
-                </div>
-            )}
-            
-            {isLoading ? (
-                <p className="text-center p-6">Carregando escala...</p>
-            ) : (
-                <div className="space-y-4">
-                    {upcomingMeetings.length > 0 ? upcomingMeetings.map(meeting => (
-                         <ScheduleAccordion
-                            key={meeting.id}
-                            isOpen={expandedItems.has(meeting.id)}
-                            onToggle={() => toggleItem(meeting.id)}
-                            title={
-                                <div>
-                                    <p className="font-bold text-lg text-slate-900 dark:text-white">{new Date(meeting.date).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', timeZone: 'UTC' })}</p>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">Dirigente: {meeting.conductorName}</p>
-                                </div>
-                            }
-                            footer={
-                                isServant && (
-                                    <div className="p-3 flex justify-end items-center space-x-2">
-                                        <button onClick={() => handleOpenModal(meeting)} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
-                                        <button onClick={() => handleDelete(meeting)} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
-                                    </div>
-                                )
-                            }
-                        >
-                            <ConductorDetail schedule={meeting} />
-                        </ScheduleAccordion>
-                    )) : (
-                        <div className="p-6 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 rounded-lg shadow-md">
-                            Nenhuma escala futura encontrada.
-                        </div>
+        <>
+            <div className="bg-[#65a30d] p-4 sm:p-6 lg:p-8">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h2 className="text-2xl font-bold text-white">Serviço de Campo</h2>
+                        <p className="mt-1 text-lime-100">Gerencie os dirigentes para as saídas de campo.</p>
+                    </div>
+                    {!isReadOnly && isServant && (
+                        <button onClick={() => handleOpenModal(null)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-white/20 hover:bg-white/30">
+                            <PlusIcon className="h-5 w-5 mr-2" />
+                            Criar
+                        </button>
                     )}
                 </div>
-            )}
+            </div>
+            <div className="p-4 sm:p-6 lg:p-8">
+                {upcomingMeetings.length > 0 && (
+                    <div className="mb-4">
+                        <button onClick={toggleAll} className="px-4 py-2 text-sm font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600">
+                            {allExpanded ? 'Ocultar Programação' : 'Mostrar Programação'}
+                        </button>
+                    </div>
+                )}
+                
+                {isLoading ? (
+                    <p className="text-center p-6">Carregando escala...</p>
+                ) : (
+                    <div className="space-y-4">
+                        {upcomingMeetings.length > 0 ? upcomingMeetings.map(meeting => (
+                             <ScheduleAccordion
+                                key={meeting.id}
+                                isOpen={expandedItems.has(meeting.id)}
+                                onToggle={() => toggleItem(meeting.id)}
+                                title={
+                                    <div>
+                                        <p className="font-bold text-lg text-slate-900 dark:text-white">{new Date(meeting.date).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', timeZone: 'UTC' })}</p>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">Dirigente: {meeting.conductorName}</p>
+                                    </div>
+                                }
+                                footer={
+                                    isServant && (
+                                        <div className="p-3 flex justify-end items-center space-x-2">
+                                            <button onClick={() => handleOpenModal(meeting)} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
+                                            <button onClick={() => handleDelete(meeting)} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
+                                        </div>
+                                    )
+                                }
+                            >
+                                <ConductorDetail schedule={meeting} />
+                            </ScheduleAccordion>
+                        )) : (
+                            <div className="p-6 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 rounded-lg shadow-md">
+                                Nenhuma escala futura encontrada.
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
             
             {isModalOpen && (
                 <ConductorsFormModal
@@ -193,7 +200,7 @@ const Conductors: React.FC = () => {
                 title="Confirmar Arquivamento"
                 message={`Você tem certeza que deseja arquivar o registro do dirigente ${meetingToDelete?.conductorName} de ${meetingToDelete ? new Date(meetingToDelete.date).toLocaleDateString('pt-BR', {timeZone:'UTC'}) : ''}?`}
             />
-        </div>
+        </>
     );
 };
 

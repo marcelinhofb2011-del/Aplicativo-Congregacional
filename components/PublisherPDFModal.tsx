@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import html2canvas from 'html2canvas';
 import { PublisherProfile } from '../types';
@@ -122,7 +123,7 @@ const PublisherPDFModal: React.FC<PublisherPDFModalProps> = ({ isOpen, onClose, 
                      <div id="pdf-content" className="p-10 bg-white" style={{ width: '800px' }}>
                         <div className="text-center mb-8">
                              <h1 className="text-2xl font-bold text-black">Lista de Publicadores</h1>
-                             <h2 className="text-lg text-gray-600">Congregação Central</h2>
+                             <h2 className="text-lg text-gray-600">Congregação Vila Cisper</h2>
                         </div>
                         <div className="mb-4">
                             <p className="font-semibold text-black">Grupo: <span className="font-normal">{selectedGroup === 'all' ? 'Todos' : selectedGroup}</span></p>

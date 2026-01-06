@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { FieldServiceReport, UserRole } from '../types';
 import { getReports, updateReport, archiveReport } from '../services/firestoreService';
@@ -144,77 +145,80 @@ const ReportList: React.FC = () => {
     };
 
     return (
-        <div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Pasta de Relatórios</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Visualize e filtre todos os relatórios enviados.</p>
-            
-            <div className="flex flex-col md:flex-row gap-4 mb-4">
-                <div className="relative flex-grow">
-                    <MagnifyingGlassIcon className="h-5 w-5 text-slate-400 absolute top-1/2 left-3 -translate-y-1/2" />
-                    <input 
-                        type="text"
-                        placeholder="Buscar por nome..."
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800"
-                    />
-                </div>
-                <div className="relative">
-                    <CalendarDaysIcon className="h-5 w-5 text-slate-400 absolute top-1/2 left-3 -translate-y-1/2 pointer-events-none" />
-                     <input 
-                        type="month"
-                        value={selectedMonth}
-                        onChange={e => setSelectedMonth(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800"
-                    />
-                </div>
-                <div className="relative">
-                    <FilterIcon className="h-5 w-5 text-slate-400 absolute top-1/2 left-3 -translate-y-1/2" />
-                    <select
-                        value={selectedGroup}
-                        onChange={e => setSelectedGroup(e.target.value)}
-                        className="w-full appearance-none pl-10 pr-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800"
-                    >
-                        {uniqueGroups.map(group => (
-                            <option key={group} value={group}>
-                                {group === 'all' ? 'Todos os Grupos' : `Grupo ${group}`}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+        <>
+            <div className="bg-[#65a30d] p-4 sm:p-6 lg:p-8">
+                <h2 className="text-2xl font-bold text-white">Pasta de Relatórios</h2>
+                <p className="mt-1 text-lime-100">Visualize e filtre todos os relatórios enviados.</p>
             </div>
+            <div className="p-4 sm:p-6 lg:p-8">
+                <div className="flex flex-col md:flex-row gap-4 mb-4">
+                    <div className="relative flex-grow">
+                        <MagnifyingGlassIcon className="h-5 w-5 text-slate-400 absolute top-1/2 left-3 -translate-y-1/2" />
+                        <input 
+                            type="text"
+                            placeholder="Buscar por nome..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800"
+                        />
+                    </div>
+                    <div className="relative">
+                        <CalendarDaysIcon className="h-5 w-5 text-slate-400 absolute top-1/2 left-3 -translate-y-1/2 pointer-events-none" />
+                         <input 
+                            type="month"
+                            value={selectedMonth}
+                            onChange={e => setSelectedMonth(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800"
+                        />
+                    </div>
+                    <div className="relative">
+                        <FilterIcon className="h-5 w-5 text-slate-400 absolute top-1/2 left-3 -translate-y-1/2" />
+                        <select
+                            value={selectedGroup}
+                            onChange={e => setSelectedGroup(e.target.value)}
+                            className="w-full appearance-none pl-10 pr-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800"
+                        >
+                            {uniqueGroups.map(group => (
+                                <option key={group} value={group}>
+                                    {group === 'all' ? 'Todos os Grupos' : `Grupo ${group}`}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
 
-            <ReportSummary data={summaryData} isLoading={isLoading} />
+                <ReportSummary data={summaryData} isLoading={isLoading} />
 
-            <div className="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
-               {isLoading ? (
-                    <p className="p-4 text-center">Carregando relatórios...</p>
-               ) : (
-                 <ul className="divide-y divide-slate-200 dark:divide-slate-700">
-                    {filteredReports.length > 0 ? filteredReports.map(report => (
-                        <li key={report.id} className="p-4 group hover:bg-slate-50 dark:hover:bg-slate-700/50 flex justify-between items-center">
-                            <div className="cursor-pointer flex-grow" onClick={() => setSelectedReport(report)}>
-                                <p className="font-semibold text-primary">{report.publisherName}</p>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">
-                                    Grupo: {report.group} | Data: {new Date(report.date).toLocaleDateString('pt-BR', {timeZone:'UTC'})}
-                                </p>
-                            </div>
-                            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                {isServant && (
-                                    <>
-                                        <button onClick={() => handleEdit(report)} className="p-2 text-slate-500 hover:text-amber-500"><PencilIcon className="h-5 w-5" /></button>
-                                        <button onClick={() => handleDelete(report)} className="p-2 text-slate-500 hover:text-red-500"><TrashIcon className="h-5 w-5" /></button>
-                                    </>
-                                )}
-                            </div>
-                        </li>
-                    )) : (
-                        <li className="p-6 text-center text-slate-500 dark:text-slate-400">
-                           Nenhum relatório corresponde aos filtros.
-                        </li>
-                    )}
-                </ul>
-               )}
+                <div className="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
+                   {isLoading ? (
+                        <p className="p-4 text-center">Carregando relatórios...</p>
+                   ) : (
+                     <ul className="divide-y divide-slate-200 dark:divide-slate-700">
+                        {filteredReports.length > 0 ? filteredReports.map(report => (
+                            <li key={report.id} className="p-4 group hover:bg-slate-50 dark:hover:bg-slate-700/50 flex justify-between items-center">
+                                <div className="cursor-pointer flex-grow" onClick={() => setSelectedReport(report)}>
+                                    <p className="font-semibold text-primary">{report.publisherName}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                        Grupo: {report.group} | Data: {new Date(report.date).toLocaleDateString('pt-BR', {timeZone:'UTC'})}
+                                    </p>
+                                </div>
+                                <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    {isServant && (
+                                        <>
+                                            <button onClick={() => handleEdit(report)} className="p-2 text-slate-500 hover:text-amber-500"><PencilIcon className="h-5 w-5" /></button>
+                                            <button onClick={() => handleDelete(report)} className="p-2 text-slate-500 hover:text-red-500"><TrashIcon className="h-5 w-5" /></button>
+                                        </>
+                                    )}
+                                </div>
+                            </li>
+                        )) : (
+                            <li className="p-6 text-center text-slate-500 dark:text-slate-400">
+                               Nenhum relatório corresponde aos filtros.
+                            </li>
+                        )}
+                    </ul>
+                   )}
+                </div>
             </div>
             
             <ReportDetailModal report={selectedReport} onClose={() => setSelectedReport(null)} />
@@ -237,7 +241,7 @@ const ReportList: React.FC = () => {
             />
 
             <Toast message={toastMessage} onClear={() => setToastMessage('')} />
-        </div>
+        </>
     );
 };
 

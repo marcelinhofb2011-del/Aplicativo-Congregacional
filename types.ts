@@ -1,3 +1,4 @@
+
 export enum UserRole {
     PUBLISHER = 'PUBLISHER',
     SERVANT = 'SERVANT',
@@ -255,12 +256,12 @@ export enum PublisherStatus {
 export interface PublisherProfile extends BaseRecord {
     // Personal Info
     name: string;
-    birthDate: string; // ISO (Timestamp in Firestore)
+    birthDate?: string; // ISO (Timestamp in Firestore)
     baptismDate?: string; // ISO (Timestamp in Firestore), optional
-    group: '1' | '2' | '3' | '';
-    address: string;
-    phone: string;
-    email: string;
+    group?: '1' | '2' | '3' | '';
+    address?: string;
+    phone?: string;
+    email?: string;
 
     // Theocratic Info
     status?: PublisherStatus;
@@ -273,8 +274,8 @@ export interface PublisherProfile extends BaseRecord {
     privileges?: string; // text area for other privileges
 
     // Emergency Contact
-    emergencyContactName: string;
-    emergencyContactPhone: string;
+    emergencyContactName?: string;
+    emergencyContactPhone?: string;
     notes?: string;
 }
 

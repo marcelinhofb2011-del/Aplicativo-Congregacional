@@ -8,23 +8,34 @@ export const DashboardIcon: React.FC<{ className?: string }> = ({ className }) =
 );
 
 export const ReportIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <span className={`${className} flex items-center justify-center text-2xl`} role="img" aria-label="mão escrevendo">✍️</span>
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75c0-.231-.035-.454-.1-.664M6.75 7.5h1.5v.75h-1.5v-.75z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18.75c0-1.135.845-2.098 1.976-2.192a48.424 48.424 0 011.123-.08c.314 0 .622.026.928.075 1.056.166 1.886.962 1.886 2.023v4.275c0 1.06-.83 1.857-1.886 2.023a48.421 48.421 0 01-.928.075c-.398 0-.79-.023-1.17-.067a2.105 2.105 0 01-1.933-2.023V18.75z" />
+  </svg>
 );
 
 export const AttendanceIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <span className={`${className} flex items-center justify-center text-2xl`} role="img" aria-label="mão levantada">🙋</span>
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
 );
 
 export const LifeMinistryIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <span className={`${className} flex items-center justify-center text-4xl`} role="img" aria-label="gem">💎</span>
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.898 20.562L16.25 21.75l-.648-1.188a2.25 2.25 0 01-1.47-1.47l-1.188-.648 1.188-.648a2.25 2.25 0 011.47-1.47l.648-1.188.648 1.188a2.25 2.25 0 011.47 1.47l1.188.648-1.188.648a2.25 2.25 0 01-1.47 1.47z" />
+    </svg>
 );
 
 export const AssignmentsIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <span className={`${className} flex items-center justify-center text-4xl`} role="img" aria-label="repeat">🔁</span>
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.664 0l3.181-3.183m-4.991-2.693L19.015 7.74M2.985 19.644L7.74 14.989" />
+  </svg>
 );
 
 export const CleaningIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <span className={`${className} flex items-center justify-center text-4xl`} role="img" aria-label="broom">🧹</span>
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6.166 21.75L4.5 19.5m1.666 2.25L9.25 16.5m-3.084 5.25L11.5 14.25m-5.334 7.5l9.418-9.418a1.5 1.5 0 000-2.122L7.001 2.625a1.5 1.5 0 00-2.122 0L2.625 4.904a1.5 1.5 0 000 2.122l9.418 9.418h7.457" />
+    </svg>
 );
 
 export const FieldServiceIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -40,11 +51,19 @@ export const PublicTalkIcon: React.FC<{ className?: string }> = ({ className }) 
 );
 
 export const TerritoriesIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <span className={`${className} flex items-center justify-center text-4xl`} role="img" aria-label="map">🗺️</span>
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.5 2.25l-7-2.25-2.25 1.5 2.25 1.5 7 2.25" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6.75h-9a1.5 1.5 0 00-1.5 1.5v9a1.5 1.5 0 001.5 1.5h9a1.5 1.5 0 001.5-1.5v-9a1.5 1.5 0 00-1.5-1.5z" />
+    </svg>
 );
 
 export const BusIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <span className={`${className} flex items-center justify-center text-4xl`} role="img" aria-label="bus">🚍</span>
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18.75V14.25m12 4.5V14.25m-12 4.5H3.375c-.621 0-1.125-.504-1.125-1.125V9.375c0-.621.504-1.125 1.125-1.125h17.25c.621 0 1.125.504 1.125 1.125v8.25c0 .621-.504 1.125-1.125 1.125H18m-12 4.5h12m-12 0a.75.75 0 100 1.5h12a.75.75 0 100-1.5H6z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 8.25h12v6H6v-6z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 8.25v6" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 8.25v6" />
+    </svg>
 );
 
 export const SettingsIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -73,7 +92,9 @@ export const XIcon: React.FC<{ className?: string }> = ({ className }) => (
 );
 
 export const ChurchIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <span className={`${className} flex items-center justify-center`} role="img" aria-label="department store">🏬</span>
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
+    </svg>
 );
 
 export const LockIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -143,7 +164,9 @@ export const ConductorIcon: React.FC<{ className?: string }> = ({ className }) =
 );
 
 export const ShepherdingIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <span className={`${className} flex items-center justify-center text-4xl`} role="img" aria-label="ovelha">🐑</span>
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+    </svg>
 );
 
 export const ChevronRightIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -204,5 +227,11 @@ export const EyeIcon: React.FC<{ className?: string }> = ({ className }) => (
 export const EyeSlashIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.243 4.243l-4.243-4.243" />
+    </svg>
+);
+
+export const BookOpenIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
     </svg>
 );

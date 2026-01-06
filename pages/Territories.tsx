@@ -83,21 +83,23 @@ const Territories: React.FC = () => {
     };
 
     return (
-        <div>
-            <div className="mb-6">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Controle de Territórios</h2>
-                <p className="mt-1 text-slate-600 dark:text-slate-400">
+        <>
+            <div className="bg-[#65a30d] p-4 sm:p-6 lg:p-8">
+                <h2 className="text-2xl font-bold text-white">Controle de Territórios</h2>
+                <p className="mt-1 text-lime-100">
                     Visualize o status, solicite ou gerencie os territórios da congregação.
                 </p>
             </div>
 
-            {isLoading ? <p>Carregando territórios...</p> : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                    {territories.sort((a,b) => a.number - b.number).map(territory => (
-                        <TerritoryCard key={territory.id} territory={territory} onClick={handleCardClick} />
-                    ))}
-                </div>
-            )}
+            <div className="p-4 sm:p-6 lg:p-8">
+                {isLoading ? <p>Carregando territórios...</p> : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        {territories.sort((a,b) => a.number - b.number).map(territory => (
+                            <TerritoryCard key={territory.id} territory={territory} onClick={handleCardClick} />
+                        ))}
+                    </div>
+                )}
+            </div>
 
             {selectedTerritory && (
                 <TerritoryActionModal
@@ -112,7 +114,7 @@ const Territories: React.FC = () => {
                 />
             )}
             <Toast message={toastMessage} onClear={() => setToastMessage('')} />
-        </div>
+        </>
     );
 };
 

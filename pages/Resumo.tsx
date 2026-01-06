@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { getAttendanceRecords, getReports } from '../services/firestoreService';
@@ -72,27 +73,35 @@ const Resumo: React.FC = () => {
     if (!user) return null;
 
     return (
-        <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Resumo e Estatísticas</h2>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6">
-                     <LineChart 
-                        title="Média de Assistência"
-                        data={attendanceData.data}
-                        labels={attendanceData.labels}
-                        isLoading={isLoading}
-                    />
-                </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6">
-                    <BarChart
-                        title="Horas por Grupo (Est.)"
-                        data={reportData}
-                        isLoading={isLoading}
-                    />
+        <>
+            <div className="bg-[#65a30d] p-4 sm:p-6 lg:p-8">
+                <div className="max-w-4xl mx-auto">
+                    <h2 className="text-2xl font-bold text-white">Resumo e Estatísticas</h2>
+                    <p className="mt-1 text-lime-100">Veja gráficos sobre a assistência e atividade de campo.</p>
                 </div>
             </div>
-        </div>
+            <div className="p-4 sm:p-6 lg:p-8">
+                <div className="max-w-4xl mx-auto">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6">
+                             <LineChart 
+                                title="Média de Assistência"
+                                data={attendanceData.data}
+                                labels={attendanceData.labels}
+                                isLoading={isLoading}
+                            />
+                        </div>
+                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 sm:p-6">
+                            <BarChart
+                                title="Horas por Grupo (Est.)"
+                                data={reportData}
+                                isLoading={isLoading}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </>
     );
 };
 

@@ -1,3 +1,4 @@
+
 // Notification helper functions
 
 /**
@@ -34,8 +35,8 @@ export const showTestNotification = () => {
         navigator.serviceWorker.ready.then(registration => {
             registration.showNotification('Notificação de Teste', {
                 body: 'Esta é uma notificação de teste do aplicativo!',
-                icon: '/icon-192.png',
-                badge: '/icon-192.png'
+                icon: '/icon-192.svg',
+                badge: '/icon-192.svg'
             });
         });
     } else {
@@ -51,7 +52,7 @@ export const showNewAssignmentNotification = (brotherName: string, assignmentTyp
         navigator.serviceWorker.ready.then(registration => {
             registration.showNotification('Nova Designação', {
                 body: `${brotherName} recebeu uma nova designação: ${assignmentType}.`,
-                icon: '/icon-192.png'
+                icon: '/icon-192.svg'
             });
         });
     }

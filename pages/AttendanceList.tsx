@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { AttendanceRecord, UserRole } from '../types';
 import { getAttendanceRecords, updateAttendanceRecord, archiveAttendanceRecord } from '../services/firestoreService';
@@ -87,53 +88,57 @@ const AttendanceList: React.FC = () => {
     };
 
     return (
-        <div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Pasta de Assistência</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Lista de todos os registros de assistência.</p>
-            {isLoading ? <p>Carregando registros...</p> : (
-                <div className="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
-                   <ul className="divide-y divide-slate-200 dark:divide-slate-700">
-                        {records.length > 0 ? records.map(record => (
-                            <li key={record.id} className="p-4 group hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
-                                    <div className="mb-2 sm:mb-0">
-                                        <p className="font-bold text-primary">{formatDate(record.date)}</p>
-                                        <p className="text-sm text-slate-500 dark:text-slate-400">Enviado por: {record.submitterName}</p>
-                                    </div>
-                                    <div className="flex items-center gap-4">
-                                        <div className="flex items-center gap-4 text-center">
-                                            <div>
-                                                <p className="text-sm text-slate-500">Presentes</p>
-                                                <p className="font-semibold text-lg">{record.presentCount}</p>
+        <>
+            <div className="bg-[#65a30d] p-4 sm:p-6 lg:p-8">
+                <h2 className="text-2xl font-bold text-white">Pasta de Assistência</h2>
+                <p className="mt-1 text-lime-100">Lista de todos os registros de assistência.</p>
+            </div>
+            <div className="p-4 sm:p-6 lg:p-8">
+                {isLoading ? <p>Carregando registros...</p> : (
+                    <div className="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
+                       <ul className="divide-y divide-slate-200 dark:divide-slate-700">
+                            {records.length > 0 ? records.map(record => (
+                                <li key={record.id} className="p-4 group hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
+                                        <div className="mb-2 sm:mb-0">
+                                            <p className="font-bold text-primary">{formatDate(record.date)}</p>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400">Enviado por: {record.submitterName}</p>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex items-center gap-4 text-center">
+                                                <div>
+                                                    <p className="text-sm text-slate-500">Presentes</p>
+                                                    <p className="font-semibold text-lg">{record.presentCount}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm text-slate-500">Online</p>
+                                                    <p className="font-semibold text-lg">{record.onlineCount}</p>
+                                                </div>
+                                                <div className="border-l pl-4">
+                                                    <p className="text-sm text-slate-500">Total</p>
+                                                    <p className="font-bold text-2xl text-slate-900 dark:text-white">{record.totalCount}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="text-sm text-slate-500">Online</p>
-                                                <p className="font-semibold text-lg">{record.onlineCount}</p>
-                                            </div>
-                                            <div className="border-l pl-4">
-                                                <p className="text-sm text-slate-500">Total</p>
-                                                <p className="font-bold text-2xl text-slate-900 dark:text-white">{record.totalCount}</p>
+                                            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                {isServant && (
+                                                    <>
+                                                        <button onClick={() => handleEdit(record)} className="p-2 text-slate-500 hover:text-amber-500"><PencilIcon className="h-5 w-5" /></button>
+                                                        <button onClick={() => handleDelete(record)} className="p-2 text-slate-500 hover:text-red-500"><TrashIcon className="h-5 w-5" /></button>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
-                                        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            {isServant && (
-                                                <>
-                                                    <button onClick={() => handleEdit(record)} className="p-2 text-slate-500 hover:text-amber-500"><PencilIcon className="h-5 w-5" /></button>
-                                                    <button onClick={() => handleDelete(record)} className="p-2 text-slate-500 hover:text-red-500"><TrashIcon className="h-5 w-5" /></button>
-                                                </>
-                                            )}
-                                        </div>
                                     </div>
-                                </div>
-                            </li>
-                        )) : (
-                             <li className="p-6 text-center text-slate-500 dark:text-slate-400">
-                                Nenhum registro de assistência encontrado.
-                            </li>
-                        )}
-                    </ul>
-                </div>
-            )}
+                                </li>
+                            )) : (
+                                 <li className="p-6 text-center text-slate-500 dark:text-slate-400">
+                                    Nenhum registro de assistência encontrado.
+                                </li>
+                            )}
+                        </ul>
+                    </div>
+                )}
+            </div>
 
             {isFormModalOpen && (
                 <AttendanceFormModal
@@ -153,7 +158,7 @@ const AttendanceList: React.FC = () => {
             />
 
             <Toast message={toastMessage} onClear={() => setToastMessage('')} />
-        </div>
+        </>
     );
 };
 

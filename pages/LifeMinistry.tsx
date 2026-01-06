@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -182,62 +183,66 @@ const LifeMinistry: React.FC = () => {
     };
 
     return (
-        <div>
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Vida e Ministério</h2>
-                {!isReadOnly && isServant && (
-                    <button
-                        onClick={() => handleOpenModal(null)}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-dark"
-                    >
-                        <PlusIcon className="h-5 w-5 mr-2" />
-                        Criar
-                    </button>
-                )}
-            </div>
-            
-             {upcomingSchedules.length > 0 && (
-                <div className="mb-4">
-                    <button onClick={toggleAll} className="px-4 py-2 text-sm font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600">
-                        {allExpanded ? 'Ocultar Programação' : 'Mostrar Programação'}
-                    </button>
-                </div>
-            )}
-
-            {isLoading ? <p>Carregando...</p> : (
-                 <div className="space-y-4">
-                    {upcomingSchedules.length > 0 ? upcomingSchedules.map(schedule => (
-                        <ScheduleAccordion
-                            key={schedule.id}
-                            isOpen={expandedItems.has(schedule.id)}
-                            onToggle={() => toggleItem(schedule.id)}
-                            title={
-                                <div>
-                                    <p className="font-bold text-lg text-slate-900 dark:text-white">{schedule.week}</p>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">Presidente: {schedule.president}</p>
-                                </div>
-                            }
-                            footer={
-                                <div className="p-4 flex justify-end items-center space-x-2">
-                                    <button onClick={() => handleShare(schedule)} className="p-2 text-slate-500 hover:text-sky-500" aria-label="Compartilhar"><ShareIcon className="h-5 w-5" /></button>
-                                    {isServant && (
-                                        <>
-                                            <button onClick={() => handleOpenModal(schedule)} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
-                                            <button onClick={() => handleDeleteClick(schedule)} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
-                                        </>
-                                    )}
-                                </div>
-                            }
+        <>
+            <div className="bg-[#65a30d] p-4 sm:p-6 lg:p-8">
+                <div className="flex justify-between items-center">
+                    <h2 className="text-2xl font-bold text-white">Vida e Ministério</h2>
+                    {!isReadOnly && isServant && (
+                        <button
+                            onClick={() => handleOpenModal(null)}
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-white/20 hover:bg-white/30"
                         >
-                            <LifeMinistryDetail schedule={schedule} />
-                        </ScheduleAccordion>
-                    )) : (
-                         <div className="p-6 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 rounded-lg shadow-md">
-                            Nenhuma programação futura encontrada.
-                        </div>
+                            <PlusIcon className="h-5 w-5 mr-2" />
+                            Criar
+                        </button>
                     )}
                 </div>
-            )}
+            </div>
+            
+            <div className="p-4 sm:p-6 lg:p-8">
+                {upcomingSchedules.length > 0 && (
+                    <div className="mb-4">
+                        <button onClick={toggleAll} className="px-4 py-2 text-sm font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600">
+                            {allExpanded ? 'Ocultar Programação' : 'Mostrar Programação'}
+                        </button>
+                    </div>
+                )}
+
+                {isLoading ? <p>Carregando...</p> : (
+                     <div className="space-y-4">
+                        {upcomingSchedules.length > 0 ? upcomingSchedules.map(schedule => (
+                            <ScheduleAccordion
+                                key={schedule.id}
+                                isOpen={expandedItems.has(schedule.id)}
+                                onToggle={() => toggleItem(schedule.id)}
+                                title={
+                                    <div>
+                                        <p className="font-bold text-lg text-slate-900 dark:text-white">{schedule.week}</p>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">Presidente: {schedule.president}</p>
+                                    </div>
+                                }
+                                footer={
+                                    <div className="p-4 flex justify-end items-center space-x-2">
+                                        <button onClick={() => handleShare(schedule)} className="p-2 text-slate-500 hover:text-sky-500" aria-label="Compartilhar"><ShareIcon className="h-5 w-5" /></button>
+                                        {isServant && (
+                                            <>
+                                                <button onClick={() => handleOpenModal(schedule)} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
+                                                <button onClick={() => handleDeleteClick(schedule)} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
+                                            </>
+                                        )}
+                                    </div>
+                                }
+                            >
+                                <LifeMinistryDetail schedule={schedule} />
+                            </ScheduleAccordion>
+                        )) : (
+                             <div className="p-6 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 rounded-lg shadow-md">
+                                Nenhuma programação futura encontrada.
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
 
             {isModalOpen && (
                 <LifeMinistryFormModal
@@ -256,7 +261,7 @@ const LifeMinistry: React.FC = () => {
                 message="Você tem certeza que deseja arquivar esta programação? Ela não será mais exibida na lista principal."
             />
             <Toast message={toastMessage} onClear={() => setToastMessage('')} />
-        </div>
+        </>
     );
 };
 

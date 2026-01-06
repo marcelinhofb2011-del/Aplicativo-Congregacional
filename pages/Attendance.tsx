@@ -73,9 +73,9 @@ const Attendance: React.FC = () => {
 
     if (isPublisher && !isAttendanceUnlocked) {
         return (
-            <div>
+            <div className="p-4 sm:p-6 lg:p-8">
                 {showModal && <AttendancePasswordModal onVerify={handleVerifyPassword} onClose={() => setShowModal(false)} />}
-                <div className="bg-white dark:bg-slate-900 shadow rounded-lg p-6 text-center">
+                <div className="bg-white dark:bg-slate-800 shadow rounded-lg p-6 text-center max-w-xl mx-auto">
                     <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Acesso Restrito</h2>
                     <p className="mt-2 text-slate-600 dark:text-slate-400">Esta seção requer uma senha adicional para ser acessada.</p>
                     <button onClick={() => setShowModal(true)} className="mt-4 px-5 py-3 bg-primary text-white rounded-md hover:bg-primary-dark">
@@ -87,44 +87,55 @@ const Attendance: React.FC = () => {
     }
     
     return (
-        <div className="max-w-xl mx-auto">
-             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Registrar Assistência</h2>
-             <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 shadow rounded-lg p-6 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Data</label>
-                         <div className="relative">
-                            <input type="date" value={date} onChange={e => setDate(e.target.value)} required className="input-style pr-10" />
-                            <CalendarDaysIcon className="h-5 w-5 text-slate-400 absolute top-1/2 right-3 -translate-y-1/2" />
+        <>
+            <div className="bg-[#65a30d] p-4 sm:p-6 lg:p-8">
+                <div className="max-w-xl mx-auto">
+                    <h2 className="text-2xl font-bold text-white">Registrar Assistência</h2>
+                    <p className="mt-1 text-lime-100">
+                        Informe o número de presentes e online na reunião.
+                    </p>
+                </div>
+            </div>
+            <div className="p-4 sm:p-6 lg:p-8">
+                <div className="max-w-xl mx-auto">
+                     <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 shadow rounded-lg p-6 space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Data</label>
+                                 <div className="relative">
+                                    <input type="date" value={date} onChange={e => setDate(e.target.value)} required className="input-style pr-10" />
+                                    <CalendarDaysIcon className="h-5 w-5 text-slate-400 absolute top-1/2 right-3 -translate-y-1/2" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Seu Nome</label>
+                                <input type="text" value={submitterName} onChange={e => setSubmitterName(e.target.value)} required className="input-style" />
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Seu Nome</label>
-                        <input type="text" value={submitterName} onChange={e => setSubmitterName(e.target.value)} required className="input-style" />
-                    </div>
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Presentes</label>
+                                <input type="number" value={presentCount} onChange={e => setPresentCount(e.target.value === '' ? '' : parseInt(e.target.value))} required min="0" className="input-style" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Online</label>
+                                <input type="number" value={onlineCount} onChange={e => setOnlineCount(e.target.value === '' ? '' : parseInt(e.target.value))} required min="0" className="input-style" />
+                            </div>
+                        </div>
+                         <div className="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-md text-center">
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total da Assistência</p>
+                            <p className="text-3xl font-bold text-slate-900 dark:text-white">{totalCount}</p>
+                         </div>
+                        <div className="pt-2">
+                            <button type="submit" className="w-full py-3 px-5 bg-primary text-white font-semibold rounded-md hover:bg-primary-dark">
+                                Enviar
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Presentes</label>
-                        <input type="number" value={presentCount} onChange={e => setPresentCount(e.target.value === '' ? '' : parseInt(e.target.value))} required min="0" className="input-style" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Online</label>
-                        <input type="number" value={onlineCount} onChange={e => setOnlineCount(e.target.value === '' ? '' : parseInt(e.target.value))} required min="0" className="input-style" />
-                    </div>
-                </div>
-                 <div className="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-md text-center">
-                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total da Assistência</p>
-                    <p className="text-3xl font-bold text-slate-900 dark:text-white">{totalCount}</p>
-                 </div>
-                <div className="pt-2">
-                    <button type="submit" className="w-full py-3 px-5 bg-primary text-white font-semibold rounded-md hover:bg-primary-dark">
-                        Enviar
-                    </button>
-                </div>
-            </form>
+            </div>
             <Toast message={toastMessage} onClear={() => setToastMessage('')} />
-        </div>
+        </>
     );
 };
 

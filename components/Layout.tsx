@@ -15,10 +15,8 @@ const Layout: React.FC = () => {
         <div className="flex flex-col h-screen bg-light dark:bg-dark">
             <Header />
             
-            <main className="flex-1 overflow-y-auto pb-16"> {/* padding-bottom to avoid overlap with BottomNav */}
-                 <div className="p-4 sm:p-6 lg:p-8 animate-fade-in">
-                    <Outlet />
-                 </div>
+            <main className="flex-1 overflow-y-auto pb-16 animate-fade-in"> {/* padding-bottom to avoid overlap with BottomNav */}
+                <Outlet />
             </main>
             
             <BottomNav />
