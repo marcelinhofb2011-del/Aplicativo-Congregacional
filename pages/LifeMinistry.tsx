@@ -33,10 +33,20 @@ const LifeMinistry: React.FC = () => {
     const upcomingSchedules = useMemo(() => {
         const today = new Date();
         today.setUTCHours(0, 0, 0, 0);
+
+        // A schedule for a week should be considered "upcoming" until the week is over.
+        const getWeekEndDate = (startDateString: string): Date => {
+            const startDate = new Date(startDateString);
+            const endDate = new Date(startDate);
+            endDate.setUTCDate(startDate.getUTCDate() + 6); // Add 6 days to Monday to get Sunday
+            return endDate;
+        };
+
         return schedules
-            .filter(s => new Date(s.date) >= today)
+            .filter(s => getWeekEndDate(s.date) >= today)
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     }, [schedules]);
+
 
     const fetchSchedules = async () => {
         setIsLoading(true);

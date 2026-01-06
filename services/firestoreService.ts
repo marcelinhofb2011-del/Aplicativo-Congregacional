@@ -54,7 +54,7 @@ const pushNotification = (payload: { type: string, title: string, body: string, 
 
 
 // --- Life & Ministry ---
-const schedulesCollection = collection(db, 'programacoes');
+const schedulesCollection = collection(db, 'programacao');
 export const getSchedules = async (): Promise<LifeMinistrySchedule[]> => {
     const snapshot = await getDocs(schedulesCollection);
     const allObjects = docsToObjects<LifeMinistrySchedule>(snapshot);
@@ -76,9 +76,9 @@ export const addSchedule = async (schedule: Omit<LifeMinistrySchedule, 'id' | ke
 export const updateSchedule = async (id: string, schedule: Partial<LifeMinistrySchedule>, userId: string) => {
     const data: any = { ...schedule };
     if (schedule.date) data.date = Timestamp.fromDate(new Date(schedule.date));
-    return updateDoc(doc(db, 'programacoes', id), updateMetadata(data, userId));
+    return updateDoc(doc(db, 'programacao', id), updateMetadata(data, userId));
 };
-export const archiveSchedule = async (id: string, userId: string) => updateDoc(doc(db, 'programacoes', id), updateMetadata({ isActive: false }, userId));
+export const archiveSchedule = async (id: string, userId: string) => updateDoc(doc(db, 'programacao', id), updateMetadata({ isActive: false }, userId));
 
 
 // --- Reports ---
