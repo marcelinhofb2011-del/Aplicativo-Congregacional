@@ -255,13 +255,15 @@ const PublicTalk: React.FC = () => {
                                     <div className="flex items-center">
                                         <button onClick={(e) => { e.stopPropagation(); handleShare(talk); }} className="p-2 text-slate-500 hover:text-green-500" aria-label="Compartilhar no WhatsApp"><WhatsAppIcon className="h-5 w-5" /></button>
                                         <button onClick={(e) => { e.stopPropagation(); handleShare(talk); }} disabled={isSharing} className="p-2 text-slate-500 hover:text-sky-500 disabled:opacity-50" aria-label="Compartilhar"><ShareIcon className="h-5 w-5" /></button>
-                                        {isServant && (
-                                            <>
-                                                <button onClick={(e) => { e.stopPropagation(); handleOpenFormModal(talk); }} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
-                                                <button onClick={(e) => { e.stopPropagation(); handleDelete(talk); }} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
-                                            </>
-                                        )}
                                     </div>
+                                }
+                                footer={
+                                    isServant && (
+                                        <div className="p-3 flex justify-end items-center space-x-2">
+                                            <button onClick={() => handleOpenFormModal(talk)} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
+                                            <button onClick={() => handleDelete(talk)} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
+                                        </div>
+                                    )
                                 }
                             >
                                 <PublicTalkDetail schedule={talk} />
