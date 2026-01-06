@@ -112,7 +112,7 @@ const Publishers: React.FC = () => {
 
     return (
         <>
-            <div className="bg-[#65a30d] p-4 sm:p-6 lg:p-8">
+            <div className="sticky top-0 z-10 bg-[#65a30d] p-4 sm:p-6 lg:p-8">
                 <div className="flex justify-between items-center">
                     <div>
                         <h2 className="text-2xl font-bold text-white">Pasta de Publicadores</h2>
