@@ -20,7 +20,7 @@ const Login: React.FC = () => {
             {/* Colorful background effect */}
             <div className="absolute inset-0 z-0">
                 <div className="absolute bottom-0 left-[-20%] right-[-10%] top-[-10%] h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle_farthest-side,rgba(168,85,247,0.2),rgba(255,255,255,0))]"></div>
-                <div className="absolute bottom-[-10%] right-[5%] top-[-20%] h-[600px] w-[500px] rounded-full bg-[radial-gradient(circle_farthest-side,rgba(132,204,22,0.2),rgba(255,255,255,0))]"></div>
+                <div className="absolute bottom-[-10%] right-[5%] top-[-20%] h-[600px] w-[500px] rounded-full bg-[radial-gradient(circle_farthest-side,rgba(37,99,235,0.2),rgba(255,255,255,0))]"></div>
                 <div className="absolute bottom-[20%] right-[-20%] top-[-10%] h-[400px] w-[500px] rounded-full bg-[radial-gradient(circle_farthest-side,rgba(59,130,246,0.1),rgba(255,255,255,0))]"></div>
             </div>
 
@@ -28,7 +28,7 @@ const Login: React.FC = () => {
                 <div className="p-8 sm:p-10">
                     <div className="text-center mb-8">
                         {/* Reusing the Publisher Dashboard logo style */}
-                        <div className="mx-auto mb-4 w-20 h-20 bg-[#65a30d] rounded-full flex items-center justify-center shadow-lg">
+                        <div className="mx-auto mb-4 w-20 h-20 bg-primary rounded-full flex items-center justify-center shadow-lg">
                             <span className="text-white font-bold text-3xl tracking-wider">VC</span>
                         </div>
                         <p className="text-sm font-bold tracking-[0.3em] text-slate-800 dark:text-slate-200">
@@ -47,7 +47,7 @@ const Login: React.FC = () => {
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="input-style bg-white/50 dark:bg-slate-900/50 border-slate-300 dark:border-slate-600 placeholder-slate-500 dark:placeholder-slate-400 focus:border-[#65a30d] focus:ring-[#65a30d]"
+                                className="input-style bg-white/50 dark:bg-slate-900/50 border-slate-300 dark:border-slate-600 placeholder-slate-500 dark:placeholder-slate-400 focus:border-primary focus:ring-primary"
                                 placeholder="Email"
                             />
                         </div>
@@ -61,7 +61,7 @@ const Login: React.FC = () => {
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="input-style bg-white/50 dark:bg-slate-900/50 border-slate-300 dark:border-slate-600 placeholder-slate-500 dark:placeholder-slate-400 focus:border-[#65a30d] focus:ring-[#65a30d] pr-10"
+                                className="input-style bg-white/50 dark:bg-slate-900/50 border-slate-300 dark:border-slate-600 placeholder-slate-500 dark:placeholder-slate-400 focus:border-primary focus:ring-primary pr-10"
                                 placeholder="Senha"
                             />
                              <button
@@ -84,7 +84,7 @@ const Login: React.FC = () => {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="group relative w-full flex justify-center py-3 px-6 border border-transparent font-semibold rounded-md text-white bg-[#65a30d] hover:bg-[#588d0b] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#588d0b] disabled:bg-lime-500/60 disabled:cursor-not-allowed text-base transition-colors"
+                                className="group relative w-full flex justify-center py-3 px-6 border border-transparent font-semibold rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-dark disabled:bg-primary/60 disabled:cursor-not-allowed text-base transition-colors"
                             >
                                 {loading ? 'Entrando...' : 'Entrar'}
                             </button>
@@ -93,7 +93,7 @@ const Login: React.FC = () => {
 
                      <div className="text-center mt-6 text-sm">
                         <span className="text-slate-600 dark:text-slate-400">Não tem uma conta? </span>
-                        <Link to="/cadastro" className="font-medium text-[#65a30d] hover:text-[#588d0b]">
+                        <Link to="/cadastro" className="font-medium text-primary hover:text-primary-dark">
                             Cadastre-se
                         </Link>
                     </div>

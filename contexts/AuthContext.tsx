@@ -3,9 +3,10 @@ import React, { createContext, useState, useContext, useEffect, ReactNode, useCa
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User as FirebaseUser, signInAnonymously } from 'firebase/auth';
 import { auth, rtdb } from '../services/firebase';
 import { ref, onValue, set, onDisconnect, serverTimestamp, off, query, orderByChild, startAt, onChildAdded } from 'firebase/database';
-import { User, UserRole } from '../types';
+import { User, UserRole, AppNotification } from '../types';
 import { ATTENDANCE_EXTRA_PASSWORD, PAGE_PASSWORDS } from '../constants';
 import { hasNotificationPermission } from '../utils/notifications';
+import { getUnreadNotifications, markNotificationsAsRead } from '../services/firestoreService';
 
 interface AuthContextType {
     user: User | null;
@@ -13,11 +14,13 @@ interface AuthContextType {
     error: string | null;
     isAttendanceUnlocked: boolean;
     onlineCount: number;
+    notifications: AppNotification[];
     login: (email: string, pass: string) => Promise<void>;
     logout: () => Promise<void>;
     checkAttendancePassword: (password: string) => boolean;
     isPageUnlocked: (pagePath: string) => boolean;
     checkPagePassword: (pagePath: string, password: string) => boolean;
+    handleNotificationsShown: (notificationIds: string[]) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,19 +32,47 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [isAttendanceUnlocked, setAttendanceUnlocked] = useState<boolean>(false);
     const [onlineCount, setOnlineCount] = useState(0);
     const [unlockedPages, setUnlockedPages] = useState<Set<string>>(new Set());
+    const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
             if (firebaseUser) {
                 const isAnon = firebaseUser.isAnonymous;
-                setUser({
+                const currentUser = {
                     uid: firebaseUser.uid,
                     email: isAnon ? 'publicador@local' : firebaseUser.email,
                     displayName: firebaseUser.displayName,
                     role: isAnon ? UserRole.PUBLISHER : UserRole.SERVANT,
-                });
+                };
+                setUser(currentUser);
+
+                // Fetch notifications ONLY for non-anonymous users
+                if (!isAnon) {
+                    try {
+                        const unread = await getUnreadNotifications(currentUser.uid);
+                        setNotifications(unread);
+                    } catch (e: any) {
+                         if (e.message.includes('FAILED_PRECONDITION')) {
+                            console.warn(
+                                '%c[ATENÇÃO] ÍNDICE DO FIRESTORE NECESSÁRIO',
+                                'color: orange; font-weight: bold;',
+                                '\nPara que as notificações funcionem corretamente, por favor, crie o seguinte índice no seu Firestore:\n\n' +
+                                '1. Coleção: notificacoes\n' +
+                                '2. Campos a serem indexados:\n' +
+                                '   - usuarioUid (Ascendente)\n' +
+                                '   - notificado (Ascendente)\n' +
+                                '3. Status do índice: Ativado\n\n' +
+                                `Link para criar o índice (substitua [SEU_PROJETO]): https://console.firebase.google.com/project/${auth.app.options.projectId}/firestore/indexes/composite/create`
+                            );
+                        } else {
+                            console.error("Erro ao buscar notificações:", e);
+                        }
+                    }
+                }
+
             } else {
                 setUser(null);
+                setNotifications([]); // Clear notifications on logout
             }
             setLoading(false);
         });
@@ -90,9 +121,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return () => unsubscribe();
     }, []);
 
-    // Listener de Notificações em Tempo Real
+    // Listener de Notificações em Tempo Real (RTDB - opcional, mas bom ter)
     useEffect(() => {
-        if (user?.role !== UserRole.SERVANT) return;
+        if (!user || user.role !== UserRole.SERVANT) return;
 
         const notificationsRef = ref(rtdb, 'notifications');
         const recentNotificationsQuery = query(notificationsRef, orderByChild('timestamp'), startAt(Date.now()));
@@ -107,7 +138,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                             body: notification.body,
                             icon: '/icon-192.svg',
                             badge: '/icon-192.svg',
-                            data: { url: notification.link || '/' } // Passa a URL para o service worker
+                            data: { url: notification.link || '/' }
                         });
                     });
                 }
@@ -117,6 +148,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return () => unsubscribe();
     }, [user]);
 
+    const handleNotificationsShown = async (notificationIds: string[]) => {
+        try {
+            await markNotificationsAsRead(notificationIds);
+            setNotifications([]); // Clear from local state
+        } catch (error) {
+            console.error("Falha ao marcar notificações como lidas:", error);
+        }
+    };
 
     const login = useCallback(async (email: string, pass: string) => {
         setLoading(true);
@@ -183,7 +222,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, []);
 
     return (
-        <AuthContext.Provider value={{ user, loading, error, isAttendanceUnlocked, onlineCount, login, logout, checkAttendancePassword, isPageUnlocked, checkPagePassword }}>
+        <AuthContext.Provider value={{ user, loading, error, isAttendanceUnlocked, onlineCount, notifications, login, logout, checkAttendancePassword, isPageUnlocked, checkPagePassword, handleNotificationsShown }}>
             {children}
         </AuthContext.Provider>
     );

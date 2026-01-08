@@ -146,9 +146,9 @@ const ReportList: React.FC = () => {
 
     return (
         <>
-            <div className="bg-[#65a30d] p-4 sm:p-6 lg:p-8">
+            <div className="bg-primary p-4 sm:p-6 lg:p-8">
                 <h2 className="text-2xl font-bold text-white">Pasta de Relatórios</h2>
-                <p className="mt-1 text-lime-100">Visualize e filtre todos os relatórios enviados.</p>
+                <p className="mt-1 text-blue-100">Visualize e filtre todos os relatórios enviados.</p>
             </div>
             <div className="p-4 sm:p-6 lg:p-8">
                 <div className="flex flex-col md:flex-row gap-4 mb-4">

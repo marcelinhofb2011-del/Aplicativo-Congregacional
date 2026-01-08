@@ -11,6 +11,7 @@ interface PublisherFormModalProps {
 }
 
 const BLANK_PUBLISHER: Omit<PublisherProfile, 'id' | keyof BaseRecord> = {
+    uid: '',
     name: '',
     birthDate: '',
     baptismDate: '',
@@ -79,11 +80,12 @@ const FormSection: React.FC<{ title: string, children: React.ReactNode, classNam
     </div>
 );
 
-const FormField: React.FC<{ label: string, name: string, value: string, onChange: any, type?: string, required?: boolean, placeholder?: string }> = 
-({ label, name, value, onChange, type = 'text', required = false, placeholder }) => (
+const FormField: React.FC<{ label: string, name: string, value: string, onChange: any, type?: string, required?: boolean, placeholder?: string, helperText?: string }> = 
+({ label, name, value, onChange, type = 'text', required = false, placeholder, helperText }) => (
     <div>
         <label className="block text-sm font-medium mb-1">{label}</label>
         <input type={type} name={name} value={value} onChange={onChange} required={required} className="input-style" placeholder={placeholder} />
+        {helperText && <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{helperText}</p>}
     </div>
 );
 
@@ -100,6 +102,7 @@ const PublisherFormModal: React.FC<PublisherFormModalProps> = ({ isOpen, onClose
     useEffect(() => {
         if (initialData) {
             setFormData({
+                uid: initialData.uid || '',
                 name: initialData.name,
                 birthDate: isoToDDMMYYYY(initialData.birthDate),
                 baptismDate: isoToDDMMYYYY(initialData.baptismDate),
@@ -157,6 +160,7 @@ const PublisherFormModal: React.FC<PublisherFormModalProps> = ({ isOpen, onClose
         }
 
         const dataToSave: Omit<PublisherProfile, 'id' | keyof BaseRecord> = {
+            uid: formData.uid || '',
             name: formData.name,
             birthDate: birthDateISO,
             baptismDate: baptismDateISO,
@@ -198,6 +202,13 @@ const PublisherFormModal: React.FC<PublisherFormModalProps> = ({ isOpen, onClose
                             <FormField label="Telefone" name="phone" type="tel" value={formData.phone} onChange={handleInputChange} />
                             <FormField label="Email" name="email" type="email" value={formData.email} onChange={handleInputChange} />
                         </div>
+                        <FormField 
+                            label="ID de Autenticação (UID)" 
+                            name="uid" 
+                            value={formData.uid || ''} 
+                            onChange={handleInputChange} 
+                            helperText="Opcional. Preencha para que o usuário receba notificações de designações."
+                        />
                         <FormField label="Endereço" name="address" value={formData.address} onChange={handleInputChange} />
                     </FormSection>
 

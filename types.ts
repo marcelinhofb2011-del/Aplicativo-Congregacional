@@ -21,6 +21,18 @@ export interface BaseRecord {
     isActive: boolean;
 }
 
+// Type for generic Notifications
+export interface AppNotification extends BaseRecord {
+    tipo: 'vida_ministerio' | 'designacao' | 'limpeza' | 'servico_campo' | 'discurso_publico';
+    titulo: string;
+    descricao: string;
+    data: string; // ISO (Timestamp in Firestore)
+    referenciaId: string; // ID of the original document
+    usuarioUid: string;
+    notificado: boolean;
+    link: string; // Path to navigate to on click
+}
+
 
 // Type for Dashboard Cards
 export interface Schedule {
@@ -88,6 +100,7 @@ export interface LifeMinistrySchedule extends BaseRecord {
     };
     finalSong: string;
     finalPrayer: string;
+    assignedUids?: string[];
 }
 
 // Types for Report Feature
@@ -190,6 +203,7 @@ export interface Assignment extends BaseRecord {
     audio?: string;
     video?: string;
     notes?: string;
+    assignedUids?: string[];
 }
 
 // Types for Cleaning Feature
@@ -201,6 +215,7 @@ export interface CleaningSchedule extends BaseRecord {
     group: 'Grupo 1' | 'Grupo 2' | 'Grupo 3' | '';
     meetingDays: MeetingDay[];
     notes?: string;
+    assignedUids?: string[];
 }
 
 
@@ -218,6 +233,7 @@ export interface ConductorMeeting extends BaseRecord {
     date: string; // ISO (Timestamp in Firestore)
     conductorName: string;
     notes?: string;
+    assignedUids?: string[];
 }
 
 // Types for Shepherding Feature
@@ -243,6 +259,7 @@ export interface PublicTalkSchedule extends BaseRecord {
     address?: string;
     phone?: string;
     notes?: string;
+    assignedUids?: string[];
 }
 
 // Types for Publisher Profiles
@@ -255,6 +272,7 @@ export enum PublisherStatus {
 
 export interface PublisherProfile extends BaseRecord {
     // Personal Info
+    uid?: string; // Authentication User ID for linking
     name: string;
     birthDate?: string; // ISO (Timestamp in Firestore)
     baptismDate?: string; // ISO (Timestamp in Firestore), optional

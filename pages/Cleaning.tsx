@@ -128,7 +128,7 @@ const Cleaning: React.FC = () => {
 
     return (
         <>
-            <div className="bg-[#65a30d] p-4 sm:p-6 lg:p-8">
+            <div className="bg-primary p-4 sm:p-6 lg:p-8">
                 <div className="flex justify-between items-center">
                     <h2 className="text-2xl font-bold text-white">Escala de Limpeza</h2>
                      {!isReadOnly && isServant && (

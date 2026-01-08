@@ -110,14 +110,14 @@ const Passages: React.FC = () => {
         return tickets.reduce((acc, ticket) => {
             acc.totalSold += ticket.totalPeople;
             acc.totalAmount += ticket.totalAmount;
-            acc.totalPaid += ticket.amountPaid;
+            acc.totalPaid += ticket.totalPaid;
             return acc;
         }, { totalSold: 0, totalAmount: 0, totalPaid: 0 });
     }, [tickets]);
 
     return (
         <>
-            <div className="bg-[#65a30d] p-4 sm:p-6 lg:p-8">
+            <div className="bg-primary p-4 sm:p-6 lg:p-8">
                 <div className="flex flex-wrap justify-between items-center gap-4">
                     <h2 className="text-2xl font-bold text-white">Gerenciamento de Passagens</h2>
                     {isServant && (

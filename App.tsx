@@ -1,12 +1,11 @@
 
-
-
 import React from 'react';
 import { HashRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { ThemeProvider } from './contexts/ThemeContext'; // Import ThemeProvider
+import { ThemeProvider } from './contexts/ThemeContext';
+import { ScheduleProvider } from './contexts/ScheduleContext';
 import Login from './pages/Login';
-import Register from './pages/Register'; // Import the new Register page
+import Register from './pages/Register';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Report from './pages/Report';
@@ -26,7 +25,7 @@ import Conductors from './pages/Conductors';
 import Shepherding from './pages/Shepherding';
 import ReportList from './pages/ReportList';
 import AttendanceList from './pages/AttendanceList';
-import Resumo from './pages/Resumo'; // Import the new Resumo page
+import Resumo from './pages/Resumo';
 import Publishers from './pages/Publishers';
 
 
@@ -67,7 +66,6 @@ const AppContent: React.FC = () => {
                     <Route path="dashboard" element={<Dashboard />} />
                     <Route path="relatorio" element={<Report />} />
                     <Route path="assistencia" element={<Attendance />} />
-                    {/* Moved from SERVANT-only block to allow viewing for all roles */}
                     <Route path="menu" element={<Menu />} />
                     <Route path="resumo" element={<Resumo />} />
                     <Route path="vida-e-ministerio" element={<LifeMinistry />} />
@@ -84,7 +82,6 @@ const AppContent: React.FC = () => {
                 </Route>
                 
                 <Route element={<ProtectedRoute roles={[UserRole.SERVANT]} />}>
-                    {/* Publisher data is sensitive and remains SERVANT-only */}
                     <Route path="publicadores" element={<Publishers />} />
                     <Route path="pastoreio" element={<Shepherding />} />
                 </Route>
@@ -101,9 +98,11 @@ const App: React.FC = () => {
   return (
     <ThemeProvider>
         <AuthProvider>
-            <HashRouter>
-                <AppContent/>
-            </HashRouter>
+            <ScheduleProvider>
+                <HashRouter>
+                    <AppContent/>
+                </HashRouter>
+            </ScheduleProvider>
         </AuthProvider>
     </ThemeProvider>
   );

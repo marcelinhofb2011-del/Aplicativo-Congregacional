@@ -14,12 +14,12 @@ const Attendance: React.FC = () => {
     const [showModal, setShowModal] = useState(user?.role === UserRole.PUBLISHER && !isAttendanceUnlocked);
     const [toastMessage, setToastMessage] = useState('');
 
+    const isPublisher = user?.role === UserRole.PUBLISHER;
+
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-    const [submitterName, setSubmitterName] = useState(user?.email || '');
+    const [submitterName, setSubmitterName] = useState(isPublisher ? '' : (user?.email || ''));
     const [presentCount, setPresentCount] = useState<number | ''>('');
     const [onlineCount, setOnlineCount] = useState<number | ''>('');
-
-    const isPublisher = user?.role === UserRole.PUBLISHER;
 
     const totalCount = useMemo(() => {
         return (Number(presentCount) || 0) + (Number(onlineCount) || 0);
@@ -56,7 +56,7 @@ const Attendance: React.FC = () => {
             
             // Reset form
             setDate(new Date().toISOString().split('T')[0]);
-            setSubmitterName(user?.email || '');
+            setSubmitterName(isPublisher ? '' : (user?.email || ''));
             setPresentCount('');
             setOnlineCount('');
 
@@ -88,10 +88,10 @@ const Attendance: React.FC = () => {
     
     return (
         <>
-            <div className="bg-[#65a30d] p-4 sm:p-6 lg:p-8">
+            <div className="bg-primary p-4 sm:p-6 lg:p-8">
                 <div className="max-w-xl mx-auto">
                     <h2 className="text-2xl font-bold text-white">Registrar Assistência</h2>
-                    <p className="mt-1 text-lime-100">
+                    <p className="mt-1 text-blue-100">
                         Informe o número de presentes e online na reunião.
                     </p>
                 </div>

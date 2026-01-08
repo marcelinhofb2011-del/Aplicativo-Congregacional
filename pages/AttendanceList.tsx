@@ -176,9 +176,9 @@ const AttendanceList: React.FC = () => {
 
     return (
         <>
-            <div className="bg-[#65a30d] p-4 sm:p-6 lg:p-8">
+            <div className="bg-primary p-4 sm:p-6 lg:p-8">
                 <h2 className="text-2xl font-bold text-white">Pasta de Assistência</h2>
-                <p className="mt-1 text-lime-100">Lista de todos os registros de assistência.</p>
+                <p className="mt-1 text-blue-100">Lista de todos os registros de assistência.</p>
             </div>
             <div className="p-4 sm:p-6 lg:p-8">
                 {isServant && (

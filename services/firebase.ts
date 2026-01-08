@@ -1,3 +1,4 @@
+
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
@@ -10,7 +11,7 @@ const firebaseConfig = {
   storageBucket: "sistema-congregacional.firebasestorage.app",
   messagingSenderId: "1093095098126",
   appId: "1:1093095098126:web:3542bafb2ab79467fcb95f",
-  databaseURL: "https://sistema-congregacional.firebaseio.com"
+  databaseURL: "https://sistema-congregacional-default-rtdb.firebaseio.com"
 };
 
 const app = initializeApp(firebaseConfig);

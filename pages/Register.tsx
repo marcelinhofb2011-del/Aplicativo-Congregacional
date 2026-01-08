@@ -70,7 +70,7 @@ const Register: React.FC = () => {
 
             <div className="relative w-full max-w-md space-y-6 bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 p-8 sm:p-10">
                 <div className="text-center mb-6">
-                    <div className="mx-auto mb-4 w-20 h-20 bg-[#65a30d] rounded-full flex items-center justify-center shadow-lg">
+                    <div className="mx-auto mb-4 w-20 h-20 bg-primary rounded-full flex items-center justify-center shadow-lg">
                         <span className="text-white font-bold text-3xl tracking-wider">VC</span>
                     </div>
                     <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">

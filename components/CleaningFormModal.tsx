@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { CleaningSchedule, BaseRecord, MeetingDay } from '../types';
 import { XIcon } from './icons/Icons';
 import { CLEANING_GROUPS } from '../constants';
+import { getPublisherProfiles } from '../services/firestoreService';
 
 interface CleaningFormModalProps {
     isOpen: boolean;
@@ -69,7 +70,7 @@ const CleaningFormModal: React.FC<CleaningFormModalProps> = ({ isOpen, onClose, 
         });
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.group || !formData.date || !formData.endDate || formData.meetingDays.length === 0) {
             alert('Por favor, preencha todos os campos obrigatórios, incluindo pelo menos um dia de reunião.');
@@ -79,12 +80,26 @@ const CleaningFormModal: React.FC<CleaningFormModalProps> = ({ isOpen, onClose, 
             alert('A data final não pode ser anterior à data de início.');
             return;
         }
+
+        // Fetch publishers to get UIDs for the selected group
+        let assignedUids: string[] = [];
+        try {
+            const groupNumber = formData.group.replace('Grupo ', '');
+            const allPublishers = await getPublisherProfiles();
+            assignedUids = allPublishers
+                .filter(p => p.group === groupNumber && p.uid)
+                .map(p => p.uid!);
+        } catch (error) {
+            console.error("Could not fetch publisher UIDs for notification:", error);
+        }
+
         const dataToSave: Omit<CleaningSchedule, 'id' | keyof BaseRecord> = {
             date: new Date(formData.date).toISOString(),
             endDate: new Date(formData.endDate).toISOString(),
             group: formData.group,
             meetingDays: formData.meetingDays,
-            notes: formData.notes || ''
+            notes: formData.notes || '',
+            assignedUids,
         };
         onSave(dataToSave);
     };

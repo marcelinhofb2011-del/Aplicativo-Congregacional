@@ -42,10 +42,10 @@ const Menu: React.FC = () => {
 
     return (
         <div>
-            <div className="sticky top-0 z-10 bg-[#65a30d] p-4 sm:p-6 lg:p-8">
+            <div className="sticky top-0 z-10 bg-primary p-4 sm:p-6 lg:p-8">
                 <div className="max-w-2xl mx-auto">
                     <h2 className="text-3xl font-bold tracking-tight text-white mb-2">Menu Principal</h2>
-                    <p className="text-lime-100">
+                    <p className="text-blue-100">
                         Navegue pelas seções administrativas para gerenciar a congregação.
                     </p>
                 </div>

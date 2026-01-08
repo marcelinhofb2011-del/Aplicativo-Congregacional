@@ -54,10 +54,10 @@ const Header: React.FC = () => {
     };
 
     return (
-        <header className={`flex items-center justify-between h-16 bg-[#65a30d] px-4 sm:px-6 lg:px-8 flex-shrink-0 sticky top-0 z-30 shadow-md`}>
+        <header className={`flex items-center justify-between h-16 bg-primary px-4 sm:px-6 lg:px-8 flex-shrink-0 sticky top-0 z-30 shadow-md`}>
             <div className="flex-1">
                 {showBackButton && (
-                    <button onClick={handleBack} className="flex items-center gap-1 text-green-100 hover:text-white transition-colors p-2 -ml-2 rounded-md">
+                    <button onClick={handleBack} className="flex items-center gap-1 text-blue-100 hover:text-white transition-colors p-2 -ml-2 rounded-md">
                         <ArrowLeftIcon className="h-5 w-5" />
                         <span className="text-sm font-medium hidden sm:inline">Voltar</span>
                     </button>
@@ -70,14 +70,14 @@ const Header: React.FC = () => {
                 <OnlineIndicator />
                 <button
                     onClick={toggleTheme}
-                    className="p-2 rounded-full text-green-100 hover:text-white hover:bg-white/10 transition-colors"
+                    className="p-2 rounded-full text-blue-100 hover:text-white hover:bg-white/10 transition-colors"
                     aria-label="Alterar tema"
                 >
                     {theme === 'dark' ? <SunIcon className="h-6 w-6" /> : <MoonIcon className="h-6 w-6" />}
                 </button>
                 <button
                     onClick={handleLogout}
-                    className="p-2 rounded-full text-green-100 hover:text-white hover:bg-white/10 transition-colors"
+                    className="p-2 rounded-full text-blue-100 hover:text-white hover:bg-white/10 transition-colors"
                     aria-label="Sair"
                 >
                     <LogoutIcon className="h-6 w-6" />

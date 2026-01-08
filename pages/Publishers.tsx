@@ -136,11 +136,11 @@ const Publishers: React.FC = () => {
     return (
         <>
             <div className="sticky top-0 z-10">
-                <div className="bg-[#65a30d] p-4 sm:p-6 lg:p-8">
+                <div className="bg-primary p-4 sm:p-6 lg:p-8">
                     <div className="flex justify-between items-center">
                         <div>
                             <h2 className="text-2xl font-bold text-white">Pasta de Publicadores</h2>
-                            <p className="mt-1 text-lime-100">Gerencie os perfis de todos os publicadores. Total: {publishers.length}</p>
+                            <p className="mt-1 text-blue-100">Gerencie os perfis de todos os publicadores. Total: {publishers.length}</p>
                         </div>
                         <div className="flex items-center space-x-2">
                             <button

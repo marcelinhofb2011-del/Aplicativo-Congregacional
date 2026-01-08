@@ -20,9 +20,9 @@ const Secretario: React.FC = () => {
         
     return (
         <>
-            <div className="bg-[#65a30d] p-4 sm:p-6 lg:p-8">
+            <div className="bg-primary p-4 sm:p-6 lg:p-8">
                 <h2 className="text-2xl font-bold text-white">Painel do Secretário</h2>
-                <p className="mt-1 text-lime-100 max-w-2xl">
+                <p className="mt-1 text-blue-100 max-w-2xl">
                     Acesse as pastas de relatórios de serviço de campo e os registros de assistência da congregação.
                 </p>
             </div>
