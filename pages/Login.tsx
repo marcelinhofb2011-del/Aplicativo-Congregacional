@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { EyeIcon, EyeSlashIcon } from '../components/icons/Icons';
+import OnlineIndicator from '../components/OnlineIndicator';
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -17,6 +18,10 @@ const Login: React.FC = () => {
 
     return (
         <div className="relative flex items-center justify-center min-h-screen w-full bg-slate-100 dark:bg-slate-900 px-4 sm:px-6 lg:px-8 overflow-hidden">
+            <div className="absolute top-4 right-4 z-10">
+                <OnlineIndicator />
+            </div>
+            
             {/* Colorful background effect */}
             <div className="absolute inset-0 z-0">
                 <div className="absolute bottom-0 left-[-20%] right-[-10%] top-[-10%] h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle_farthest-side,rgba(168,85,247,0.2),rgba(255,255,255,0))]"></div>

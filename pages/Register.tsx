@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '../services/firebase';
 import { EyeIcon, EyeSlashIcon } from '../components/icons/Icons';
+import OnlineIndicator from '../components/OnlineIndicator';
 
 const Register: React.FC = () => {
     const [name, setName] = useState('');
@@ -66,6 +67,10 @@ const Register: React.FC = () => {
 
     return (
          <div className="flex items-center justify-center min-h-screen w-full bg-slate-100 dark:bg-slate-900 px-4 sm:px-6 lg:px-8">
+            <div className="absolute top-4 right-4 z-10">
+                <OnlineIndicator />
+            </div>
+
             <div className="absolute inset-0 bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 dark:from-slate-800 dark:via-slate-900 dark:to-black"></div>
 
             <div className="relative w-full max-w-md space-y-6 bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 p-8 sm:p-10">

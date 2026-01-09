@@ -3,10 +3,9 @@ import React from 'react';
 import { useAuth } from '../hooks/useAuth';
 
 const OnlineIndicator: React.FC = () => {
-    const { onlineCount, user } = useAuth();
+    const { onlineCount } = useAuth();
 
-    // Se não houver ninguém logado ou count zero (improvável se o próprio user está logado)
-    if (!user || onlineCount === 0) {
+    if (onlineCount === 0) {
         return null;
     }
 
