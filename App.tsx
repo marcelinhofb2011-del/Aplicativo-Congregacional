@@ -27,6 +27,7 @@ import ReportList from './pages/ReportList';
 import AttendanceList from './pages/AttendanceList';
 import Resumo from './pages/Resumo';
 import Publishers from './pages/Publishers';
+import Announcements from './pages/Announcements';
 
 
 const ProtectedRoute: React.FC<{ roles: UserRole[] }> = ({ roles }) => {
@@ -78,6 +79,7 @@ const AppContent: React.FC = () => {
                     <Route path="discurso-publico" element={<PublicTalk />} />
                     <Route path="territorios" element={<Territories />} />
                     <Route path="passagens" element={<Passages />} />
+                    <Route path="anuncios" element={<Announcements />} />
                     <Route path="configuracoes" element={<Settings />} />
                 </Route>
                 

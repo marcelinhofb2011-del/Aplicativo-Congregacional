@@ -16,12 +16,14 @@ import {
     ShepherdingIcon,
     SettingsIcon,
     BookOpenIcon,
-    ChevronRightIcon, // Importar o ícone
+    ChevronRightIcon,
+    MegaphoneIcon,
 } from '../components/icons/Icons';
 
 // Itens de menu para a grade principal
 const MENU_GRID_ITEMS = [
     { path: '/resumo', label: 'Resumo', icon: ChartBarIcon, color: 'text-indigo-500' },
+    { path: '/anuncios', label: 'Anúncios', icon: MegaphoneIcon, color: 'text-sky-500' },
     { path: '/vida-e-ministerio', label: 'Ministério', icon: LifeMinistryIcon, color: 'text-green-500' },
     { path: '/designacoes', label: 'Designações', icon: AssignmentsIcon, color: 'text-orange-500' },
     { path: '/limpeza', label: 'Limpeza', icon: CleaningIcon, color: 'text-purple-500' },

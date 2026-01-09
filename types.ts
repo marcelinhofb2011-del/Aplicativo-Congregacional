@@ -306,3 +306,10 @@ export interface DashboardSchedule {
     details: string;
     fullData: LifeMinistrySchedule | Assignment | CleaningSchedule | ConductorMeeting | PublicTalkSchedule | ShepherdingVisit;
 }
+
+// Type for Announcements
+export interface Announcement extends BaseRecord {
+    title: string;
+    body: string;
+    isPinned: boolean;
+}

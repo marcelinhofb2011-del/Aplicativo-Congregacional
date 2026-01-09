@@ -12,18 +12,40 @@ import {
     ConductorMeeting,
     PublicTalkSchedule,
     ShepherdingVisit,
+    Announcement,
 } from '../types';
 import DashboardWindow from '../components/DashboardWindow';
+import AnnouncementsWidget from '../components/AnnouncementsWidget';
+import { getAnnouncements } from '../services/firestoreService';
 import { SECONDARY_NAV_ITEMS } from '../constants';
 
 const Dashboard: React.FC = () => {
     const { user } = useAuth();
-    const { schedules, isLoading } = useSchedules();
+    const { schedules, isLoading: isLoadingSchedules } = useSchedules();
     const location = useLocation();
     const [dashboardWindows, setDashboardWindows] = useState<any[]>([]);
+    const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+    const [isLoadingAnnouncements, setIsLoadingAnnouncements] = useState(true);
 
     useEffect(() => {
-        if (!user || isLoading) return;
+        const fetchAnnouncements = async () => {
+            if (!user) return;
+            setIsLoadingAnnouncements(true);
+            try {
+                const fetchedAnnouncements = await getAnnouncements();
+                setAnnouncements(fetchedAnnouncements);
+            } catch (error) {
+                console.error("Failed to fetch announcements:", error);
+            } finally {
+                setIsLoadingAnnouncements(false);
+            }
+        };
+
+        fetchAnnouncements();
+    }, [user]);
+
+    useEffect(() => {
+        if (!user || isLoadingSchedules) return;
 
         const loadDashboardData = () => {
             try {
@@ -89,16 +111,16 @@ const Dashboard: React.FC = () => {
         };
 
         loadDashboardData();
-    }, [user, schedules, isLoading, location]);
+    }, [user, schedules, isLoadingSchedules, location]);
 
     const welcomeMessage = `Olá, ${user?.displayName || user?.email?.split('@')[0] || 'irmão'}!`;
     const subtitle = user?.role === UserRole.SERVANT
-        ? "Aqui está um resumo das próximas atividades."
-        : "Consulte as próximas atividades da congregação.";
+        ? "Aqui está um resumo das próximas atividades e anúncios."
+        : "Consulte os anúncios e as próximas atividades da congregação.";
 
     const renderDashboardContent = () => (
         <>
-            {isLoading && dashboardWindows.length === 0 ? (
+            {isLoadingSchedules && dashboardWindows.length === 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {[...Array(6)].map((_, i) => <div key={i} className="h-48 bg-slate-200/50 dark:bg-slate-700/50 rounded-3xl animate-pulse"></div>)}
                 </div>
@@ -137,7 +159,8 @@ const Dashboard: React.FC = () => {
                 </p>
             </div>
 
-            <div className="p-4 sm:p-6 lg:p-8">
+            <div className="p-4 sm:p-6 lg:p-8 space-y-8">
+                <AnnouncementsWidget announcements={announcements} isLoading={isLoadingAnnouncements} />
                 {renderDashboardContent()}
             </div>
         </>

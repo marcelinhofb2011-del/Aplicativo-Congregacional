@@ -4,7 +4,7 @@ import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, query, orderBy,
 import { ref, push, serverTimestamp } from 'firebase/database';
 import { 
     LifeMinistrySchedule, FieldServiceReport, AttendanceRecord, Territory, BusTicket, Assignment, 
-    CleaningSchedule, FieldServiceMeeting, ConductorMeeting, ShepherdingVisit, PublicTalkSchedule, BaseRecord, PublisherProfile, AppNotification 
+    CleaningSchedule, FieldServiceMeeting, ConductorMeeting, ShepherdingVisit, PublicTalkSchedule, BaseRecord, PublisherProfile, AppNotification, Announcement 
 } from '../types';
 
 // Helper to convert Firestore docs to typed objects, handling Timestamps
@@ -363,3 +363,21 @@ export const updatePublisherProfile = async (id: string, profile: Partial<Publis
     return updateDoc(doc(db, 'publicadores', id), updateMetadata(data, userId));
 };
 export const archivePublisherProfile = async (id: string, userId: string) => updateDoc(doc(db, 'publicadores', id), updateMetadata({ isActive: false }, userId));
+
+// --- Announcements ---
+const announcementsCollection = collection(db, 'anuncios');
+export const getAnnouncements = async (): Promise<Announcement[]> => {
+    const snapshot = await getDocs(query(announcementsCollection, orderBy('createdAt', 'desc')));
+    return docsToObjects<Announcement>(snapshot).filter(item => item.isActive);
+};
+export const addAnnouncement = async (announcement: Omit<Announcement, 'id' | keyof BaseRecord>, userId: string) => {
+    const docRef = await addDoc(announcementsCollection, addMetadata(announcement, userId));
+    pushNotification({ type: 'NEW_ANNOUNCEMENT', title: 'Novo Anúncio', body: announcement.title, link: '/anuncios' }, userId);
+    return docRef;
+};
+export const updateAnnouncement = (id: string, announcement: Partial<Announcement>, userId: string) => {
+    return updateDoc(doc(db, 'anuncios', id), updateMetadata(announcement, userId));
+};
+export const archiveAnnouncement = (id: string, userId: string) => {
+    return updateDoc(doc(db, 'anuncios', id), updateMetadata({ isActive: false }, userId));
+};

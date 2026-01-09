@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { UserRole } from './types';
-import { DashboardIcon, ReportIcon, AttendanceIcon, LifeMinistryIcon, AssignmentsIcon, CleaningIcon, FieldServiceIcon, PublicTalkIcon, TerritoriesIcon, BusIcon, SettingsIcon, ConductorIcon, ShepherdingIcon, Squares2X2Icon, ChartBarIcon, UsersIcon, BookOpenIcon, DocumentTextIcon } from './components/icons/Icons';
+import { DashboardIcon, ReportIcon, AttendanceIcon, LifeMinistryIcon, AssignmentsIcon, CleaningIcon, FieldServiceIcon, PublicTalkIcon, TerritoriesIcon, BusIcon, SettingsIcon, ConductorIcon, ShepherdingIcon, Squares2X2Icon, ChartBarIcon, UsersIcon, BookOpenIcon, DocumentTextIcon, MegaphoneIcon } from './components/icons/Icons';
 
 export interface NavItem {
     path: string;
@@ -39,6 +39,9 @@ export const MENU_NAV_ITEM: NavItem = { path: '/menu', label: 'Menu', icon: Squa
 // Nav Item for the new Resumo page
 export const RESUMO_NAV_ITEM: NavItem = { path: '/resumo', label: 'Resumo', icon: ChartBarIcon, roles: [UserRole.SERVANT], color: 'text-indigo-500' };
 
+// Nav Item for Announcements page
+export const ANNOUNCEMENTS_NAV_ITEM: NavItem = { path: '/anuncios', label: 'Anúncios', icon: MegaphoneIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-sky-500' };
+
 // Nav Items for Secretary sub-pages (for Header titles)
 export const REPORT_LIST_NAV_ITEM: NavItem = { path: '/secretario/relatorios', label: 'Pasta de Relatórios', icon: ReportIcon, roles: [UserRole.SERVANT], color: 'text-emerald-600' };
 export const ATTENDANCE_LIST_NAV_ITEM: NavItem = { path: '/secretario/assistencia', label: 'Pasta de Assistência', icon: AttendanceIcon, roles: [UserRole.SERVANT], color: 'text-emerald-600' };
@@ -50,6 +53,7 @@ export const ALL_NAV_ITEMS = [
     ...SECONDARY_NAV_ITEMS, 
     MENU_NAV_ITEM,
     RESUMO_NAV_ITEM,
+    ANNOUNCEMENTS_NAV_ITEM,
     REPORT_LIST_NAV_ITEM,
     ATTENDANCE_LIST_NAV_ITEM,
 ];
@@ -81,10 +85,11 @@ export const MENU_ITEM_GRADIENTS: { [key: string]: string } = {
     'text-purple-500': 'from-purple-500 to-purple-600',
     'text-emerald-600': 'from-emerald-500 to-emerald-700',
     'text-rose-500': 'from-rose-500 to-rose-600',
-    'text-cyan-500': 'from-cyan-400 to-cyan-600',
+    'text-cyan-400': 'from-cyan-400 to-cyan-600',
     'text-pink-500': 'from-pink-500 to-pink-600',
     'text-indigo-600': 'from-indigo-500 to-indigo-700',
     'text-lime-500': 'from-lime-400 to-lime-600',
     'text-yellow-400': 'from-yellow-400 to-yellow-500',
     'text-slate-500': 'from-slate-500 to-slate-700',
+    'text-sky-500': 'from-sky-500 to-sky-600',
 };
