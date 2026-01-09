@@ -2,7 +2,7 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback } from 'react';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User as FirebaseUser, signInAnonymously } from 'firebase/auth';
 import { auth, rtdb } from '../services/firebase';
-import { ref, onValue, set, onDisconnect, serverTimestamp, off, query, orderByChild, startAt, onChildAdded } from 'firebase/database';
+import { ref, onValue, set, onDisconnect, serverTimestamp, off, query, orderByChild, startAt, onChildAdded, remove } from 'firebase/database';
 import { User, UserRole, AppNotification } from '../types';
 import { ATTENDANCE_EXTRA_PASSWORD, PAGE_PASSWORDS } from '../constants';
 import { hasNotificationPermission } from '../utils/notifications';
@@ -85,22 +85,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (!user || user.uid.startsWith('mock-')) return;
 
         const myConnectionRef = ref(rtdb, `presence/${user.uid}`);
-        const connectedRef = ref(rtdb, '.info/connected');
 
-        const listener = onValue(connectedRef, (snap) => {
-            if (snap.val() === true) {
-                set(myConnectionRef, {
-                    online: true,
-                    lastSeen: serverTimestamp(),
-                    email: user.email
-                });
-                onDisconnect(myConnectionRef).remove();
-            }
+        // Set presence immediately upon login/user becoming available.
+        set(myConnectionRef, {
+            online: true,
+            lastSeen: serverTimestamp(),
+            email: user.email
         });
 
+        // When the client disconnects (browser closes, network loss),
+        // Firebase will automatically remove the presence entry.
+        onDisconnect(myConnectionRef).remove();
+
         return () => {
-            off(connectedRef, 'value', listener);
-            set(myConnectionRef, null);
+            // When the component unmounts (e.g., on logout),
+            // we manually remove the presence entry.
+            remove(myConnectionRef);
         };
     }, [user]);
 
@@ -109,7 +109,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const presenceRef = ref(rtdb, 'presence');
         const unsubscribe = onValue(presenceRef, (snap) => {
             if (snap.exists()) {
-                setOnlineCount(snap.numChildren());
+                setOnlineCount(snap.size);
             } else {
                 setOnlineCount(0);
             }
@@ -190,6 +190,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (user?.uid.startsWith('mock-')) {
                 setUser(null);
             } else {
+                // The presence useEffect cleanup will handle removing the user from RTDB.
                 await signOut(auth);
             }
         } catch (e) {
