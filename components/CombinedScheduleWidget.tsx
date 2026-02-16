@@ -65,6 +65,11 @@ const CombinedScheduleWidget: React.FC<CombinedScheduleWidgetProps> = ({ cleanin
                     <p className="text-sm text-violet-200">
                         {fieldServiceMeeting.conductorName} - {meetingDate}
                     </p>
+                    {fieldServiceMeeting.notes && (
+                        <p className="text-xs text-violet-100 mt-1 truncate">
+                            {fieldServiceMeeting.notes}
+                        </p>
+                    )}
                 </div>
             </div>
         );

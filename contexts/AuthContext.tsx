@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback } from 'react';
 import { getAuthInstance, ensurePersistence } from '../services/firebase';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User as FirebaseUser } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User as FirebaseUser, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { User, UserRole, AppNotification } from '../types';
 
 interface AuthContextType {
@@ -14,6 +14,9 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const PUBLISHER_EMAIL = 'publicador@app.dev';
+const PUBLISHER_PASS = '123456';
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
@@ -25,7 +28,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
             if (firebaseUser) {
                 // Lógica de perfil simples baseada no email
-                const isPublicadorAccount = firebaseUser.email === 'publicador@local';
+                const isPublicadorAccount = firebaseUser.email === PUBLISHER_EMAIL;
                 setUser({
                     uid: firebaseUser.uid,
                     email: firebaseUser.email,
@@ -49,13 +52,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             await signInWithEmailAndPassword(auth, email, pass);
             // onAuthStateChanged cuidará de definir o estado do usuário
         } catch (e: any) {
-            console.error("Falha no login:", e);
-            if (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') {
-                setError('Email ou senha incorretos.');
-            } else if (e.code === 'auth/network-request-failed') {
-                setError('Falha de conexão. Verifique sua internet.');
+            // Se o login falhar para a conta de publicador padrão, tente criá-la.
+            // Isso garante que a conta de teste sempre funcione.
+            if ((e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found') && email === PUBLISHER_EMAIL && pass === PUBLISHER_PASS) {
+                try {
+                    const auth = getAuthInstance();
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+                    await updateProfile(userCredential.user, { displayName: 'Publicador' });
+                    // onAuthStateChanged irá lidar com o login automaticamente após a criação.
+                    setError(null); // Limpa o erro de login inicial
+                } catch (creationError: any) {
+                     // Se a criação também falhar (ex: email já existe com outra senha), exibe o erro original.
+                    console.error("Falha ao criar conta de publicador de fallback:", creationError);
+                    setError('Email ou senha incorretos.');
+                }
             } else {
-                setError('Falha no login. Verifique as credenciais.');
+                console.error("Falha no login:", e);
+                if (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') {
+                    setError('Email ou senha incorretos.');
+                } else if (e.code === 'auth/network-request-failed') {
+                    setError('Falha de conexão. Verifique sua internet.');
+                } else {
+                    setError('Falha no login. Verifique as credenciais.');
+                }
             }
         } finally {
             setLoading(false);
