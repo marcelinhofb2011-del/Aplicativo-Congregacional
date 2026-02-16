@@ -1,9 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
-import { Assignment, BaseRecord, PublisherProfile } from '../types';
-import { XIcon, UserPlusIcon } from './icons/Icons';
-import { getPublisherProfiles } from '../services/firestoreService';
-import PublisherSearchModal from './PublisherSearchModal';
+import { Assignment, BaseRecord } from '../types';
+import { XIcon } from './icons/Icons';
 
 interface AssignmentFormModalProps {
     isOpen: boolean;
@@ -12,132 +9,41 @@ interface AssignmentFormModalProps {
     initialData: Assignment | null;
 }
 
-type RoleField = 'indicator1' | 'indicator2' | 'mic1' | 'mic2' | 'reader' | 'audio' | 'video';
+type RoleField = 'president' | 'indicator1' | 'indicator2' | 'mic1' | 'mic2' | 'reader' | 'audio' | 'video';
 
-const roleLabels: Record<RoleField, string> = {
-    indicator1: 'Indicador 👤',
-    indicator2: 'Indicador 👤',
-    mic1: 'Microfone 🎤',
-    mic2: 'Microfone 🎤',
-    reader: 'Leitor 📖',
-    audio: 'Áudio 🎶',
-    video: 'Vídeo 🖥️'
-};
-
-const BLANK_ASSIGNMENT_STATE = {
+const BLANK_ASSIGNMENT_STATE: Record<RoleField, string> & { date: string; notes: string; } = {
     date: new Date().toISOString().split('T')[0],
-    indicator1: null, indicator2: null, mic1: null, mic2: null,
-    reader: null, audio: null, video: null, notes: ''
+    president: '',
+    indicator1: '', indicator2: '', mic1: '', mic2: '',
+    reader: '', audio: '', video: '', notes: ''
 };
-
-// Componente para um único seletor de publicador
-const PublisherSelector: React.FC<{
-    label: string;
-    publisher: PublisherProfile | null;
-    onSelect: () => void;
-    onClear: () => void;
-}> = ({ label, publisher, onSelect, onClear }) => (
-    <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{label}</label>
-        <div className="flex gap-2">
-            <div className="input-style flex-grow flex items-center justify-between">
-                <span className={publisher ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400'}>
-                    {publisher?.name || 'Ninguém designado'}
-                </span>
-            </div>
-            <button type="button" onClick={onSelect} className="p-3 bg-primary text-white rounded-md hover:bg-primary-dark"><UserPlusIcon className="h-5 w-5"/></button>
-            {publisher && <button type="button" onClick={onClear} className="p-3 bg-red-500 text-white rounded-md hover:bg-red-600"><XIcon className="h-5 w-5"/></button>}
-        </div>
-    </div>
-);
-
-// Componente para um par de seletores de publicador, com um único rótulo
-const PairedPublisherSelector: React.FC<{
-    label: string;
-    publisher1: PublisherProfile | null;
-    publisher2: PublisherProfile | null;
-    onSelect1: () => void;
-    onClear1: () => void;
-    onSelect2: () => void;
-    onClear2: () => void;
-}> = ({ label, publisher1, publisher2, onSelect1, onClear1, onSelect2, onClear2 }) => (
-    <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{label}</label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {/* Selector 1 */}
-            <div className="flex gap-2">
-                <div className="input-style flex-grow flex items-center justify-between">
-                    <span className={publisher1 ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400'}>
-                        {publisher1?.name || 'Vaga 1'}
-                    </span>
-                </div>
-                <button type="button" onClick={onSelect1} className="p-3 bg-primary text-white rounded-md hover:bg-primary-dark"><UserPlusIcon className="h-5 w-5"/></button>
-                {publisher1 && <button type="button" onClick={onClear1} className="p-3 bg-red-500 text-white rounded-md hover:bg-red-600"><XIcon className="h-5 w-5"/></button>}
-            </div>
-            {/* Selector 2 */}
-            <div className="flex gap-2">
-                <div className="input-style flex-grow flex items-center justify-between">
-                    <span className={publisher2 ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400'}>
-                        {publisher2?.name || 'Vaga 2'}
-                    </span>
-                </div>
-                <button type="button" onClick={onSelect2} className="p-3 bg-primary text-white rounded-md hover:bg-primary-dark"><UserPlusIcon className="h-5 w-5"/></button>
-                {publisher2 && <button type="button" onClick={onClear2} className="p-3 bg-red-500 text-white rounded-md hover:bg-red-600"><XIcon className="h-5 w-5"/></button>}
-            </div>
-        </div>
-    </div>
-);
-
 
 const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
-    const [formData, setFormData] = useState<Record<RoleField, PublisherProfile | null> & { date: string; notes: string; }>(BLANK_ASSIGNMENT_STATE);
-    const [publishers, setPublishers] = useState<PublisherProfile[]>([]);
-    const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
-    const [activeRole, setActiveRole] = useState<RoleField | null>(null);
+    const [formData, setFormData] = useState(BLANK_ASSIGNMENT_STATE);
 
     useEffect(() => {
         if (isOpen) {
-            getPublisherProfiles().then(setPublishers);
+            if (initialData) {
+                setFormData({
+                    date: new Date(initialData.date).toISOString().split('T')[0],
+                    president: initialData.president || '',
+                    indicator1: initialData.indicator1 || '',
+                    indicator2: initialData.indicator2 || '',
+                    mic1: initialData.mic1 || '',
+                    mic2: initialData.mic2 || '',
+                    reader: initialData.reader || '',
+                    audio: initialData.audio || '',
+                    video: initialData.video || '',
+                    notes: initialData.notes || ''
+                });
+            } else {
+                setFormData(BLANK_ASSIGNMENT_STATE);
+            }
         }
-    }, [isOpen]);
+    }, [isOpen, initialData]);
 
-    useEffect(() => {
-        if (initialData && publishers.length > 0) {
-            const findPub = (name?: string) => publishers.find(p => p.name === name) || null;
-            setFormData({
-                date: new Date(initialData.date).toISOString().split('T')[0],
-                indicator1: findPub(initialData.indicator1),
-                indicator2: findPub(initialData.indicator2),
-                mic1: findPub(initialData.mic1),
-                mic2: findPub(initialData.mic2),
-                reader: findPub(initialData.reader),
-                audio: findPub(initialData.audio),
-                video: findPub(initialData.video),
-                notes: initialData.notes || ''
-            });
-        } else if (!initialData) {
-            setFormData(BLANK_ASSIGNMENT_STATE);
-        }
-    }, [initialData, isOpen, publishers]);
 
     if (!isOpen) return null;
-
-    const handleOpenSearch = (role: RoleField) => {
-        setActiveRole(role);
-        setIsSearchModalOpen(true);
-    };
-
-    const handleSelectPublisher = (publisher: PublisherProfile) => {
-        if (activeRole) {
-            setFormData(prev => ({ ...prev, [activeRole]: publisher }));
-        }
-        setIsSearchModalOpen(false);
-        setActiveRole(null);
-    };
-
-    const handleClearPublisher = (role: RoleField) => {
-        setFormData(prev => ({ ...prev, [role]: null }));
-    };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -147,7 +53,11 @@ const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({ isOpen, onClo
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         
-        const assignedRoles = Object.keys(roleLabels).filter(role => formData[role as RoleField]);
+        const assignedRoles: RoleField[] = (Object.keys(formData) as (keyof typeof formData)[])
+            .filter((key): key is RoleField => 
+                key !== 'date' && key !== 'notes' && typeof formData[key] === 'string' && (formData[key] as string).trim() !== ''
+            );
+
         if (assignedRoles.length === 0) {
             alert('Preencha pelo menos uma designação.');
             return;
@@ -156,14 +66,15 @@ const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({ isOpen, onClo
         const dataToSave: Omit<Assignment, 'id' | keyof BaseRecord> = {
             date: new Date(formData.date + 'T00:00:00Z').toISOString(), // Treat date as UTC
             notes: formData.notes || '',
-            indicator1: formData.indicator1?.name || '',
-            indicator2: formData.indicator2?.name || '',
-            mic1: formData.mic1?.name || '',
-            mic2: formData.mic2?.name || '',
-            reader: formData.reader?.name || '',
-            audio: formData.audio?.name || '',
-            video: formData.video?.name || '',
-            assignedUids: Array.from(new Set(assignedRoles.map(role => formData[role as RoleField]?.uid).filter((uid): uid is string => !!uid)))
+            president: formData.president || '',
+            indicator1: formData.indicator1 || '',
+            indicator2: formData.indicator2 || '',
+            mic1: formData.mic1 || '',
+            mic2: formData.mic2 || '',
+            reader: formData.reader || '',
+            audio: formData.audio || '',
+            video: formData.video || '',
+            assignedUids: [] // UIDs are no longer tracked with simple text inputs
         };
         onSave(dataToSave);
     };
@@ -188,29 +99,45 @@ const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({ isOpen, onClo
                         </div>
                         
                         <div className="space-y-6">
-                            <PairedPublisherSelector 
-                                label="Indicadores 👤"
-                                publisher1={formData.indicator1}
-                                publisher2={formData.indicator2}
-                                onSelect1={() => handleOpenSearch('indicator1')}
-                                onClear1={() => handleClearPublisher('indicator1')}
-                                onSelect2={() => handleOpenSearch('indicator2')}
-                                onClear2={() => handleClearPublisher('indicator2')}
-                            />
-                            <PairedPublisherSelector 
-                                label="Microfones 🎤"
-                                publisher1={formData.mic1}
-                                publisher2={formData.mic2}
-                                onSelect1={() => handleOpenSearch('mic1')}
-                                onClear1={() => handleClearPublisher('mic1')}
-                                onSelect2={() => handleOpenSearch('mic2')}
-                                onClear2={() => handleClearPublisher('mic2')}
-                            />
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                               <PublisherSelector label={roleLabels.reader} publisher={formData.reader} onSelect={() => handleOpenSearch('reader')} onClear={() => handleClearPublisher('reader')} />
-                               <PublisherSelector label={roleLabels.audio} publisher={formData.audio} onSelect={() => handleOpenSearch('audio')} onClear={() => handleClearPublisher('audio')} />
+                             {/* Presidente */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Presidente 👔</label>
+                                <input type="text" name="president" value={formData.president} onChange={handleInputChange} placeholder="Nome do presidente..." className="input-style" />
                             </div>
-                             <PublisherSelector label={roleLabels.video} publisher={formData.video} onSelect={() => handleOpenSearch('video')} onClear={() => handleClearPublisher('video')} />
+
+                            {/* Indicadores */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Indicadores 👤</label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <input type="text" name="indicator1" value={formData.indicator1} onChange={handleInputChange} placeholder="Nome do indicador 1..." className="input-style" />
+                                    <input type="text" name="indicator2" value={formData.indicator2} onChange={handleInputChange} placeholder="Nome do indicador 2..." className="input-style" />
+                                </div>
+                            </div>
+                            
+                            {/* Microfones */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Microfones 🎤</label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <input type="text" name="mic1" value={formData.mic1} onChange={handleInputChange} placeholder="Nome do microfone 1..." className="input-style" />
+                                    <input type="text" name="mic2" value={formData.mic2} onChange={handleInputChange} placeholder="Nome do microfone 2..." className="input-style" />
+                                </div>
+                            </div>
+
+                            {/* Leitor, Áudio, Vídeo */}
+                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Leitor 📖</label>
+                                    <input type="text" name="reader" value={formData.reader} onChange={handleInputChange} placeholder="Nome do leitor..." className="input-style" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Áudio 🎶</label>
+                                    <input type="text" name="audio" value={formData.audio} onChange={handleInputChange} placeholder="Nome do responsável..." className="input-style" />
+                                </div>
+                             </div>
+                             <div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Vídeo 🖥️</label>
+                                <input type="text" name="video" value={formData.video} onChange={handleInputChange} placeholder="Nome do responsável..." className="input-style" />
+                            </div>
                         </div>
                         
                         <div>
@@ -228,13 +155,6 @@ const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({ isOpen, onClo
                         </button>
                     </div>
                 </form>
-
-                 <PublisherSearchModal
-                    isOpen={isSearchModalOpen}
-                    onClose={() => setIsSearchModalOpen(false)}
-                    onSelect={handleSelectPublisher}
-                    publishers={publishers}
-                />
             </div>
         </div>
     );

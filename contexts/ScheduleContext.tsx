@@ -1,7 +1,7 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useAuth } from './AuthContext';
-import {
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import { 
     getSchedules,
     getAssignments,
     getCleaningSchedules,
@@ -9,7 +9,7 @@ import {
     getPublicTalks,
     getShepherdingVisits
 } from '../services/firestoreService';
-import { LifeMinistrySchedule, Assignment, CleaningSchedule, ConductorMeeting, PublicTalkSchedule, ShepherdingVisit, BaseRecord } from '../types';
+import { LifeMinistrySchedule, Assignment, CleaningSchedule, ConductorMeeting, PublicTalkSchedule, ShepherdingVisit } from '../types';
 
 export type ScheduleItem = LifeMinistrySchedule | Assignment | CleaningSchedule | ConductorMeeting | PublicTalkSchedule | ShepherdingVisit;
 
@@ -17,6 +17,7 @@ interface ScheduleContextType {
     schedules: ScheduleItem[];
     isLoading: boolean;
     error: string | null;
+    forceUpdate: () => void;
 }
 
 const ScheduleContext = createContext<ScheduleContextType | undefined>(undefined);
@@ -26,22 +27,20 @@ export const ScheduleProvider: React.FC<{ children: ReactNode }> = ({ children }
     const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [updateTrigger, setUpdateTrigger] = useState(0);
 
+    const forceUpdate = useCallback(() => {
+        setUpdateTrigger(prev => prev + 1);
+    }, []);
+    
     useEffect(() => {
-        // Só busca os dados se houver um usuário logado
         if (user) {
             const fetchAllSchedules = async () => {
                 setIsLoading(true);
                 setError(null);
                 try {
-                    const [
-                        lifeMinistry,
-                        assignments,
-                        cleaning,
-                        conductors,
-                        publicTalks,
-                        shepherding,
-                    ] = await Promise.all([
+                    // Buscar todos os tipos de agendamentos em paralelo
+                    const results = await Promise.all([
                         getSchedules(),
                         getAssignments(),
                         getCleaningSchedules(),
@@ -49,34 +48,26 @@ export const ScheduleProvider: React.FC<{ children: ReactNode }> = ({ children }
                         getPublicTalks(),
                         getShepherdingVisits(),
                     ]);
-
-                    const allSchedules: ScheduleItem[] = [
-                        ...lifeMinistry,
-                        ...assignments,
-                        ...cleaning,
-                        ...conductors,
-                        ...publicTalks,
-                        ...shepherding,
-                    ];
                     
+                    const allSchedules = results.flat();
                     setSchedules(allSchedules);
                 } catch (err) {
-                    console.error("Failed to fetch all schedules:", err);
-                    setError("Falha ao carregar as programações.");
+                    console.error("Falha ao buscar programações:", err);
+                    setError("Não foi possível carregar as programações do banco de dados.");
                 } finally {
                     setIsLoading(false);
                 }
             };
             fetchAllSchedules();
         } else {
-            // Se o usuário deslogar, limpa os dados
+            // Limpa os dados quando o usuário faz logout
             setSchedules([]);
             setIsLoading(false);
         }
-    }, [user]);
+    }, [user, updateTrigger]);
 
     return (
-        <ScheduleContext.Provider value={{ schedules, isLoading, error }}>
+        <ScheduleContext.Provider value={{ schedules, isLoading, error, forceUpdate }}>
             {children}
         </ScheduleContext.Provider>
     );

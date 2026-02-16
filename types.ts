@@ -1,4 +1,5 @@
 
+
 export enum UserRole {
     PUBLISHER = 'PUBLISHER',
     SERVANT = 'SERVANT',
@@ -195,6 +196,7 @@ export interface BusTicket {
 // Types for Assignments Feature (Platform Duties)
 export interface Assignment extends BaseRecord {
     date: string; // ISO (Timestamp in Firestore)
+    president?: string;
     indicator1?: string;
     indicator2?: string;
     mic1?: string;
@@ -312,4 +314,5 @@ export interface Announcement extends BaseRecord {
     title: string;
     body: string;
     isPinned: boolean;
+    images?: string[]; // Array of base64 data URLs
 }

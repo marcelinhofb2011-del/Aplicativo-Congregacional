@@ -1,238 +1,91 @@
-
 import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback } from 'react';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User as FirebaseUser, signInAnonymously } from 'firebase/auth';
-import { auth, rtdb } from '../services/firebase';
-import { ref, onValue, set, onDisconnect, serverTimestamp, off, query, orderByChild, startAt, onChildAdded, remove } from 'firebase/database';
+import { getAuthInstance, ensurePersistence } from '../services/firebase';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User as FirebaseUser } from 'firebase/auth';
 import { User, UserRole, AppNotification } from '../types';
-import { ATTENDANCE_EXTRA_PASSWORD, PAGE_PASSWORDS } from '../constants';
-import { hasNotificationPermission } from '../utils/notifications';
-import { getUnreadNotifications, markNotificationsAsRead } from '../services/firestoreService';
 
 interface AuthContextType {
     user: User | null;
     loading: boolean;
     error: string | null;
-    isAttendanceUnlocked: boolean;
-    onlineCount: number;
-    notifications: AppNotification[];
     login: (email: string, pass: string) => Promise<void>;
     logout: () => Promise<void>;
-    checkAttendancePassword: (password: string) => boolean;
-    isPageUnlocked: (pagePath: string) => boolean;
-    checkPagePassword: (pagePath: string, password: string) => boolean;
-    handleNotificationsShown: (notificationIds: string[]) => Promise<void>;
+    // As propriedades de senha extra e notificações foram removidas para simplificar
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-    const [isAttendanceUnlocked, setAttendanceUnlocked] = useState<boolean>(false);
-    const [onlineCount, setOnlineCount] = useState(0);
-    const [unlockedPages, setUnlockedPages] = useState<Set<string>>(new Set());
-    const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+        ensurePersistence();
+        const auth = getAuthInstance();
+        const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
             if (firebaseUser) {
-                const isAnon = firebaseUser.isAnonymous;
-                const currentUser = {
+                // Lógica de perfil simples baseada no email
+                const isPublicadorAccount = firebaseUser.email === 'publicador@local';
+                setUser({
                     uid: firebaseUser.uid,
-                    email: isAnon ? 'publicador@local' : firebaseUser.email,
+                    email: firebaseUser.email,
                     displayName: firebaseUser.displayName,
-                    role: isAnon ? UserRole.PUBLISHER : UserRole.SERVANT,
-                };
-                setUser(currentUser);
-
-                // Fetch notifications ONLY for non-anonymous users
-                if (!isAnon) {
-                    try {
-                        const unread = await getUnreadNotifications(currentUser.uid);
-                        setNotifications(unread);
-                    } catch (e: any) {
-                         if (e.message.includes('FAILED_PRECONDITION')) {
-                            console.warn(
-                                '%c[ATENÇÃO] ÍNDICE DO FIRESTORE NECESSÁRIO',
-                                'color: orange; font-weight: bold;',
-                                '\nPara que as notificações funcionem corretamente, por favor, crie o seguinte índice no seu Firestore:\n\n' +
-                                '1. Coleção: notificacoes\n' +
-                                '2. Campos a serem indexados:\n' +
-                                '   - usuarioUid (Ascendente)\n' +
-                                '   - notificado (Ascendente)\n' +
-                                '3. Status do índice: Ativado\n\n' +
-                                `Link para criar o índice (substitua [SEU_PROJETO]): https://console.firebase.google.com/project/${auth.app.options.projectId}/firestore/indexes/composite/create`
-                            );
-                        } else {
-                            console.error("Erro ao buscar notificações:", e);
-                        }
-                    }
-                }
-
+                    role: isPublicadorAccount ? UserRole.PUBLISHER : UserRole.SERVANT,
+                });
             } else {
                 setUser(null);
-                setNotifications([]); // Clear notifications on logout
             }
             setLoading(false);
         });
-        
-        return () => unsubscribe();
-    }, []);
-    
-    // Gerenciamento de Presença do Usuário Atual
-    useEffect(() => {
-        if (!user || user.uid.startsWith('mock-')) return;
-
-        const myConnectionRef = ref(rtdb, `presence/${user.uid}`);
-
-        // Set presence immediately upon login/user becoming available.
-        set(myConnectionRef, {
-            online: true,
-            lastSeen: serverTimestamp(),
-            email: user.email
-        });
-
-        // When the client disconnects (browser closes, network loss),
-        // Firebase will automatically remove the presence entry.
-        onDisconnect(myConnectionRef).remove();
-
-        return () => {
-            // When the component unmounts (e.g., on logout),
-            // we manually remove the presence entry.
-            remove(myConnectionRef);
-        };
-    }, [user]);
-
-    // Contador Global de Usuários Online
-    useEffect(() => {
-        const presenceRef = ref(rtdb, 'presence');
-        const unsubscribe = onValue(presenceRef, (snap) => {
-            if (snap.exists()) {
-                setOnlineCount(snap.size);
-            } else {
-                setOnlineCount(0);
-            }
-        }, (err) => {
-            console.warn("Erro ao ler contador de presença:", err);
-            setOnlineCount(0);
-        });
 
         return () => unsubscribe();
     }, []);
-
-    // Listener de Notificações em Tempo Real (RTDB - opcional, mas bom ter)
-    useEffect(() => {
-        if (!user || user.role !== UserRole.SERVANT) return;
-
-        const notificationsRef = ref(rtdb, 'notifications');
-        const recentNotificationsQuery = query(notificationsRef, orderByChild('timestamp'), startAt(Date.now()));
-
-        const unsubscribe = onChildAdded(recentNotificationsQuery, (snapshot) => {
-            const notification = snapshot.val();
-            // Evita notificar o próprio usuário que criou o evento
-            if (notification && notification.createdBy !== user.uid) {
-                if (hasNotificationPermission()) {
-                    navigator.serviceWorker.ready.then(registration => {
-                        registration.showNotification(notification.title, {
-                            body: notification.body,
-                            icon: '/icon-192.svg',
-                            badge: '/icon-192.svg',
-                            data: { url: notification.link || '/' }
-                        });
-                    });
-                }
-            }
-        });
-
-        return () => unsubscribe();
-    }, [user]);
-
-    const handleNotificationsShown = async (notificationIds: string[]) => {
-        try {
-            await markNotificationsAsRead(notificationIds);
-            setNotifications([]); // Clear from local state
-        } catch (error) {
-            console.error("Falha ao marcar notificações como lidas:", error);
-        }
-    };
 
     const login = useCallback(async (email: string, pass: string) => {
         setLoading(true);
         setError(null);
-
-        if (email.toLowerCase() === 'publicador@local' && pass === '123') {
-            try {
-                await signInAnonymously(auth);
-            } catch (e: any) {
-                console.error("Anonymous sign-in failed:", e);
-                setError('Falha ao iniciar sessão de publicador.');
-                setLoading(false);
-            }
-            return;
-        }
-
         try {
+            const auth = getAuthInstance();
             await signInWithEmailAndPassword(auth, email, pass);
+            // onAuthStateChanged cuidará de definir o estado do usuário
         } catch (e: any) {
-            console.error("Login failed:", e);
-            if (e.code === 'auth/invalid-credential') {
+            console.error("Falha no login:", e);
+            if (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') {
                 setError('Email ou senha incorretos.');
+            } else if (e.code === 'auth/network-request-failed') {
+                setError('Falha de conexão. Verifique sua internet.');
             } else {
-                setError('Falha no login.');
+                setError('Falha no login. Verifique as credenciais.');
             }
+        } finally {
             setLoading(false);
         }
     }, []);
 
     const logout = useCallback(async () => {
+        setError(null);
         try {
-            if (user?.uid.startsWith('mock-')) {
-                setUser(null);
-            } else {
-                // The presence useEffect cleanup will handle removing the user from RTDB.
-                await signOut(auth);
-            }
+            const auth = getAuthInstance();
+            await signOut(auth);
+            // onAuthStateChanged cuidará da limpeza
         } catch (e) {
-            console.error("Logout failed", e);
-        } finally {
-            setAttendanceUnlocked(false);
-            setUnlockedPages(new Set());
+            console.error("Falha ao sair", e);
+            setError('Falha ao sair.');
         }
-    }, [user]);
+    }, []);
     
-    const checkAttendancePassword = useCallback((password: string) => {
-        if (password === ATTENDANCE_EXTRA_PASSWORD) {
-            setAttendanceUnlocked(true);
-            return true;
-        }
-        return false;
-    }, []);
-
-    const isPageUnlocked = useCallback((pagePath: string) => {
-        return unlockedPages.has(pagePath);
-    }, [unlockedPages]);
-
-    const checkPagePassword = useCallback((pagePath: string, password: string) => {
-        const correctPassword = PAGE_PASSWORDS[pagePath as keyof typeof PAGE_PASSWORDS];
-        if (correctPassword && password === correctPassword) {
-            setUnlockedPages(prev => new Set(prev).add(pagePath));
-            return true;
-        }
-        return false;
-    }, []);
-
+    // O valor do provedor foi simplificado para conter apenas a lógica de autenticação padrão.
+    const contextValue = {
+        user,
+        loading,
+        error,
+        login,
+        logout,
+    };
+    
     return (
-        <AuthContext.Provider value={{ user, loading, error, isAttendanceUnlocked, onlineCount, notifications, login, logout, checkAttendancePassword, isPageUnlocked, checkPagePassword, handleNotificationsShown }}>
+        <AuthContext.Provider value={contextValue as AuthContextType}>
             {children}
         </AuthContext.Provider>
     );
-};
-
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
 };

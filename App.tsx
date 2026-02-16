@@ -1,12 +1,12 @@
-
 import React from 'react';
 import { HashRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
+import { useAuth } from './hooks/useAuth';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ScheduleProvider } from './contexts/ScheduleContext';
+import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Report from './pages/Report';
 import Attendance from './pages/Attendance';
@@ -30,14 +30,10 @@ import Publishers from './pages/Publishers';
 import Announcements from './pages/Announcements';
 
 
-const ProtectedRoute: React.FC<{ roles: UserRole[] }> = ({ roles }) => {
+const RoleProtectedRoute: React.FC<{ roles: UserRole[] }> = ({ roles }) => {
   const { user } = useAuth();
-
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (roles.length > 0 && !roles.includes(user.role)) {
+  
+  if (!user || (roles.length > 0 && !roles.includes(user.role))) {
     return <Navigate to="/not-found" replace />;
   }
 
@@ -46,9 +42,9 @@ const ProtectedRoute: React.FC<{ roles: UserRole[] }> = ({ roles }) => {
 
 
 const AppContent: React.FC = () => {
-    const { user, loading } = useAuth();
+    const { user, loading: authLoading } = useAuth();
 
-    if (loading) {
+    if (authLoading) {
         return (
             <div className="flex items-center justify-center h-screen bg-light dark:bg-dark">
                 <div className="text-xl font-semibold">Carregando...</div>
@@ -58,39 +54,46 @@ const AppContent: React.FC = () => {
 
     return (
         <Routes>
-            <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
-            <Route path="/cadastro" element={!user ? <Register /> : <Navigate to="/" />} />
-            <Route path="/" element={user ? <Layout /> : <Navigate to="/login" />} >
-                <Route index element={<Dashboard />} />
-                
-                <Route element={<ProtectedRoute roles={[UserRole.PUBLISHER, UserRole.SERVANT]} />}>
-                    <Route path="dashboard" element={<Dashboard />} />
-                    <Route path="relatorio" element={<Report />} />
-                    <Route path="assistencia" element={<Attendance />} />
-                    <Route path="menu" element={<Menu />} />
-                    <Route path="resumo" element={<Resumo />} />
-                    <Route path="vida-e-ministerio" element={<LifeMinistry />} />
-                    <Route path="designacoes" element={<Assignments />} />
-                    <Route path="limpeza" element={<Cleaning />} />
-                    <Route path="secretario" element={<Secretario />} />
-                    <Route path="secretario/relatorios" element={<ReportList />} />
-                    <Route path="secretario/assistencia" element={<AttendanceList />} />
-                    <Route path="dirigentes" element={<Conductors />} />
-                    <Route path="discurso-publico" element={<PublicTalk />} />
-                    <Route path="territorios" element={<Territories />} />
-                    <Route path="passagens" element={<Passages />} />
-                    <Route path="anuncios" element={<Announcements />} />
-                    <Route path="configuracoes" element={<Settings />} />
-                </Route>
-                
-                <Route element={<ProtectedRoute roles={[UserRole.SERVANT]} />}>
-                    <Route path="publicadores" element={<Publishers />} />
-                    <Route path="pastoreio" element={<Shepherding />} />
-                </Route>
-            </Route>
+            {!user ? (
+                <>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/cadastro" element={<Register />} />
+                    <Route path="*" element={<Navigate to="/login" replace />} />
+                </>
+            ) : (
+                <>
+                    <Route path="/" element={<Layout />} >
+                        <Route index element={<Dashboard />} />
+                        
+                        <Route element={<RoleProtectedRoute roles={[UserRole.PUBLISHER, UserRole.SERVANT]} />}>
+                            <Route path="dashboard" element={<Dashboard />} />
+                            <Route path="relatorio" element={<Report />} />
+                            <Route path="assistencia" element={<Attendance />} />
+                            <Route path="menu" element={<Menu />} />
+                            <Route path="resumo" element={<Resumo />} />
+                            <Route path="vida-e-ministerio" element={<LifeMinistry />} />
+                            <Route path="designacoes" element={<Assignments />} />
+                            <Route path="limpeza" element={<Cleaning />} />
+                            <Route path="secretario" element={<Secretario />} />
+                            <Route path="secretario/relatorios" element={<ReportList />} />
+                            <Route path="secretario/assistencia" element={<AttendanceList />} />
+                            <Route path="dirigentes" element={<Conductors />} />
+                            <Route path="discurso-publico" element={<PublicTalk />} />
+                            <Route path="territorios" element={<Territories />} />
+                            <Route path="passagens" element={<Passages />} />
+                            <Route path="anuncios" element={<Announcements />} />
+                            <Route path="configuracoes" element={<Settings />} />
+                        </Route>
+                        
+                        <Route element={<RoleProtectedRoute roles={[UserRole.SERVANT]} />}>
+                            <Route path="publicadores" element={<Publishers />} />
+                        </Route>
+                    </Route>
 
-            <Route path="/not-found" element={<NotFound />} />
-            <Route path="*" element={<Navigate to="/not-found" replace />} />
+                    <Route path="/not-found" element={<NotFound />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                </>
+            )}
         </Routes>
     );
 };
@@ -98,15 +101,15 @@ const AppContent: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <ThemeProvider>
-        <AuthProvider>
-            <ScheduleProvider>
-                <HashRouter>
+    <HashRouter>
+        <ThemeProvider>
+            <AuthProvider>
+                <ScheduleProvider>
                     <AppContent/>
-                </HashRouter>
-            </ScheduleProvider>
-        </AuthProvider>
-    </ThemeProvider>
+                </ScheduleProvider>
+            </AuthProvider>
+        </ThemeProvider>
+    </HashRouter>
   );
 };
 

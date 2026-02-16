@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Assignment } from '../../types';
 
@@ -28,6 +27,7 @@ const AssignmentDetail: React.FC<{ assignment: Assignment }> = ({ assignment }) 
                 Designações - {formattedDate}
             </h3>
             <div className="space-y-2">
+                <AssignmentRow label="Presidente" value={assignment.president} />
                 <AssignmentRow label="Indicador" value={indicators} />
                 <AssignmentRow label="Microfone" value={microphones} />
                 <AssignmentRow label="Leitor" value={assignment.reader} />

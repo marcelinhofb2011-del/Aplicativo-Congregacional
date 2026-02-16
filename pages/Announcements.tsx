@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Announcement, UserRole } from '../types';
@@ -164,8 +163,17 @@ const Announcements: React.FC = () => {
                                     </div>
                                 }
                             >
-                                <div className="p-4 sm:p-6 text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
-                                    {ann.body}
+                                <div className="p-4 sm:p-6">
+                                    <div className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
+                                        {ann.body}
+                                    </div>
+                                    {ann.images && ann.images.length > 0 && (
+                                        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                            {ann.images.map((img, idx) => (
+                                                <img key={idx} src={img} alt={`Anúncio ${idx + 1}`} className="rounded-md object-cover aspect-square" />
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </ScheduleAccordion>
                         )) : (

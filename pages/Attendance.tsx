@@ -3,15 +3,13 @@ import React, { useState, useMemo } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { UserRole, AttendanceRecord, BaseRecord } from '../types';
 import { addAttendanceRecord } from '../services/firestoreService';
-import AttendancePasswordModal from '../components/AttendancePasswordModal';
 import Toast from '../components/Toast';
 import { CalendarDaysIcon } from '../components/icons/Icons';
 import { useNavigate } from 'react-router-dom';
 
 const Attendance: React.FC = () => {
-    const { user, isAttendanceUnlocked, checkAttendancePassword } = useAuth();
+    const { user } = useAuth();
     const navigate = useNavigate();
-    const [showModal, setShowModal] = useState(user?.role === UserRole.PUBLISHER && !isAttendanceUnlocked);
     const [toastMessage, setToastMessage] = useState('');
 
     const isPublisher = user?.role === UserRole.PUBLISHER;
@@ -24,14 +22,6 @@ const Attendance: React.FC = () => {
     const totalCount = useMemo(() => {
         return (Number(presentCount) || 0) + (Number(onlineCount) || 0);
     }, [presentCount, onlineCount]);
-    
-    const handleVerifyPassword = (password: string) => {
-        const success = checkAttendancePassword(password);
-        if (success) {
-            setShowModal(false);
-        }
-        return success;
-    };
     
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -70,21 +60,6 @@ const Attendance: React.FC = () => {
             setToastMessage('Erro ao salvar registro.');
         }
     };
-
-    if (isPublisher && !isAttendanceUnlocked) {
-        return (
-            <div className="p-4 sm:p-6 lg:p-8">
-                {showModal && <AttendancePasswordModal onVerify={handleVerifyPassword} onClose={() => setShowModal(false)} />}
-                <div className="bg-white dark:bg-slate-800 shadow rounded-lg p-6 text-center max-w-xl mx-auto">
-                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Acesso Restrito</h2>
-                    <p className="mt-2 text-slate-600 dark:text-slate-400">Esta seção requer uma senha adicional para ser acessada.</p>
-                    <button onClick={() => setShowModal(true)} className="mt-4 px-5 py-3 bg-primary text-white rounded-md hover:bg-primary-dark">
-                        Digitar Senha
-                    </button>
-                </div>
-            </div>
-        );
-    }
     
     return (
         <>

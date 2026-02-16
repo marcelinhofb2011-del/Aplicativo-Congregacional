@@ -1,29 +1,21 @@
 
+
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
-import { ReportIcon, AttendanceIcon, ChevronRightIcon, BookOpenIcon } from '../components/icons/Icons';
-import { UserRole } from '../types';
+import { AttendanceIcon, ChevronRightIcon } from '../components/icons/Icons';
 
 const Secretario: React.FC = () => {
-    const { user } = useAuth();
-    const isServant = user?.role === UserRole.SERVANT;
-
-    const baseMenuItems = [
-        { path: '/secretario/relatorios', label: 'Relatórios de Serviço', icon: ReportIcon, color: 'text-blue-500' },
+    
+    const menuItems = [
         { path: '/secretario/assistencia', label: 'Registros de Assistência', icon: AttendanceIcon, color: 'text-emerald-500' },
     ];
-
-    const menuItems = isServant
-        ? [...baseMenuItems, { path: '/publicadores', label: 'Pasta de Publicadores', icon: BookOpenIcon, color: 'text-rose-500' }]
-        : baseMenuItems;
         
     return (
         <>
             <div className="bg-primary p-4 sm:p-6 lg:p-8">
                 <h2 className="text-2xl font-bold text-white">Painel do Secretário</h2>
                 <p className="mt-1 text-blue-100 max-w-2xl">
-                    Acesse as pastas de relatórios de serviço de campo e os registros de assistência da congregação.
+                    Acesse os registros de assistência da congregação.
                 </p>
             </div>
             <div className="p-4 sm:p-6 lg:p-8">

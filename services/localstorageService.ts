@@ -1,7 +1,9 @@
 
 import { 
     LifeMinistrySchedule, FieldServiceReport, AttendanceRecord, Territory, BusTicket, Assignment, 
-    CleaningSchedule, FieldServiceMeeting, ConductorMeeting, ShepherdingVisit, PublicTalkSchedule, BaseRecord, TerritoryStatus, BusTicketStatus, PublisherProfile 
+    CleaningSchedule, FieldServiceMeeting, ConductorMeeting, ShepherdingVisit, PublicTalkSchedule, BaseRecord, TerritoryStatus, BusTicketStatus, PublisherProfile, 
+// FIX: Import the 'Announcement' type to resolve type errors.
+    Announcement 
 } from '../types';
 
 // --- MOCK DATA (to be seeded into localStorage) ---
@@ -252,15 +254,30 @@ export const addReport = async (report: Omit<FieldServiceReport, 'id'>): Promise
     setItem('relatorios', [...items, newReport]);
     return newReport;
 };
+// FIX: Add missing updateReport and archiveReport functions
+export const updateReport = async (id: string, data: Partial<FieldServiceReport>, userEmail: string): Promise<FieldServiceReport> => {
+    const items = getItem<FieldServiceReport>('relatorios');
+    let updatedItem: FieldServiceReport | undefined;
+    const newItems = items.map(item => {
+        if (item.id === id) {
+            updatedItem = { ...item, ...data, updatedAt: new Date().toISOString(), updatedBy: userEmail };
+            return updatedItem;
+        }
+        return item;
+    });
+    setItem('relatorios', newItems);
+    if (!updatedItem) throw new Error("Item not found");
+    return updatedItem;
+};
+export const archiveReport = (id: string, userEmail: string) => updateReport(id, { isActive: false } as Partial<FieldServiceReport>, userEmail);
+
 
 // Attendance
-export const getAttendanceRecords = () => getCollection<AttendanceRecord>('assistencia', 'date');
-export const addAttendanceRecord = async (record: Omit<AttendanceRecord, 'id'>): Promise<AttendanceRecord> => {
-    const items = getItem<AttendanceRecord>('assistencia');
-    const newRecord = { ...record, id: crypto.randomUUID() };
-    setItem('assistencia', [...items, newRecord]);
-    return newRecord;
-};
+// FIX: Update attendance functions to use BaseRecord helpers and match call signatures.
+export const getAttendanceRecords = () => getActiveCollection<AttendanceRecord>('assistencia', 'date');
+export const addAttendanceRecord = (data: any, userEmail: string) => addBaseRecord('assistencia', data, userEmail);
+export const updateAttendanceRecord = (id: string, data: any, userEmail: string) => updateBaseRecord('assistencia', id, data, userEmail);
+export const archiveAttendanceRecord = (id: string, userEmail: string) => archiveBaseRecord('assistencia', id, userEmail);
 
 // Territories
 export const getTerritories = () => getCollection<Territory>('territorios');
@@ -350,3 +367,9 @@ export const getPublisherProfiles = () => getActiveCollection<PublisherProfile>(
 export const addPublisherProfile = (data: any, userEmail: string) => addBaseRecord<PublisherProfile>('publicadores', data, userEmail);
 export const updatePublisherProfile = (id: string, data: any, userEmail: string) => updateBaseRecord<PublisherProfile>('publicadores', id, data, userEmail);
 export const archivePublisherProfile = (id: string, userEmail: string) => archiveBaseRecord<PublisherProfile>('publicadores', id, userEmail);
+
+// Announcements
+export const getAnnouncements = () => getActiveCollection<Announcement>('anuncios', 'createdAt');
+export const addAnnouncement = (data: any, userEmail: string) => addBaseRecord<Announcement>('anuncios', data, userEmail);
+export const updateAnnouncement = (id: string, data: any, userEmail: string) => updateBaseRecord<Announcement>('anuncios', id, data, userEmail);
+export const archiveAnnouncement = (id: string, userEmail: string) => archiveBaseRecord<Announcement>('anuncios', id, userEmail);

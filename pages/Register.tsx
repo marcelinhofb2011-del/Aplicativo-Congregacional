@@ -1,10 +1,8 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { getAuthInstance } from '../services/firebase';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth } from '../services/firebase';
 import { EyeIcon, EyeSlashIcon } from '../components/icons/Icons';
-import OnlineIndicator from '../components/OnlineIndicator';
 
 const Register: React.FC = () => {
     const [name, setName] = useState('');
@@ -36,6 +34,7 @@ const Register: React.FC = () => {
 
         setLoading(true);
         try {
+            const auth = getAuthInstance();
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             await updateProfile(userCredential.user, { displayName: name });
             
@@ -67,9 +66,6 @@ const Register: React.FC = () => {
 
     return (
          <div className="flex items-center justify-center min-h-screen w-full bg-slate-100 dark:bg-slate-900 px-4 sm:px-6 lg:px-8">
-            <div className="absolute top-4 right-4 z-10">
-                <OnlineIndicator />
-            </div>
 
             <div className="absolute inset-0 bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 dark:from-slate-800 dark:via-slate-900 dark:to-black"></div>
 

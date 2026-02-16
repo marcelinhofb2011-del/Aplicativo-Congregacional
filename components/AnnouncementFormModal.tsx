@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Announcement, BaseRecord } from '../types';
 import { XIcon } from './icons/Icons';
@@ -10,14 +9,26 @@ interface AnnouncementFormModalProps {
     initialData: Announcement | null;
 }
 
-const BLANK_ANNOUNCEMENT: Omit<Announcement, 'id' | keyof BaseRecord> = {
+const BLANK_ANNOUNCEMENT: Omit<Announcement, 'id' | keyof BaseRecord | 'images'> = {
     title: '',
     body: '',
     isPinned: false,
 };
 
+const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = error => reject(error);
+    });
+};
+
+
 const AnnouncementFormModal: React.FC<AnnouncementFormModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
     const [formData, setFormData] = useState(BLANK_ANNOUNCEMENT);
+    const [images, setImages] = useState<string[]>([]);
+    const [isConverting, setIsConverting] = useState(false);
 
     useEffect(() => {
         if (initialData) {
@@ -26,8 +37,10 @@ const AnnouncementFormModal: React.FC<AnnouncementFormModalProps> = ({ isOpen, o
                 body: initialData.body,
                 isPinned: initialData.isPinned,
             });
+            setImages(initialData.images || []);
         } else {
             setFormData(BLANK_ANNOUNCEMENT);
+            setImages([]);
         }
     }, [initialData, isOpen]);
 
@@ -43,13 +56,34 @@ const AnnouncementFormModal: React.FC<AnnouncementFormModalProps> = ({ isOpen, o
         setFormData(prev => ({ ...prev, [name]: checked }));
     };
 
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        setIsConverting(true);
+        try {
+            const filePromises = Array.from(files).map(fileToBase64);
+            const base64strings = await Promise.all(filePromises);
+            setImages(prev => [...prev, ...base64strings]);
+        } catch (error) {
+            console.error("Error converting files to base64", error);
+            alert("Ocorreu um erro ao processar as imagens.");
+        } finally {
+            setIsConverting(false);
+        }
+    };
+    
+    const handleRemoveImage = (index: number) => {
+        setImages(prev => prev.filter((_, i) => i !== index));
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.title.trim() || !formData.body.trim()) {
-            alert('Por favor, preencha o título e o corpo do anúncio.');
+            alert('Por favor, preencha o título e a descrição do anúncio.');
             return;
         }
-        onSave(formData);
+        onSave({ ...formData, images });
     };
 
     return (
@@ -67,7 +101,7 @@ const AnnouncementFormModal: React.FC<AnnouncementFormModalProps> = ({ isOpen, o
 
                     <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow space-y-6">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Título</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Título do Anúncio</label>
                             <input
                                 type="text"
                                 name="title"
@@ -79,17 +113,36 @@ const AnnouncementFormModal: React.FC<AnnouncementFormModalProps> = ({ isOpen, o
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Conteúdo do Anúncio</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Descrição</label>
                             <textarea
                                 name="body"
                                 value={formData.body}
                                 onChange={handleInputChange}
                                 required
-                                rows={8}
+                                rows={6}
                                 className="input-style"
                                 placeholder="Digite o conteúdo completo do anúncio aqui."
                             ></textarea>
                         </div>
+
+                         <div>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Fazer upload de arquivos</label>
+                             <input type="file" multiple accept="image/*" onChange={handleFileChange} className="input-style" />
+                             {isConverting && <p className="text-sm text-slate-500 mt-2">Processando imagens...</p>}
+                             {images.length > 0 && (
+                                 <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                                     {images.map((imgSrc, index) => (
+                                         <div key={index} className="relative group">
+                                             <img src={imgSrc} alt={`Preview ${index}`} className="w-full h-24 object-cover rounded-md" />
+                                             <button type="button" onClick={() => handleRemoveImage(index)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                 <XIcon className="h-3 w-3" />
+                                             </button>
+                                         </div>
+                                     ))}
+                                 </div>
+                             )}
+                        </div>
+
                          <div className="flex items-center">
                             <input
                                 type="checkbox"

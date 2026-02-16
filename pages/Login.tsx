@@ -1,9 +1,9 @@
 
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { EyeIcon, EyeSlashIcon } from '../components/icons/Icons';
-import OnlineIndicator from '../components/OnlineIndicator';
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -18,9 +18,6 @@ const Login: React.FC = () => {
 
     return (
         <div className="relative flex items-center justify-center min-h-screen w-full bg-slate-100 dark:bg-slate-900 px-4 sm:px-6 lg:px-8 overflow-hidden">
-            <div className="absolute top-4 right-4 z-10">
-                <OnlineIndicator />
-            </div>
             
             {/* Colorful background effect */}
             <div className="absolute inset-0 z-0">
@@ -101,13 +98,6 @@ const Login: React.FC = () => {
                         <Link to="/cadastro" className="font-medium text-primary hover:text-primary-dark">
                             Cadastre-se
                         </Link>
-                    </div>
-                </div>
-                
-                <div className="bg-slate-100/70 dark:bg-slate-900/70 p-4 border-t border-slate-200/80 dark:border-slate-700/80 text-center text-sm text-slate-500 dark:text-slate-400">
-                    <div>
-                        <span className="font-semibold">Publicador:</span>
-                        <span> Email: <b>publicador@local</b> | Senha: <b>123</b></span>
                     </div>
                 </div>
             </div>

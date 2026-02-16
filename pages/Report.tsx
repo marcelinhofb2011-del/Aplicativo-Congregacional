@@ -1,6 +1,8 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import { PublisherProfile, FieldServiceReport } from '../types';
 import { addReport, getPublisherProfiles } from '../services/firestoreService';
 import PublisherSearchModal from '../components/PublisherSearchModal';
@@ -9,6 +11,7 @@ import { MagnifyingGlassIcon, CalendarDaysIcon } from '../components/icons/Icons
 
 const Report: React.FC = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
 
     // Form state
     const [allPublishers, setAllPublishers] = useState<PublisherProfile[]>([]);
@@ -65,7 +68,7 @@ const Report: React.FC = () => {
     
     const handleSubmitReport = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedPublisher || !group) {
+        if (!user || !selectedPublisher || !group) {
             alert("Por favor, selecione um publicador e um grupo.");
             return;
         }
@@ -73,14 +76,13 @@ const Report: React.FC = () => {
         const [year, month] = date.split('-').map(Number);
         const reportDate = new Date(Date.UTC(year, month - 1, 1));
 
-        const reportData: Omit<FieldServiceReport, 'id'> = {
+        const reportData: Omit<FieldServiceReport, 'id' | 'submittedAt'> = {
             publisherId: selectedPublisher.id,
             publisherName: selectedPublisher.name,
             group: group,
             date: reportDate.toISOString(),
             privilege,
             notes,
-            submittedAt: new Date().toISOString(),
             ...(privilege === 'PIONEER' 
                 ? { hours: Number(hours) || 0, minutes: Number(minutes) || 0, revisits: Number(revisits) || 0, studies: Number(studies) || 0 }
                 : { hasParticipated, revisits: hasParticipated ? Number(revisits) || 0 : 0, studies: hasParticipated ? Number(studies) || 0 : 0 }
@@ -88,7 +90,7 @@ const Report: React.FC = () => {
         };
 
         try {
-            await addReport(reportData);
+            await addReport(reportData, user.uid);
             setToastMessage('Relatório enviado com sucesso!');
             resetForm();
             setTimeout(() => {

@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -13,11 +14,17 @@ import {
     PublicTalkSchedule,
     ShepherdingVisit,
     Announcement,
+    DashboardSchedule,
 } from '../types';
 import DashboardWindow from '../components/DashboardWindow';
 import AnnouncementsWidget from '../components/AnnouncementsWidget';
 import { getAnnouncements } from '../services/firestoreService';
 import { SECONDARY_NAV_ITEMS } from '../constants';
+import LifeMinistryWidget from '../components/LifeMinistryWidget';
+import ScheduleDetailModal from '../components/ScheduleDetailModal';
+import AssignmentsWidget from '../components/AssignmentsWidget';
+import CombinedScheduleWidget from '../components/CombinedScheduleWidget';
+
 
 const Dashboard: React.FC = () => {
     const { user } = useAuth();
@@ -26,6 +33,11 @@ const Dashboard: React.FC = () => {
     const [dashboardWindows, setDashboardWindows] = useState<any[]>([]);
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [isLoadingAnnouncements, setIsLoadingAnnouncements] = useState(true);
+    const [viewingSchedule, setViewingSchedule] = useState<DashboardSchedule | null>(null);
+    const [nextLifeMinistry, setNextLifeMinistry] = useState<LifeMinistrySchedule | undefined>(undefined);
+    const [nextAssignment, setNextAssignment] = useState<Assignment | undefined>(undefined);
+    const [nextCleaningSchedule, setNextCleaningSchedule] = useState<CleaningSchedule | undefined>(undefined);
+    const [nextFieldServiceMeeting, setNextFieldServiceMeeting] = useState<ConductorMeeting | undefined>(undefined);
 
     useEffect(() => {
         const fetchAnnouncements = async () => {
@@ -49,7 +61,7 @@ const Dashboard: React.FC = () => {
 
         const loadDashboardData = () => {
             try {
-                const lifeMinistrySchedules = schedules.filter(s => 'president' in s) as LifeMinistrySchedule[];
+                const lifeMinistrySchedules = schedules.filter(s => 'president' in s && s.week) as LifeMinistrySchedule[];
                 const assignments = schedules.filter(s => 'indicator1' in s || 'mic1' in s) as Assignment[];
                 const cleaningSchedules = schedules.filter(s => 'endDate' in s) as CleaningSchedule[];
                 const conductorMeetings = schedules.filter(s => 'conductorName' in s) as ConductorMeeting[];
@@ -59,18 +71,44 @@ const Dashboard: React.FC = () => {
                 const today = new Date();
                 today.setUTCHours(0, 0, 0, 0);
                 
+                const upcomingLifeMinistry = lifeMinistrySchedules
+                    .filter(s => {
+                        const startDate = new Date(s.date);
+                        const endDate = new Date(startDate);
+                        endDate.setUTCDate(endDate.getUTCDate() + 6);
+                        return endDate >= today;
+                    })
+                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+                setNextLifeMinistry(upcomingLifeMinistry[0]);
+
+                const upcomingAssignments = assignments
+                    .filter(s => new Date(s.date) >= today)
+                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                setNextAssignment(upcomingAssignments[0]);
+
+                const upcomingCleaning = cleaningSchedules
+                    .filter(s => new Date(s.endDate) >= today)
+                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                setNextCleaningSchedule(upcomingCleaning[0]);
+
+                const upcomingFieldService = conductorMeetings
+                    .filter(s => new Date(s.date) >= today)
+                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                setNextFieldServiceMeeting(upcomingFieldService[0]);
+
+
                 const isUpcoming = (item: any, typeHint: string): boolean => {
                     const scheduleData = item.fullData || item;
+
+                    if (!scheduleData.date || isNaN(new Date(scheduleData.date).getTime())) {
+                        return false;
+                    }
                     
                     if (typeHint === 'Limpeza' || typeHint === '/limpeza') {
                         return new Date(scheduleData.endDate) >= today;
                     }
-                    if (typeHint === 'Vida e Ministério' || typeHint === '/vida-e-ministerio') {
-                        const startDate = new Date(scheduleData.date);
-                        const endDate = new Date(startDate);
-                        endDate.setUTCDate(endDate.getUTCDate() + 6);
-                        return endDate >= today;
-                    }
+                    
                     return new Date(scheduleData.date) >= today;
                 };
                 
@@ -84,10 +122,6 @@ const Dashboard: React.FC = () => {
                     : publicTalks;
 
                 const dataMap: { [key: string]: BaseRecord[] } = {
-                    '/vida-e-ministerio': lifeMinistrySchedules,
-                    '/designacoes': assignments,
-                    '/limpeza': cleaningSchedules,
-                    '/dirigentes': conductorMeetings,
                     '/pastoreio': shepherdingVisits,
                     '/discurso-publico': dashboardPublicTalks,
                 };
@@ -113,39 +147,75 @@ const Dashboard: React.FC = () => {
         loadDashboardData();
     }, [user, schedules, isLoadingSchedules, location]);
 
+    const handleViewLifeMinistryDetails = (scheduleData: LifeMinistrySchedule) => {
+        setViewingSchedule({
+            id: scheduleData.id,
+            type: 'Vida e Ministério',
+            title: `Programação - ${scheduleData.week}`,
+            date: scheduleData.date,
+            details: '',
+            fullData: scheduleData,
+        });
+    };
+    
+    const handleViewAssignmentDetails = (scheduleData: Assignment) => {
+        setViewingSchedule({
+            id: scheduleData.id,
+            type: 'Designações',
+            title: `Designações - ${new Date(scheduleData.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}`,
+            date: scheduleData.date,
+            details: '',
+            fullData: scheduleData,
+        });
+    };
+
     const welcomeMessage = `Olá, ${user?.displayName || user?.email?.split('@')[0] || 'irmão'}!`;
     const subtitle = user?.role === UserRole.SERVANT
         ? "Aqui está um resumo das próximas atividades e anúncios."
         : "Consulte os anúncios e as próximas atividades da congregação.";
 
     const renderDashboardContent = () => (
-        <>
-            {isLoadingSchedules && dashboardWindows.length === 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[...Array(6)].map((_, i) => <div key={i} className="h-48 bg-slate-200/50 dark:bg-slate-700/50 rounded-3xl animate-pulse"></div>)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="animate-fade-in-up">
+                <LifeMinistryWidget 
+                    schedule={nextLifeMinistry}
+                    isLoading={isLoadingSchedules}
+                    onDetailsClick={handleViewLifeMinistryDetails}
+                />
+            </div>
+             <div className="animate-fade-in-up" style={{ animationDelay: `75ms` }}>
+                <AssignmentsWidget 
+                    schedule={nextAssignment}
+                    isLoading={isLoadingSchedules}
+                    onDetailsClick={handleViewAssignmentDetails}
+                />
+            </div>
+            <div className="animate-fade-in-up" style={{ animationDelay: '150ms' }}>
+                <CombinedScheduleWidget 
+                    cleaningSchedule={nextCleaningSchedule}
+                    fieldServiceMeeting={nextFieldServiceMeeting}
+                    isLoading={isLoadingSchedules}
+                />
+            </div>
+            {dashboardWindows.length > 0 ? dashboardWindows.map((window, index) => (
+                <div key={window.path} className="animate-fade-in-up" style={{ animationDelay: `${(index + 3) * 75}ms` }}>
+                    <DashboardWindow
+                        title={window.label}
+                        icon={window.icon}
+                        count={window.count}
+                        path={window.path}
+                        colorClass={window.color || 'text-slate-500'}
+                        hasNewItem={window.hasNewItem}
+                    />
                 </div>
-            ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {dashboardWindows.length > 0 ? dashboardWindows.map((window, index) => (
-                        <div key={window.path} className="animate-fade-in-up" style={{ animationDelay: `${index * 75}ms` }}>
-                            <DashboardWindow
-                                title={window.label}
-                                icon={window.icon}
-                                count={window.count}
-                                path={window.path}
-                                colorClass={window.color || 'text-slate-500'}
-                                hasNewItem={window.hasNewItem}
-                            />
-                        </div>
-                    )) : (
-                         <div className="sm:col-span-2 lg:col-span-3 text-center py-10 px-6 bg-white dark:bg-slate-800 rounded-lg shadow-md">
-                            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Nenhuma programação futura encontrada.</h3>
-                            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Quando novas programações forem criadas, elas aparecerão aqui.</p>
-                        </div>
-                    )}
-                </div>
+            )) : (
+                 !isLoadingSchedules && !nextLifeMinistry && !nextAssignment && !nextCleaningSchedule && !nextFieldServiceMeeting && (
+                     <div className="sm:col-span-2 lg:col-span-3 text-center py-10 px-6 bg-white dark:bg-slate-800 rounded-lg shadow-md">
+                        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Nenhuma outra programação futura encontrada.</h3>
+                    </div>
+                 )
             )}
-        </>
+        </div>
     );
 
     return (
@@ -163,6 +233,11 @@ const Dashboard: React.FC = () => {
                 <AnnouncementsWidget announcements={announcements} isLoading={isLoadingAnnouncements} />
                 {renderDashboardContent()}
             </div>
+            
+            <ScheduleDetailModal
+                schedule={viewingSchedule}
+                onClose={() => setViewingSchedule(null)}
+            />
         </>
     );
 };

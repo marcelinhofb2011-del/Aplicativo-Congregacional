@@ -16,11 +16,11 @@ root.render(
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // Usar caminho absoluto ajuda a evitar problemas de escopo em PWAs
-    navigator.serviceWorker.register('/service-worker.js').then(registration => {
+    // Usar caminho relativo garante que o worker seja encontrado na mesma origem.
+    navigator.serviceWorker.register('./service-worker.js').then(registration => {
       console.log('ServiceWorker registrado com sucesso:', registration.scope);
     }).catch(err => {
-      console.warn('Falha ao registrar ServiceWorker (comum em previews):', err);
+      console.warn('Falha ao registrar ServiceWorker:', err);
     });
   });
 }

@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -29,17 +30,32 @@ const LifeMinistry: React.FC = () => {
     useEffect(() => {
         fetchSchedules();
     }, []);
+    
+    const upcomingSchedules = useMemo(() => {
+        const today = new Date();
+        today.setUTCHours(0, 0, 0, 0);
 
-    const displaySchedules = useMemo(() => {
-        // Remove all filters to ensure data is displayed.
-        // Sort safely, putting items without a valid date at the end.
-        return [...schedules].sort((a, b) => {
-            const dateA = a?.date ? new Date(a.date).getTime() : 0;
-            const dateB = b?.date ? new Date(b.date).getTime() : 0;
-            if (!dateA || isNaN(dateA)) return 1;
-            if (!dateB || isNaN(dateB)) return -1;
-            return dateB - dateA; // Sort descending (most recent first)
-        });
+        const getWeekEndDate = (startDateString: string): Date => {
+            const startDate = new Date(startDateString);
+            const endDate = new Date(startDate);
+            endDate.setUTCDate(endDate.getUTCDate() + 6);
+            return endDate;
+        };
+        
+        // Etapa 1: Filtrar explicitamente para garantir que temos apenas programações de Vida e Ministério.
+        const lifeMinistrySchedules = schedules.filter(s => 'president' in s && s.date) as LifeMinistrySchedule[];
+
+        // Etapa 2: Aplicar a lógica de data apenas na lista limpa.
+        return lifeMinistrySchedules
+            .filter(s => {
+                if (!s.date || isNaN(new Date(s.date).getTime())) {
+                    return false;
+                }
+                const weekEndDate = getWeekEndDate(s.date);
+                return weekEndDate >= today;
+            })
+            // A ordenação agora é feita pelo servidor, mas podemos garantir aqui também.
+            .sort((a, b) => a.date.localeCompare(b.date));
     }, [schedules]);
 
 
@@ -47,6 +63,7 @@ const LifeMinistry: React.FC = () => {
         setIsLoading(true);
         try {
             const fetchedSchedules = await getSchedules();
+            console.log("Schedules fetched for Life & Ministry:", fetchedSchedules); // Log para depuração
             setSchedules(fetchedSchedules);
         } catch (error) {
             console.error("Failed to fetch schedules:", error);
@@ -72,7 +89,7 @@ const LifeMinistry: React.FC = () => {
         setAllExpanded(prev => {
             const nextState = !prev;
             if (nextState) {
-                setExpandedItems(new Set(displaySchedules.map(s => s.id)));
+                setExpandedItems(new Set(upcomingSchedules.map(s => s.id)));
             } else {
                 setExpandedItems(new Set());
             }
@@ -205,17 +222,17 @@ const LifeMinistry: React.FC = () => {
             </div>
             
             <div className="p-4 sm:p-6 lg:p-8">
-                {displaySchedules.length > 0 && (
+                {upcomingSchedules.length > 0 && (
                     <div className="mb-4">
                         <button onClick={toggleAll} className="px-4 py-2 text-sm font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600">
-                            {allExpanded ? 'Ocultar Todos' : 'Mostrar Todos'}
+                            {allExpanded ? 'Ocultar Programação' : 'Mostrar Programação'}
                         </button>
                     </div>
                 )}
 
                 {isLoading ? <p>Carregando...</p> : (
                      <div className="space-y-4">
-                        {displaySchedules.length > 0 ? displaySchedules.map(schedule => (
+                        {upcomingSchedules.length > 0 ? upcomingSchedules.map(schedule => (
                             <ScheduleAccordion
                                 key={schedule.id}
                                 isOpen={expandedItems.has(schedule.id)}
@@ -242,7 +259,7 @@ const LifeMinistry: React.FC = () => {
                             </ScheduleAccordion>
                         )) : (
                              <div className="p-6 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 rounded-lg shadow-md">
-                                Nenhuma programação encontrada. Verifique se há dados na coleção 'vida_e_ministerio'.
+                                Nenhuma programação futura encontrada.
                             </div>
                         )}
                     </div>

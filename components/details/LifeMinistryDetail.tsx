@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { LifeMinistrySchedule } from '../../types';
 
@@ -27,8 +28,8 @@ const DetailRow: React.FC<{
 const LifeMinistryDetail: React.FC<{ schedule: LifeMinistrySchedule }> = ({ schedule }) => {
 
     // Filter out empty parts from arrays to correctly number the meeting items.
-    const activeChristianLifeParts = schedule.christianLifeParts.filter(p => p.theme && p.speaker);
-    const activeStudentParts = schedule.studentParts.filter(p => p.theme && p.student);
+    const activeChristianLifeParts = schedule?.christianLifeParts?.filter(p => p.theme && p.speaker) || [];
+    const activeStudentParts = schedule?.studentParts?.filter(p => p.theme && p.student) || [];
     let partCounter = 3; // Starts after Treasures parts.
 
     return (
@@ -38,20 +39,20 @@ const LifeMinistryDetail: React.FC<{ schedule: LifeMinistrySchedule }> = ({ sche
             </h2>
             <hr className="border-slate-400 dark:border-slate-600 mb-4" />
             
-            <h3 className="text-center font-bold text-slate-700 dark:text-slate-300 mb-2">{schedule.week}</h3>
+            <h3 className="text-center font-bold text-slate-700 dark:text-slate-300 mb-2">{schedule?.week || 'Semana não definida'}</h3>
             
             <div className="flex justify-end text-sm mb-2">
-                <p>Presidente: <span className="font-semibold">{schedule.president}</span></p>
+                <p>Presidente: <span className="font-semibold">{schedule?.president || 'Não definido'}</span></p>
             </div>
 
             <div className="border-b border-slate-200 dark:border-slate-700">
                  <div className="flex justify-between items-start py-2">
                     <div>
-                        <p className="font-bold text-slate-800 dark:text-slate-200">• Cântico {schedule.initialSong}</p>
+                        <p className="font-bold text-slate-800 dark:text-slate-200">• Cântico {schedule?.initialSong || 'N/D'}</p>
                         <p className="text-slate-800 dark:text-slate-200">• Comentários iniciais (1 min)</p>
                     </div>
                     <div className="text-right text-sm">
-                         <p>Oração: <span className="font-semibold">{schedule.initialPrayer}</span></p>
+                         <p>Oração: <span className="font-semibold">{schedule?.initialPrayer || 'Não definido'}</span></p>
                     </div>
                 </div>
             </div>
@@ -61,16 +62,16 @@ const LifeMinistryDetail: React.FC<{ schedule: LifeMinistrySchedule }> = ({ sche
                 <SectionHeader title="Tesouros da Palavra de Deus" colorClass="bg-slate-600" />
                 <div className="px-4 py-2 border border-t-0 border-slate-200 dark:border-slate-700 rounded-b-md">
                     <DetailRow 
-                        left={<>1. {schedule.treasuresTheme.theme} <span className="text-slate-500">(10 min)</span></>}
-                        right={schedule.treasuresTheme.speaker}
+                        left={<>1. {schedule?.treasuresTheme?.theme || 'Tema não definido'} <span className="text-slate-500">(10 min)</span></>}
+                        right={schedule?.treasuresTheme?.speaker || 'Não definido'}
                     />
                     <DetailRow 
                         left={<>2. Joias espirituais <span className="text-slate-500">(10 min)</span></>}
-                        right={schedule.spiritualGems.speaker}
+                        right={schedule?.spiritualGems?.speaker || 'Não definido'}
                     />
                     <DetailRow 
                         left={<>3. Leitura da Bíblia <span className="text-slate-500">(4 min)</span></>}
-                        right={schedule.bibleReading.student}
+                        right={schedule?.bibleReading?.student || 'Não definido'}
                     />
                 </div>
             </div>
@@ -111,7 +112,7 @@ const LifeMinistryDetail: React.FC<{ schedule: LifeMinistrySchedule }> = ({ sche
              <div className="mt-6">
                 <SectionHeader title="Nossa Vida Cristã" colorClass="bg-rose-700" />
                  <div className="px-4 py-2 border border-t-0 border-slate-200 dark:border-slate-700 rounded-b-md">
-                    <DetailRow left={`• Cântico ${schedule.intermediateSong}`} isSong />
+                    <DetailRow left={`• Cântico ${schedule?.intermediateSong || 'N/D'}`} isSong />
                     
                     {activeChristianLifeParts.map((part) => {
                        partCounter++;
@@ -129,14 +130,14 @@ const LifeMinistryDetail: React.FC<{ schedule: LifeMinistrySchedule }> = ({ sche
                         right={
                             <>
                                 <span className="text-xs text-slate-500 dark:text-slate-400 block">Dirigente/leitor</span>
-                                {schedule.congregationBibleStudy.conductor} / {schedule.congregationBibleStudy.reader}
+                                {schedule?.congregationBibleStudy?.conductor || 'N/D'} / {schedule?.congregationBibleStudy?.reader || 'N/D'}
                             </>
                         }
                     />
-                     <DetailRow left={`• Cântico ${schedule.finalSong}`} isSong />
+                     <DetailRow left={`• Cântico ${schedule?.finalSong || 'N/D'}`} isSong />
                      <div className="flex justify-end items-center py-2 text-sm">
                          <div className="text-right">
-                            <p>Oração: <span className="font-semibold">{schedule.finalPrayer}</span></p>
+                            <p>Oração: <span className="font-semibold">{schedule?.finalPrayer || 'Não definido'}</span></p>
                         </div>
                      </div>
                 </div>
