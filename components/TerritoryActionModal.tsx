@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Territory, TerritoryStatus, User, UserRole } from '../types';
 import { XIcon } from './icons/Icons';
@@ -21,8 +22,7 @@ const TerritoryActionModal: React.FC<TerritoryActionModalProps> = ({ isOpen, onC
 
     useEffect(() => {
         if (territory) {
-            // Pre-fill form for convenience
-            setPublisherName(user?.email || '');
+            setPublisherName(user?.displayName || user?.email || '');
             const futureDate = new Date();
             futureDate.setDate(futureDate.getDate() + 30);
             setReturnDate(futureDate.toISOString().split('T')[0]);
@@ -40,48 +40,52 @@ const TerritoryActionModal: React.FC<TerritoryActionModalProps> = ({ isOpen, onC
     const isServant = user.role === UserRole.SERVANT;
 
     const renderContent = () => {
-        // Servant view of Assigned territory
-        if (isServant && territory.status === TerritoryStatus.ASSIGNED && territory.assignment) {
-            return (
-                <div>
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Território Designado</h3>
-                    <div className="mt-4 space-y-3 text-sm">
-                        <p><span className="font-semibold">Irmão:</span> {territory.assignment.publisherName}</p>
-                        <p><span className="font-semibold">Retirada:</span> {new Date(territory.assignment.checkoutDate).toLocaleDateString('pt-BR')}</p>
-                        <p><span className="font-semibold">Devolução Prevista:</span> {new Date(territory.assignment.expectedReturnDate).toLocaleDateString('pt-BR')}</p>
-                        {territory.assignment.requestNotes && <p><span className="font-semibold">Observação:</span> {territory.assignment.requestNotes}</p>}
+        const { status, assignment } = territory;
+
+        // --- SERVANT ACTIONS (Highest Priority) ---
+        if (isServant) {
+            if (status === TerritoryStatus.REQUESTED && assignment) {
+                return (
+                    <div>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Analisar Solicitação</h3>
+                        <div className="mt-4 space-y-3 text-sm">
+                            <p><span className="font-semibold">Solicitante:</span> {assignment.publisherName}</p>
+                            <p><span className="font-semibold">Devolução Prevista:</span> {new Date(assignment.expectedReturnDate).toLocaleDateString('pt-BR')}</p>
+                            {assignment.requestNotes && <p><span className="font-semibold">Observação:</span> {assignment.requestNotes}</p>}
+                        </div>
+                        <div className="mt-6 flex justify-end space-x-3">
+                            <button onClick={() => onReject(territory.id)} className="px-5 py-2.5 bg-red-600 text-white rounded-md hover:bg-red-700">
+                                Rejeitar
+                            </button>
+                            <button onClick={() => onApprove(territory.id)} className="px-5 py-2.5 bg-primary text-white rounded-md hover:bg-primary-dark">
+                                Aprovar
+                            </button>
+                        </div>
                     </div>
-                    <div className="mt-6 flex justify-end">
-                        <button onClick={() => onReturn(territory.id)} className="px-5 py-2.5 bg-green-600 text-white rounded-md hover:bg-green-700">
-                            Marcar como Devolvido
-                        </button>
+                );
+            }
+            if (status === TerritoryStatus.ASSIGNED && assignment) {
+                return (
+                    <div>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Território Designado</h3>
+                        <div className="mt-4 space-y-3 text-sm">
+                            <p><span className="font-semibold">Irmão:</span> {assignment.publisherName}</p>
+                            <p><span className="font-semibold">Retirada:</span> {new Date(assignment.checkoutDate).toLocaleDateString('pt-BR')}</p>
+                            <p><span className="font-semibold">Devolução Prevista:</span> {new Date(assignment.expectedReturnDate).toLocaleDateString('pt-BR')}</p>
+                            {assignment.requestNotes && <p><span className="font-semibold">Observação:</span> {assignment.requestNotes}</p>}
+                        </div>
+                        <div className="mt-6 flex justify-end">
+                            <button onClick={() => onReturn(territory.id)} className="px-5 py-2.5 bg-green-600 text-white rounded-md hover:bg-green-700">
+                                Marcar como Devolvido
+                            </button>
+                        </div>
                     </div>
-                </div>
-            );
+                );
+            }
         }
-        // Servant view of Requested territory
-        if (isServant && territory.status === TerritoryStatus.REQUESTED && territory.assignment) {
-            return (
-                <div>
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Analisar Solicitação</h3>
-                    <div className="mt-4 space-y-3 text-sm">
-                        <p><span className="font-semibold">Solicitante:</span> {territory.assignment.publisherName}</p>
-                        <p><span className="font-semibold">Devolução Prevista:</span> {new Date(territory.assignment.expectedReturnDate).toLocaleDateString('pt-BR')}</p>
-                        {territory.assignment.requestNotes && <p><span className="font-semibold">Observação:</span> {territory.assignment.requestNotes}</p>}
-                    </div>
-                    <div className="mt-6 flex justify-end space-x-3">
-                        <button onClick={() => onReject(territory.id)} className="px-5 py-2.5 bg-red-600 text-white rounded-md hover:bg-red-700">
-                            Rejeitar
-                        </button>
-                        <button onClick={() => onApprove(territory.id)} className="px-5 py-2.5 bg-primary text-white rounded-md hover:bg-primary-dark">
-                            Aprovar
-                        </button>
-                    </div>
-                </div>
-            );
-        }
-        // Publisher view to Request
-        if (territory.status === TerritoryStatus.AVAILABLE) {
+
+        // --- ACTIONS FOR ALL USERS ---
+        if (status === TerritoryStatus.AVAILABLE) {
             return (
                 <form onSubmit={handleRequestSubmit}>
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Solicitar Território {territory.number}</h3>
@@ -96,7 +100,7 @@ const TerritoryActionModal: React.FC<TerritoryActionModalProps> = ({ isOpen, onC
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Observação (opcional)</label>
-                            <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} className="input-style"></textarea>
+                            <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} className="input-style" placeholder="Ex: cobrir apenas lado par da rua."></textarea>
                         </div>
                     </div>
                     <div className="mt-6 flex justify-end">
@@ -108,7 +112,34 @@ const TerritoryActionModal: React.FC<TerritoryActionModalProps> = ({ isOpen, onC
             );
         }
         
-        // Fallback for non-actionable states
+        // --- INFORMATIONAL VIEWS (for states with no actions for the current user) ---
+        if (status === TerritoryStatus.REQUESTED && assignment) {
+            return (
+                <div>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Território Solicitado</h3>
+                    <div className="mt-4 space-y-3 text-sm">
+                        <p><span className="font-semibold">Solicitante:</span> {assignment.publisherName}</p>
+                        <p><span className="font-semibold">Devolução Prevista:</span> {new Date(assignment.expectedReturnDate).toLocaleDateString('pt-BR')}</p>
+                        {assignment.requestNotes && <p><span className="font-semibold">Observação:</span> {assignment.requestNotes}</p>}
+                    </div>
+                    <p className="mt-4 text-xs text-slate-500">Aguardando aprovação do superintendente de serviço.</p>
+                </div>
+            );
+        }
+
+        if (status === TerritoryStatus.ASSIGNED && assignment) {
+             return (
+                <div>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Território Designado</h3>
+                    <div className="mt-4 space-y-3 text-sm">
+                        <p><span className="font-semibold">Designado para:</span> {assignment.publisherName}</p>
+                        <p><span className="font-semibold">Data da Retirada:</span> {new Date(assignment.checkoutDate).toLocaleDateString('pt-BR')}</p>
+                        <p><span className="font-semibold">Devolução Prevista:</span> {new Date(assignment.expectedReturnDate).toLocaleDateString('pt-BR')}</p>
+                    </div>
+                </div>
+            );
+        }
+
         return <p>Este território não pode ser solicitado no momento.</p>;
     };
 
@@ -116,7 +147,8 @@ const TerritoryActionModal: React.FC<TerritoryActionModalProps> = ({ isOpen, onC
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={onClose}>
             <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-md" onClick={e => e.stopPropagation()}>
                 <div className="p-6">
-                    <div className="flex justify-end">
+                    <div className="flex justify-between items-center mb-4">
+                         <h3 className="text-xl font-bold text-slate-800 dark:text-white">Território {territory.number}</h3>
                          <button onClick={onClose}><XIcon className="h-6 w-6 text-slate-500" /></button>
                     </div>
                     {renderContent()}

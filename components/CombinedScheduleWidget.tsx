@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { CleaningSchedule, ConductorMeeting } from '../types';
 import { CleaningIcon, ConductorIcon } from './icons/Icons';
@@ -23,20 +24,20 @@ const CombinedScheduleWidget: React.FC<CombinedScheduleWidgetProps> = ({ cleanin
         if (!cleaningSchedule) {
             return (
                 <div className="flex items-center gap-4 opacity-60">
-                    <CleaningIcon className="h-6 w-6 text-violet-200 flex-shrink-0" />
+                    <CleaningIcon className="h-6 w-6 text-purple-500 dark:text-purple-400 flex-shrink-0" />
                     <div>
-                        <p className="font-semibold text-white">Limpeza do Salão</p>
-                        <p className="text-sm text-violet-200">Nenhuma escala futura.</p>
+                        <p className="font-semibold text-slate-800 dark:text-slate-200">Limpeza do Salão</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Nenhuma escala futura.</p>
                     </div>
                 </div>
             );
         }
         return (
             <div className="flex items-center gap-4">
-                <CleaningIcon className="h-6 w-6 text-violet-200 flex-shrink-0" />
+                <CleaningIcon className="h-6 w-6 text-purple-500 dark:text-purple-400 flex-shrink-0" />
                 <div>
-                    <p className="font-semibold text-white">Limpeza do Salão</p>
-                    <p className="text-sm text-violet-200">
+                    <p className="font-semibold text-slate-800 dark:text-slate-200">Limpeza do Salão</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
                         {cleaningSchedule.group}: {formatDate(cleaningSchedule.date)} a {formatDate(cleaningSchedule.endDate)}
                     </p>
                 </div>
@@ -48,10 +49,10 @@ const CombinedScheduleWidget: React.FC<CombinedScheduleWidgetProps> = ({ cleanin
         if (!fieldServiceMeeting) {
             return (
                 <div className="flex items-center gap-4 opacity-60">
-                    <ConductorIcon className="h-6 w-6 text-violet-200 flex-shrink-0" />
+                    <ConductorIcon className="h-6 w-6 text-cyan-500 dark:text-cyan-400 flex-shrink-0" />
                     <div>
-                        <p className="font-semibold text-white">Serviço de Campo</p>
-                        <p className="text-sm text-violet-200">Nenhuma reunião futura.</p>
+                        <p className="font-semibold text-slate-800 dark:text-slate-200">Serviço de Campo</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Nenhuma reunião futura.</p>
                     </div>
                 </div>
             );
@@ -59,14 +60,14 @@ const CombinedScheduleWidget: React.FC<CombinedScheduleWidgetProps> = ({ cleanin
         const meetingDate = new Date(fieldServiceMeeting.date).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'short', timeZone: 'UTC' });
         return (
             <div className="flex items-center gap-4">
-                <ConductorIcon className="h-6 w-6 text-violet-200 flex-shrink-0" />
+                <ConductorIcon className="h-6 w-6 text-cyan-500 dark:text-cyan-400 flex-shrink-0" />
                 <div>
-                    <p className="font-semibold text-white">Serviço de Campo</p>
-                    <p className="text-sm text-violet-200">
+                    <p className="font-semibold text-slate-800 dark:text-slate-200">Serviço de Campo</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
                         {fieldServiceMeeting.conductorName} - {meetingDate}
                     </p>
                     {fieldServiceMeeting.notes && (
-                        <p className="text-xs text-violet-100 mt-1 truncate">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">
                             {fieldServiceMeeting.notes}
                         </p>
                     )}
@@ -77,10 +78,10 @@ const CombinedScheduleWidget: React.FC<CombinedScheduleWidgetProps> = ({ cleanin
 
 
     return (
-        <div className="relative flex flex-col justify-around h-full bg-gradient-to-br from-violet-500 to-fuchsia-500 dark:from-violet-800 dark:to-fuchsia-900 rounded-3xl shadow-lg p-6" style={{minHeight: '224px'}}>
+        <div className="relative flex flex-col justify-around h-full bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl shadow-lg border border-white/50 dark:border-slate-700/50 p-6" style={{minHeight: '224px'}}>
            {renderCleaningContent()}
            
-           {(hasCleaning && hasFieldService) && <div className="border-t border-white/20 my-2"></div>}
+           {(hasCleaning && hasFieldService) && <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>}
            
            {renderFieldServiceContent()}
         </div>

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -17,10 +16,11 @@ const BottomNav: React.FC = () => {
                 : 'text-blue-100 hover:text-white'
         }`;
         
-    // Para publicadores, mostrar todos os itens definidos.
-    // Para servos, mostrar apenas o painel, pois o menu já dá acesso a tudo.
+    // FIX: Refactored logic to fix invalid JSX and avoid duplicate links.
+    // For servants, show Dashboard, Calendar, and Menu.
+    // For publishers, show all default bottom nav items.
     const itemsToShow = user.role === UserRole.SERVANT
-        ? BOTTOM_NAV_ITEMS.filter(item => item.path === '/dashboard')
+        ? BOTTOM_NAV_ITEMS.filter(item => item.path !== '/assistencia')
         : BOTTOM_NAV_ITEMS;
 
     return (
@@ -32,7 +32,7 @@ const BottomNav: React.FC = () => {
                 </NavLink>
             ))}
             {user.role === UserRole.SERVANT && (
-                <NavLink to="/menu" className={navLinkClass}>
+                 <NavLink to="/menu" className={navLinkClass}>
                     <Squares2X2Icon className="h-6 w-6 mb-1" />
                     <span>Menu</span>
                 </NavLink>

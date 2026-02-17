@@ -62,7 +62,16 @@ const Dashboard: React.FC = () => {
         const loadDashboardData = () => {
             try {
                 const lifeMinistrySchedules = schedules.filter(s => 'president' in s && s.week) as LifeMinistrySchedule[];
-                const assignments = schedules.filter(s => 'indicator1' in s || 'mic1' in s) as Assignment[];
+                
+                const assignments = schedules.filter(s => {
+                    // Um item é considerado uma "Designação" se tiver funções de plataforma
+                    // mas NÃO for uma programação de "Vida e Ministério" (que também tem presidente).
+                    // A propriedade 'week' é única da Vida e Ministério e nos ajuda a diferenciar.
+                    const isPotentiallyAssignment = 'president' in s || 'indicator1' in s || 'mic1' in s || 'reader' in s || 'audio' in s;
+                    const isLifeMinistry = 'week' in s || 'studentParts' in s;
+                    return isPotentiallyAssignment && !isLifeMinistry;
+                }) as Assignment[];
+
                 const cleaningSchedules = schedules.filter(s => 'endDate' in s) as CleaningSchedule[];
                 const conductorMeetings = schedules.filter(s => 'conductorName' in s) as ConductorMeeting[];
                 const publicTalks = schedules.filter(s => 'theme' in s && 'speakerName' in s) as PublicTalkSchedule[];
@@ -220,16 +229,15 @@ const Dashboard: React.FC = () => {
 
     return (
         <>
-            <div className="sticky top-0 z-10 bg-primary p-4 sm:p-6 lg:p-8">
-                <h1 className="text-3xl font-bold tracking-tight text-white">
-                    {welcomeMessage}
-                </h1>
-                <p className="mt-2 text-blue-100">
-                    {subtitle}
-                </p>
-            </div>
-
             <div className="p-4 sm:p-6 lg:p-8 space-y-8">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+                        {welcomeMessage}
+                    </h1>
+                    <p className="mt-2 text-slate-600 dark:text-slate-400">
+                        {subtitle}
+                    </p>
+                </div>
                 <AnnouncementsWidget announcements={announcements} isLoading={isLoadingAnnouncements} />
                 {renderDashboardContent()}
             </div>
