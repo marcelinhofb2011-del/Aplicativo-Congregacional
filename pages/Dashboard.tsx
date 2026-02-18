@@ -27,12 +27,37 @@ type UpcomingEvent = {
     fullData: LifeMinistrySchedule | Assignment | CleaningSchedule | ConductorMeeting;
 };
 
-// Helper function to find the next upcoming event from a list
-const findNextUpcoming = <T extends { date: string }>(items: T[]): T | undefined => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+// Helper for events that span a period (Life & Ministry, Cleaning)
+const findNextUpcomingRange = <T extends { date: string, endDate?: string }>(items: T[]): T | undefined => {
+    const now = new Date();
+    const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
     return items
+        .filter(item => {
+            if (!item.date || isNaN(new Date(item.date).getTime())) return false;
+
+            let endDate: Date;
+            if (item.endDate && !isNaN(new Date(item.endDate).getTime())) {
+                endDate = new Date(item.endDate);
+            } else {
+                // For LifeMinistrySchedule, which lasts for a week (start date + 6 days)
+                const startDate = new Date(item.date);
+                endDate = new Date(startDate.getTime());
+                endDate.setUTCDate(startDate.getUTCDate() + 6);
+            }
+            return endDate >= today;
+        })
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+};
+
+// Helper for single-day events (Assignments, Field Service)
+const findNextUpcoming = <T extends { date: string }>(items: T[]): T | undefined => {
+    const now = new Date();
+    // Use UTC date for comparison to avoid timezone issues
+    const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+
+    return items
+        .filter(item => item.date && !isNaN(new Date(item.date).getTime()))
         .filter(item => new Date(item.date) >= today)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
 };
@@ -93,9 +118,9 @@ const Dashboard: React.FC = () => {
         const cleaningSchedules = schedules.filter(s => 'group' in s && 'endDate' in s) as CleaningSchedule[];
         const fieldServiceSchedules = schedules.filter(s => 'conductorName' in s) as ConductorMeeting[];
 
-        setNextLifeMinistry(findNextUpcoming(lifeMinistrySchedules));
+        setNextLifeMinistry(findNextUpcomingRange(lifeMinistrySchedules));
         setNextAssignment(findNextUpcoming(assignmentSchedules));
-        setNextCleaning(findNextUpcoming(cleaningSchedules));
+        setNextCleaning(findNextUpcomingRange(cleaningSchedules));
         setNextFieldService(findNextUpcoming(fieldServiceSchedules));
 
     }, [user, schedules, isLoadingSchedules]);
