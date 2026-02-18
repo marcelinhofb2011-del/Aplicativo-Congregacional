@@ -14,7 +14,7 @@ const formatDate = (dateString: string) => new Date(dateString).toLocaleDateStri
 const CombinedScheduleWidget: React.FC<CombinedScheduleWidgetProps> = ({ cleaningSchedule, fieldServiceMeeting, isLoading }) => {
     
     if (isLoading) {
-        return <div className="h-full bg-slate-200/50 dark:bg-slate-700/50 rounded-3xl animate-pulse" style={{minHeight: '224px'}}></div>;
+        return <div className="h-full min-h-[224px] bg-slate-200/50 dark:bg-slate-700/50 rounded-3xl animate-pulse"></div>;
     }
 
     const hasCleaning = !!cleaningSchedule;
@@ -64,7 +64,7 @@ const CombinedScheduleWidget: React.FC<CombinedScheduleWidgetProps> = ({ cleanin
                 <div>
                     <p className="font-semibold text-slate-800 dark:text-slate-200">Serviço de Campo</p>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                        {fieldServiceMeeting.conductorName} - {meetingDate}
+                        <span className="font-semibold text-slate-600 dark:text-slate-300">Dirigente:</span> {fieldServiceMeeting.conductorName} - {meetingDate}
                     </p>
                     {fieldServiceMeeting.notes && (
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">
@@ -78,10 +78,10 @@ const CombinedScheduleWidget: React.FC<CombinedScheduleWidgetProps> = ({ cleanin
 
 
     return (
-        <div className="relative flex flex-col justify-around h-full bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl shadow-lg border border-white/50 dark:border-slate-700/50 p-6" style={{minHeight: '224px'}}>
+        <div className="relative flex flex-col justify-around h-full bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl shadow-lg border border-white/50 dark:border-slate-700/50 p-6 min-h-[224px]">
            {renderCleaningContent()}
            
-           {(hasCleaning && hasFieldService) && <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>}
+           {(hasCleaning || hasFieldService) && <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>}
            
            {renderFieldServiceContent()}
         </div>
