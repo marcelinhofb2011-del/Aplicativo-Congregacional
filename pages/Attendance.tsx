@@ -15,7 +15,7 @@ const Attendance: React.FC = () => {
     const isPublisher = user?.role === UserRole.PUBLISHER;
 
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-    const [submitterName, setSubmitterName] = useState(isPublisher ? '' : (user?.email || ''));
+    const [submitterName, setSubmitterName] = useState('');
     const [presentCount, setPresentCount] = useState<number | ''>('');
     const [onlineCount, setOnlineCount] = useState<number | ''>('');
 
@@ -46,7 +46,7 @@ const Attendance: React.FC = () => {
             
             // Reset form
             setDate(new Date().toISOString().split('T')[0]);
-            setSubmitterName(isPublisher ? '' : (user?.email || ''));
+            setSubmitterName('');
             setPresentCount('');
             setOnlineCount('');
 
