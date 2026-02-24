@@ -27,11 +27,28 @@ const Announcements: React.FC = () => {
     const fetchAnnouncements = async () => {
         setIsLoading(true);
         try {
-            const data = await getAnnouncements();
+            let data = await getAnnouncements();
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+            const expiredAnnouncements = data.filter(ann => {
+                const announcementDate = new Date(ann.createdAt);
+                // Do not delete pinned announcements
+                return !ann.isPinned && announcementDate < thirtyDaysAgo;
+            });
+
+            if (expiredAnnouncements.length > 0) {
+                for (const ann of expiredAnnouncements) {
+                    await archiveAnnouncement(ann.id, user?.uid || 'system-cleanup');
+                }
+                data = data.filter(ann => !expiredAnnouncements.some(expired => expired.id === ann.id));
+                setToastMessage(`${expiredAnnouncements.length} anúncios antigos foram limpos.`);
+            }
+
             setAnnouncements(data);
         } catch (error) {
-            console.error("Failed to fetch announcements:", error);
-            setToastMessage('Falha ao carregar anúncios.');
+            console.error("Failed to fetch and clean announcements:", error);
+            setToastMessage('Falha ao carregar ou limpar anúncios.');
         } finally {
             setIsLoading(false);
         }

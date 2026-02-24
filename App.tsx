@@ -29,6 +29,9 @@ import Resumo from './pages/Resumo';
 import Publishers from './pages/Publishers';
 import Announcements from './pages/Announcements';
 import Calendar from './pages/Calendar';
+import SpeechRecord from './pages/SpeechRecord';
+
+
 
 
 const RoleProtectedRoute: React.FC<{ roles: UserRole[] }> = ({ roles }) => {
@@ -79,6 +82,9 @@ const AppContent: React.FC = () => {
                             <Route path="secretario" element={<Secretario />} />
                             <Route path="secretario/relatorios" element={<ReportList />} />
                             <Route path="secretario/assistencia" element={<AttendanceList />} />
+                                                        <Route path="secretario/registro-discurso" element={<SpeechRecord />} />
+                            
+                            
                             <Route path="dirigentes" element={<Conductors />} />
                             <Route path="discurso-publico" element={<PublicTalk />} />
                             <Route path="territorios" element={<Territories />} />

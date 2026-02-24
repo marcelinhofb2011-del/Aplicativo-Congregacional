@@ -316,3 +316,11 @@ export interface Announcement extends BaseRecord {
     isPinned: boolean;
     images?: string[]; // Array of base64 data URLs
 }
+
+export interface PioneerRecord {
+    id: string;
+    pioneerType: 'special' | '30h' | '50h';
+    monthlyHours: 15 | 30 | 50;
+    loggedHours: number;
+    userId: string; // To associate with a user
+}

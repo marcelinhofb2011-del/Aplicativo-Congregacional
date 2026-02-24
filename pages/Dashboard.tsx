@@ -8,7 +8,8 @@ import {
     Assignment,
     CleaningSchedule,
     ConductorMeeting,
-    DashboardSchedule
+    DashboardSchedule,
+    PublicTalkSchedule
 } from '../types';
 import AnnouncementsWidget from '../components/AnnouncementsWidget';
 import { getAnnouncements } from '../services/firestoreService';
@@ -18,6 +19,7 @@ import { ChartBarIcon, AssignmentsIcon, MegaphoneIcon, ChevronRightIcon } from '
 import LifeMinistryWidget from '../components/LifeMinistryWidget';
 import AssignmentsWidget from '../components/AssignmentsWidget';
 import CombinedScheduleWidget from '../components/CombinedScheduleWidget';
+import PublicTalkWidget from '../components/PublicTalkWidget';
 
 type UpcomingEvent = {
     date: Date;
@@ -75,6 +77,7 @@ const Dashboard: React.FC = () => {
     const [nextAssignment, setNextAssignment] = useState<Assignment | undefined>();
     const [nextCleaning, setNextCleaning] = useState<CleaningSchedule | undefined>();
     const [nextFieldService, setNextFieldService] = useState<ConductorMeeting | undefined>();
+    const [nextPublicTalk, setNextPublicTalk] = useState<PublicTalkSchedule | undefined>();
 
 
     useEffect(() => {
@@ -117,11 +120,13 @@ const Dashboard: React.FC = () => {
         const assignmentSchedules = schedules.filter(s => 'president' in s && !('week' in s)) as Assignment[];
         const cleaningSchedules = schedules.filter(s => 'group' in s && 'endDate' in s) as CleaningSchedule[];
         const fieldServiceSchedules = schedules.filter(s => 'conductorName' in s) as ConductorMeeting[];
+        const publicTalkSchedules = schedules.filter(s => 'speakerName' in s && 'theme' in s) as PublicTalkSchedule[];
 
         setNextLifeMinistry(findNextUpcomingRange(lifeMinistrySchedules));
         setNextAssignment(findNextUpcoming(assignmentSchedules));
         setNextCleaning(findNextUpcomingRange(cleaningSchedules));
         setNextFieldService(findNextUpcoming(fieldServiceSchedules));
+        setNextPublicTalk(findNextUpcoming(publicTalkSchedules));
 
     }, [user, schedules, isLoadingSchedules]);
     
@@ -151,7 +156,7 @@ const Dashboard: React.FC = () => {
     
     return (
         <>
-            <div className="p-4 sm:p-6 lg:p-8 space-y-8">
+            <div className="p-4 sm:p-6 lg:p-8 space-y-6">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{welcomeMessage}</h1>
                     <p className="mt-2 text-slate-600 dark:text-slate-400">Aqui está um resumo de sua congregação.</p>
@@ -180,7 +185,7 @@ const Dashboard: React.FC = () => {
                 {/* Upcoming Congregation Schedules Grid */}
                 <div>
                     <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 px-2">Próximas Programações</h2>
-                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         <LifeMinistryWidget
                             schedule={nextLifeMinistry}
                             isLoading={isLoadingSchedules}
@@ -191,7 +196,12 @@ const Dashboard: React.FC = () => {
                             isLoading={isLoadingSchedules}
                             onDetailsClick={(schedule) => handleViewDetails(schedule, 'Designações')}
                         />
-                         <div className="lg:col-span-2">
+                        <PublicTalkWidget
+                            schedule={nextPublicTalk}
+                            isLoading={isLoadingSchedules}
+                            onDetailsClick={(schedule) => handleViewDetails(schedule, 'Discurso Público')}
+                        />
+                         <div>
                              <CombinedScheduleWidget
                                 cleaningSchedule={nextCleaning}
                                 fieldServiceMeeting={nextFieldService}

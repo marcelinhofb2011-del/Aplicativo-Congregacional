@@ -2,12 +2,14 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { AttendanceIcon, ChevronRightIcon } from '../components/icons/Icons';
+import { AttendanceIcon, ChevronRightIcon, ReportIcon, CalendarDaysIcon } from '../components/icons/Icons';
 
 const Secretario: React.FC = () => {
     
     const menuItems = [
         { path: '/secretario/assistencia', label: 'Registros de Assistência', icon: AttendanceIcon, color: 'text-emerald-500' },
+        { path: '/secretario/registro-discurso', label: 'Registro de Discursos', icon: ReportIcon, color: 'text-sky-500' },
+        
     ];
         
     return (

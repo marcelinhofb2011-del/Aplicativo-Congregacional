@@ -17,7 +17,7 @@ import {
 } from 'firebase/firestore';
 import { 
     LifeMinistrySchedule, FieldServiceReport, AttendanceRecord, Territory, BusTicket, Assignment, 
-    CleaningSchedule, FieldServiceMeeting, ConductorMeeting, ShepherdingVisit, PublicTalkSchedule, BaseRecord, PublisherProfile, Announcement 
+    CleaningSchedule, FieldServiceMeeting, ConductorMeeting, ShepherdingVisit, PublicTalkSchedule, BaseRecord, PublisherProfile, Announcement, PioneerRecord 
 } from '../types';
 
 
@@ -184,6 +184,15 @@ export const getAnnouncements = () => getActiveCollection<Announcement>('anuncio
 export const addAnnouncement = (data: any, userUid: string) => addBaseRecord<Announcement>('anuncios', data, userUid);
 export const updateAnnouncement = (id: string, data: any, userUid: string) => updateBaseRecord<Announcement>('anuncios', id, data, userUid);
 export const archiveAnnouncement = (id: string, userUid: string) => archiveBaseRecord('anuncios', id, userUid);
+
+// Pioneer Planning
+export const getPioneerRecords = () => getActiveCollection<PioneerRecord>('planejamento_pioneiro', 'createdAt', 'desc');
+export const addPioneerRecord = (data: any, userUid: string) => addBaseRecord<PioneerRecord>('planejamento_pioneiro', data, userUid);
+export const updatePioneerRecord = (id: string, data: any, userUid: string) => updateBaseRecord<PioneerRecord>('planejamento_pioneiro', id, data, userUid);
+export const deletePioneerRecord = (id: string) => {
+    const db = getDbInstance();
+    return deleteDoc(doc(db, 'planejamento_pioneiro', id));
+};
 
 // Notifications
 export const getUnreadNotifications = async (userUid: string) => {

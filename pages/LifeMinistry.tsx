@@ -46,11 +46,30 @@ const LifeMinistry: React.FC = () => {
     const fetchSchedules = async () => {
         setIsLoading(true);
         try {
-            const fetchedSchedules = await getSchedules();
+            let fetchedSchedules = await getSchedules();
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Set to start of day for comparison
+
+            const expiredSchedules = fetchedSchedules.filter(schedule => {
+                if (!schedule.date) return false;
+                const scheduleDate = new Date(schedule.date);
+                return scheduleDate < today;
+            });
+
+            if (expiredSchedules.length > 0) {
+                // This is a simplified approach. In a real app, you might want to batch deletes.
+                for (const schedule of expiredSchedules) {
+                    await archiveSchedule(schedule.id, user?.uid || 'system-cleanup'); // Using archive as a soft-delete
+                }
+                // Re-fetch or filter locally
+                fetchedSchedules = fetchedSchedules.filter(schedule => !expiredSchedules.some(expired => expired.id === schedule.id));
+                setToastMessage(`${expiredSchedules.length} programações vencidas foram limpas.`);
+            }
+
             setSchedules(fetchedSchedules);
         } catch (error) {
-            console.error("Failed to fetch schedules:", error);
-            setToastMessage('Falha ao carregar programações.');
+            console.error("Failed to fetch and clean schedules:", error);
+            setToastMessage('Falha ao carregar ou limpar programações.');
         } finally {
             setIsLoading(false);
         }
