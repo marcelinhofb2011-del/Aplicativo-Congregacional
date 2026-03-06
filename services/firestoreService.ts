@@ -8,16 +8,19 @@ import {
     orderBy,
     getDocs,
     addDoc,
+    setDoc,
     updateDoc,
     doc,
     deleteDoc,
+    limit,
     Timestamp,
     DocumentData,
     QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { 
     LifeMinistrySchedule, FieldServiceReport, AttendanceRecord, Territory, BusTicket, Assignment, 
-    CleaningSchedule, FieldServiceMeeting, ConductorMeeting, ShepherdingVisit, PublicTalkSchedule, BaseRecord, PublisherProfile, Announcement, PioneerRecord 
+    CleaningSchedule, FieldServiceMeeting, ConductorMeeting, ShepherdingVisit, PublicTalkSchedule, BaseRecord, PublisherProfile, Announcement, PioneerRecord,
+    MonthlyFieldServiceReport, MeetingSchedule
 } from '../types';
 
 
@@ -61,7 +64,7 @@ const addBaseRecord = async <T extends BaseRecord>(collectionName: string, data:
         isActive: true,
     };
     const docRef = await addDoc(collection(db, collectionName), docData);
-    return { id: docRef.id, ...docData, createdAt: docData.createdAt.toDate().toISOString() } as T;
+    return { id: docRef.id, ...docData, createdAt: docData.createdAt.toDate().toISOString() } as unknown as T;
 };
 
 const updateBaseRecord = async <T extends BaseRecord>(collectionName: string, id: string, data: Partial<T>, userUid: string): Promise<void> => {
@@ -179,14 +182,75 @@ export const addPublisherProfile = (data: any, userUid: string) => addBaseRecord
 export const updatePublisherProfile = (id: string, data: any, userUid: string) => updateBaseRecord<PublisherProfile>('publicadores', id, data, userUid);
 export const archivePublisherProfile = (id: string, userUid: string) => archiveBaseRecord('publicadores', id, userUid);
 
+export const getPublisherProfileByUid = async (uid: string) => {
+    const db = getDbInstance();
+    const q = query(
+        collection(db, "publicadores"),
+        where('uid', '==', uid),
+        where('isActive', '==', true),
+        limit(1)
+    );
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) return null;
+    return fromFirestore(snapshot.docs[0]) as PublisherProfile;
+};
+
 // Announcements
 export const getAnnouncements = () => getActiveCollection<Announcement>('anuncios', 'createdAt', 'desc');
 export const addAnnouncement = (data: any, userUid: string) => addBaseRecord<Announcement>('anuncios', data, userUid);
 export const updateAnnouncement = (id: string, data: any, userUid: string) => updateBaseRecord<Announcement>('anuncios', id, data, userUid);
 export const archiveAnnouncement = (id: string, userUid: string) => archiveBaseRecord('anuncios', id, userUid);
 
+// Meeting Schedules (Programações)
+export const getMeetingSchedules = () => getActiveCollection<MeetingSchedule>('programacoes_reuniao', 'date', 'asc');
+export const addMeetingSchedule = (data: any, userUid: string) => addBaseRecord<MeetingSchedule>('programacoes_reuniao', data, userUid);
+export const updateMeetingSchedule = (id: string, data: any, userUid: string) => updateBaseRecord<MeetingSchedule>('programacoes_reuniao', id, data, userUid);
+export const archiveMeetingSchedule = (id: string, userUid: string) => archiveBaseRecord('programacoes_reuniao', id, userUid);
+
+// Monthly Field Service Reports (Relatorios_Pregacao)
+export const getMonthlyReports = (userUid: string) => {
+    const db = getDbInstance();
+    const q = query(
+        collection(db, "relatorios_pregacao"),
+        where('userId', '==', userUid),
+        where('isActive', '==', true)
+    );
+    return getDocs(q).then(snapshot => snapshot.docs.map(doc => fromFirestore(doc) as MonthlyFieldServiceReport));
+};
+
+export const addMonthlyReport = (data: any, userUid: string) => {
+    const db = getDbInstance();
+    const docId = `${userUid}_${data.year}_${data.month}`;
+    const docRef = doc(db, "relatorios_pregacao", docId);
+    
+    const now = new Date().toISOString();
+    const record = {
+        ...data,
+        id: docId,
+        createdAt: now,
+        createdBy: userUid,
+        updatedAt: now,
+        updatedBy: userUid,
+        isActive: true,
+    };
+    
+    return setDoc(docRef, record);
+};
+export const updateMonthlyReport = (id: string, data: any, userUid: string) => updateBaseRecord<MonthlyFieldServiceReport>('relatorios_pregacao', id, data, userUid);
+
 // Pioneer Planning
 export const getPioneerRecords = () => getActiveCollection<PioneerRecord>('planejamento_pioneiro', 'createdAt', 'desc');
+
+export const getPioneerRecordsByUser = (userUid: string) => {
+    const db = getDbInstance();
+    const q = query(
+        collection(db, "planejamento_pioneiro"),
+        where('createdBy', '==', userUid),
+        where('isActive', '==', true)
+    );
+    return getDocs(q).then(snapshot => snapshot.docs.map(doc => fromFirestore(doc) as PioneerRecord));
+};
+
 export const addPioneerRecord = (data: any, userUid: string) => addBaseRecord<PioneerRecord>('planejamento_pioneiro', data, userUid);
 export const updatePioneerRecord = (id: string, data: any, userUid: string) => updateBaseRecord<PioneerRecord>('planejamento_pioneiro', id, data, userUid);
 export const deletePioneerRecord = (id: string) => {
@@ -214,4 +278,54 @@ export const markNotificationsAsRead = async (notificationIds: string[]) => {
         return updateDoc(docRef, { notificado: true });
     });
     await Promise.all(promises);
+};
+
+// Cleanup expired records
+export const cleanupExpiredRecords = async (userUid: string) => {
+    const now = new Date();
+    const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    const today = new Date(todayStr + 'T00:00:00Z');
+
+    const collectionsToCleanup = [
+        { name: 'vida_ministerio', type: 'range' },
+        { name: 'programacoes_reuniao', type: 'single' },
+        { name: 'designacoes', type: 'single' },
+        { name: 'discurso_publico', type: 'single' },
+        { name: 'limpeza', type: 'range' },
+    ];
+
+    for (const coll of collectionsToCleanup) {
+        try {
+            const records = await getActiveCollection<any>(coll.name, 'date', 'asc');
+            for (const record of records) {
+                let isExpired = false;
+                if (coll.type === 'range') {
+                    const startDate = new Date(record.date);
+                    const endDate = record.endDate ? new Date(record.endDate) : new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+                    if (endDate < today) isExpired = true;
+                } else if (coll.type === 'single') {
+                    if (record.date && new Date(record.date) < today) isExpired = true;
+                }
+                
+                if (isExpired) {
+                    await archiveBaseRecord(coll.name, record.id, userUid);
+                }
+            }
+        } catch (e) {
+            console.error(`Error cleaning up ${coll.name}:`, e);
+        }
+    }
+
+    // Special cleanup for announcements - older than 30 days
+    try {
+        const announcements = await getActiveCollection<any>('anuncios', 'createdAt', 'desc');
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        for (const ann of announcements) {
+            if (new Date(ann.createdAt) < thirtyDaysAgo && !ann.isPinned) {
+                await archiveBaseRecord('anuncios', ann.id, userUid);
+            }
+        }
+    } catch (e) {
+        console.error("Error cleaning up announcements:", e);
+    }
 };

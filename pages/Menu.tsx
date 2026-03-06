@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import PioneerTargetModal from '../components/PioneerTargetModal';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { 
@@ -18,7 +17,7 @@ import {
 
 // Itens de menu para a grade principal
 const MENU_GRID_ITEMS = [
-    { path: '#pioneer-target', label: 'Pioneiro', icon: CalendarDaysIcon, color: 'text-teal-500' },
+    { path: '/pioneiro', label: 'Pioneiro', icon: CalendarDaysIcon, color: 'text-teal-500' },
     { path: '/resumo', label: 'Resumo', icon: ChartBarIcon, color: 'text-indigo-500' },
     { path: '/anuncios', label: 'Anúncios', icon: MegaphoneIcon, color: 'text-sky-500' },
     { path: '/vida-e-ministerio', label: 'Ministério', icon: LifeMinistryIcon, color: 'text-green-500' },
@@ -35,49 +34,23 @@ const MENU_GRID_ITEMS = [
 
 const Menu: React.FC = () => {
         const { user } = useAuth();
-    const [isPioneerModalOpen, setIsPioneerModalOpen] = useState(false);
 
     if (!user) return null;
 
     return (
                 <div className="p-4 sm:p-6 lg:p-8">
-            <PioneerTargetModal isOpen={isPioneerModalOpen} onClose={() => setIsPioneerModalOpen(false)} />
             <div className="max-w-xl mx-auto">
                 <div className="grid grid-cols-3 gap-4 sm:gap-5">
-                                        {MENU_GRID_ITEMS.map((item) => {
-                        const content = (
-                            <>
-                                <item.icon className={`h-10 w-10 sm:h-12 sm:w-12 mb-2 ${item.color}`} />
-                                <span className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200">{item.label}</span>
-                            </>
-                        );
-
-                        if (item.path.startsWith('/')) {
-                            return (
-                                <Link
-                                    key={item.path}
-                                    to={item.path}
-                                    className="flex flex-col items-center justify-center text-center p-3 sm:p-4 rounded-2xl bg-white dark:bg-slate-800 shadow-md hover:shadow-xl hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-dark transition-all duration-300 aspect-square"
-                                >
-                                    {content}
-                                </Link>
-                            );
-                        } else {
-                            return (
-                                <div
-                                    key={item.path}
-                                    onClick={() => {
-                                        if (item.path === '#pioneer-target') {
-                                            setIsPioneerModalOpen(true);
-                                        }
-                                    }}
-                                    className="flex flex-col items-center justify-center text-center p-3 sm:p-4 rounded-2xl bg-white dark:bg-slate-800 shadow-md hover:shadow-xl hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-dark transition-all duration-300 aspect-square cursor-pointer"
-                                >
-                                    {content}
-                                </div>
-                            );
-                        }
-                    })}
+                                        {MENU_GRID_ITEMS.map((item) => (
+                        <Link
+                            key={item.path}
+                            to={item.path}
+                            className="flex flex-col items-center justify-center text-center p-3 sm:p-4 rounded-2xl bg-white dark:bg-slate-800 shadow-md hover:shadow-xl hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-dark transition-all duration-300 aspect-square"
+                        >
+                            <item.icon className={`h-10 w-10 sm:h-12 sm:w-12 mb-2 ${item.color}`} />
+                            <span className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200">{item.label}</span>
+                        </Link>
+                    ))}
                 </div>
             </div>
         </div>

@@ -99,6 +99,22 @@ const Login: React.FC = () => {
                             Cadastre-se
                         </Link>
                     </div>
+
+                    <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
+                        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-center">
+                            <p className="text-xs font-bold text-blue-800 dark:text-blue-300 uppercase tracking-wider mb-2">
+                                Acesso para Publicadores
+                            </p>
+                            <div className="space-y-1">
+                                <p className="text-sm text-blue-700 dark:text-blue-400">
+                                    <span className="font-semibold">Email:</span> publicador@app.dev
+                                </p>
+                                <p className="text-sm text-blue-700 dark:text-blue-400">
+                                    <span className="font-semibold">Senha:</span> 123456
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

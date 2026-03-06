@@ -1,6 +1,6 @@
 import React from 'react';
 import { PublicTalkSchedule } from '../types';
-import { PodiumIcon, ConductorIcon, CalendarIcon, ChevronRightIcon } from './icons/Icons';
+import { PodiumIcon, ConductorIcon, CalendarDaysIcon, ChevronRightIcon } from './icons/Icons';
 
 interface PublicTalkWidgetProps {
     schedule?: PublicTalkSchedule;

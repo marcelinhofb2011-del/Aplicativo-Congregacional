@@ -12,7 +12,7 @@ import {
     PublicTalkSchedule
 } from '../types';
 import AnnouncementsWidget from '../components/AnnouncementsWidget';
-import { getAnnouncements } from '../services/firestoreService';
+import { getAnnouncements, cleanupExpiredRecords } from '../services/firestoreService';
 import ScheduleDetailModal from '../components/ScheduleDetailModal';
 import { Link } from 'react-router-dom';
 import { ChartBarIcon, AssignmentsIcon, MegaphoneIcon, ChevronRightIcon } from '../components/icons/Icons';
@@ -23,16 +23,17 @@ import PublicTalkWidget from '../components/PublicTalkWidget';
 
 type UpcomingEvent = {
     date: Date;
-    type: 'Vida e Ministério' | 'Designações' | 'Limpeza' | 'Serviço de Campo';
+    type: 'Vida e Ministério' | 'Designações' | 'Limpeza' | 'Serviço de Campo' | 'Discurso Público';
     title: string;
     description: string;
-    fullData: LifeMinistrySchedule | Assignment | CleaningSchedule | ConductorMeeting;
+    fullData: LifeMinistrySchedule | Assignment | CleaningSchedule | ConductorMeeting | PublicTalkSchedule;
 };
 
 // Helper for events that span a period (Life & Ministry, Cleaning)
 const findNextUpcomingRange = <T extends { date: string, endDate?: string }>(items: T[]): T | undefined => {
     const now = new Date();
-    const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    const today = new Date(todayStr + 'T00:00:00Z');
 
     return items
         .filter(item => {
@@ -55,8 +56,8 @@ const findNextUpcomingRange = <T extends { date: string, endDate?: string }>(ite
 // Helper for single-day events (Assignments, Field Service)
 const findNextUpcoming = <T extends { date: string }>(items: T[]): T | undefined => {
     const now = new Date();
-    // Use UTC date for comparison to avoid timezone issues
-    const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    const today = new Date(todayStr + 'T00:00:00Z');
 
     return items
         .filter(item => item.date && !isNaN(new Date(item.date).getTime()))
@@ -81,6 +82,12 @@ const Dashboard: React.FC = () => {
 
 
     useEffect(() => {
+        if (user) {
+            cleanupExpiredRecords(user.uid);
+        }
+    }, [user]);
+
+    useEffect(() => {
         const fetchAnnouncementsData = async () => {
             if (!user) return;
             setIsLoadingAnnouncements(true);
@@ -99,6 +106,10 @@ const Dashboard: React.FC = () => {
     useEffect(() => {
         if (!user || isLoadingSchedules) return;
 
+        const now = new Date();
+        const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+        const today = new Date(todayStr + 'T00:00:00Z');
+
         const allUpcomingEvents: UpcomingEvent[] = schedules.map(s => {
             // This mapping is now only for the "Next Personal Appointment" feature
             if ('week' in s && s.president) return { date: new Date(s.date), type: 'Vida e Ministério', title: s.week, description: `Presidente: ${s.president}`, fullData: s };
@@ -106,7 +117,7 @@ const Dashboard: React.FC = () => {
             if ('group' in s && 'endDate' in s) return { date: new Date(s.date), type: 'Limpeza', title: s.group, description: `Responsáveis: ${s.assignedUids?.join(', ') || 'Grupo'}`, fullData: s };
             if ('conductorName' in s) return { date: new Date(s.date), type: 'Serviço de Campo', title: 'Saída de campo', description: `Dirigente: ${s.conductorName}`, fullData: s };
             return null;
-        }).filter((e): e is UpcomingEvent => e !== null && e.date >= new Date())
+        }).filter((e): e is UpcomingEvent => e !== null && e.date >= today)
           .sort((a, b) => a.date.getTime() - b.date.getTime());
 
         const userAssignments = allUpcomingEvents.filter(event => 

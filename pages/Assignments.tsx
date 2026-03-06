@@ -33,8 +33,10 @@ const Assignments: React.FC = () => {
     }, []);
 
     const upcomingAssignments = useMemo(() => {
-        const today = new Date();
-        today.setUTCHours(0, 0, 0, 0);
+        const now = new Date();
+        const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+        const today = new Date(todayStr + 'T00:00:00Z');
+        
         return assignments
             .filter(a => new Date(a.date) >= today)
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());

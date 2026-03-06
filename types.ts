@@ -317,10 +317,46 @@ export interface Announcement extends BaseRecord {
     images?: string[]; // Array of base64 data URLs
 }
 
-export interface PioneerRecord {
+export interface MonthlyFieldServiceReport extends BaseRecord {
+    userId: string;
+    userName: string;
+    month: string; // "Janeiro", "Fevereiro", etc.
+    year: number;
+    hours?: number; // Optional for publishers
+    studies: number;
+    revisits: number;
+    publications: number;
+    hasParticipated?: boolean; // New field for publishers
+    notes?: string;
+    status: 'Enviado' | 'Editado';
+}
+
+export interface MeetingSchedule extends BaseRecord {
+    date: string; // ISO date string
+    president: string;
+    modality: 'Presencial' | 'Híbrida' | 'Online';
+    locationOrLink: string;
+    notes?: string;
+}
+
+export interface PioneerActivity {
     id: string;
-    pioneerType: 'special' | '30h' | '50h';
-    monthlyHours: 15 | 30 | 50;
-    loggedHours: number;
-    userId: string; // To associate with a user
+    date: string; // ISO date string
+    hours: number;
+    minutes: number;
+    studies: {
+        id: string;
+        name: string;
+        hours: number;
+        minutes: number;
+    }[];
+}
+
+export interface PioneerRecord extends BaseRecord {
+    month: string; // YYYY-MM format
+    role: 'Publicador' | 'Pioneiro Auxiliar' | 'Pioneiro Regular';
+    isAuxiliaryPioneer: boolean;
+    goalHours: number;
+    studentCount: number;
+    activities: PioneerActivity[];
 }
