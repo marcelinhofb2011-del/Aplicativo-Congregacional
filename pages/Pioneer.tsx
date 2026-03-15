@@ -85,6 +85,7 @@ const Pioneer: React.FC = () => {
     // Monthly Report States
     const [participated, setParticipated] = useState<boolean | null>(null);
     const [reportHours, setReportHours] = useState<number>(0);
+    const [reportStudies, setReportStudies] = useState<number>(0);
 
     useEffect(() => {
         if (user) {
@@ -292,7 +293,7 @@ const Pioneer: React.FC = () => {
                 month: monthName,
                 year: parseInt(yearStr),
                 hours: reportHours || 0,
-                studies: currentRecord?.studentCount || 0,
+                studies: reportStudies || 0,
                 revisits: 0,
                 publications: 0,
                 hasParticipated: participated ?? true,
@@ -314,8 +315,8 @@ const Pioneer: React.FC = () => {
                 if (reportHours > 0) shareText += `*Horas:* ${reportHours}h\n`;
             }
             
-            if (currentRecord?.studentCount && currentRecord.studentCount > 0) {
-                shareText += `*Estudos Bíblicos:* ${currentRecord.studentCount}\n`;
+            if (reportStudies > 0) {
+                shareText += `*Estudos Bíblicos:* ${reportStudies}\n`;
             }
             
             shareText += `--------------------------------\n`;
@@ -577,6 +578,7 @@ const Pioneer: React.FC = () => {
                                     navigateTo('report');
                                     if (currentRecord) {
                                         setReportHours(Math.floor(totalHoursCompleted));
+                                        setReportStudies(currentRecord.studentCount || 0);
                                     }
                                 }}
                                 className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group"
@@ -779,6 +781,25 @@ const Pioneer: React.FC = () => {
                                     {currentRecord && (
                                         <p className="text-[10px] text-slate-400 mt-1 italic">* Baseado em {totalHoursCompleted.toFixed(1)}h registradas no log diário.</p>
                                     )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1 tracking-wider">
+                                        Estudos Bíblicos
+                                    </label>
+                                    <div className="flex items-center gap-4">
+                                        <input 
+                                            type="number" 
+                                            value={reportStudies} 
+                                            onChange={(e) => setReportStudies(parseInt(e.target.value) || 0)}
+                                            className="input-style flex-1"
+                                            placeholder="Quantidade de estudos"
+                                        />
+                                        <div className="flex gap-1">
+                                            <button onClick={() => setReportStudies(Math.max(0, reportStudies - 1))} className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 transition-colors">-</button>
+                                            <button onClick={() => setReportStudies(reportStudies + 1)} className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 transition-colors">+</button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1004,6 +1025,16 @@ const GoalModal: React.FC<{isOpen: boolean, onClose: () => void, onSave: (data: 
                             <option>Pioneiro Auxiliar</option>
                             <option>Pioneiro Regular</option>
                         </select>
+                    </div>
+                    <div>
+                        <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Estudos Bíblicos</label>
+                        <input 
+                            type="number" 
+                            value={studentCount} 
+                            onChange={(e) => setStudentCount(e.target.value)} 
+                            placeholder="Ex: 2" 
+                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-slate-800 dark:text-white font-bold" 
+                        />
                     </div>
                 </div>
                 <div className="flex gap-3 mt-8">
