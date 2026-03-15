@@ -148,6 +148,20 @@ const Pioneer: React.FC = () => {
         const remainingHours = Math.max(0, currentRecord.goalHours - totalHoursCompleted);
         const dailyAverageNeeded = daysRemaining > 0 ? remainingHours / daysRemaining : 0;
 
+        const formatDuration = (hours: number) => {
+            if (hours <= 0) return "0 MIN";
+            const h = Math.floor(hours);
+            const m = Math.round((hours - h) * 60);
+            
+            if (h > 0 && m > 0) {
+                return `${h}H ${m}MIN`;
+            } else if (h > 0) {
+                return `${h}H`;
+            } else {
+                return `${m}MIN`;
+            }
+        };
+
         // Status calculation
         const progressPercent = (totalHoursCompleted / currentRecord.goalHours) * 100;
         const timePercent = (currentDay / lastDayOfMonth) * 100;
@@ -177,6 +191,8 @@ const Pioneer: React.FC = () => {
         return {
             remainingHours,
             dailyAverageNeeded,
+            formattedDailyAverage: formatDuration(dailyAverageNeeded),
+            formattedRemaining: formatDuration(remainingHours),
             daysRemaining,
             status,
             statusColor,
@@ -522,7 +538,7 @@ const Pioneer: React.FC = () => {
                                             <p className="text-[10px] font-bold text-slate-400 uppercase">Média Necessária</p>
                                         </div>
                                         <p className="text-lg font-black text-slate-800 dark:text-white">
-                                            {progressStats.dailyAverageNeeded.toFixed(1)}h<span className="text-xs font-medium text-slate-400">/dia</span>
+                                            {progressStats.formattedDailyAverage}<span className="text-[10px] font-medium text-slate-400 ml-1">/dia</span>
                                         </p>
                                     </div>
                                     <div>
@@ -531,7 +547,7 @@ const Pioneer: React.FC = () => {
                                             <p className="text-[10px] font-bold text-slate-400 uppercase">Faltam</p>
                                         </div>
                                         <p className="text-lg font-black text-slate-800 dark:text-white">
-                                            {progressStats.remainingHours.toFixed(1)}h
+                                            {progressStats.formattedRemaining}
                                         </p>
                                     </div>
                                 </div>
@@ -627,11 +643,11 @@ const Pioneer: React.FC = () => {
                                         <>
                                             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 text-center">
                                                 <p className="text-[10px] font-bold text-slate-400 uppercase">Faltam</p>
-                                                <p className="text-xl font-black text-amber-500">{progressStats.remainingHours.toFixed(1)}h</p>
+                                                <p className="text-xl font-black text-amber-500">{progressStats.formattedRemaining}</p>
                                             </div>
                                             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 text-center">
                                                 <p className="text-[10px] font-bold text-slate-400 uppercase">Média Diária</p>
-                                                <p className="text-xl font-black text-indigo-500">{progressStats.dailyAverageNeeded.toFixed(1)}h</p>
+                                                <p className="text-xl font-black text-indigo-500">{progressStats.formattedDailyAverage}</p>
                                             </div>
                                         </>
                                     )}
