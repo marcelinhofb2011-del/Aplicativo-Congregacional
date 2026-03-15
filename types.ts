@@ -344,6 +344,7 @@ export interface PioneerActivity {
     date: string; // ISO date string
     hours: number;
     minutes: number;
+    category: 'Pregação' | 'Estudos' | 'Outra';
     studies: {
         id: string;
         name: string;
