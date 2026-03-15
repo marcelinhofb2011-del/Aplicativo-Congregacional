@@ -332,7 +332,8 @@ const Pioneer: React.FC = () => {
     const handleShare = async () => {
         if (!currentRecord) return;
 
-        const monthName = new Date(selectedMonth + '-01').toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+        const [year, month] = selectedMonth.split('-').map(Number);
+        const monthName = new Date(year, month - 1, 1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
         let report = `📄 *Relatório de Serviço - ${monthName}*\n`;
         report += `--------------------------------\n`;
         report += `*Participante:* ${profile?.name || user?.displayName || 'N/A'}\n`;
@@ -344,7 +345,7 @@ const Pioneer: React.FC = () => {
 
         report += `*Detalhes da Atividade:*\n`;
         currentRecord.activities.sort((a, b) => a.date.localeCompare(b.date)).forEach(act => {
-            const dateObj = new Date(act.date);
+            const dateObj = new Date(act.date + 'T12:00:00');
             const day = dateObj.getDate();
             const weekday = dateObj.toLocaleString('pt-BR', { weekday: 'short' });
             report += `${day} (${weekday}): ${act.hours}h ${act.minutes}m - ${act.category || 'Pregação'}`;
@@ -439,7 +440,10 @@ const Pioneer: React.FC = () => {
                     <div className="flex items-center gap-3">
                         <CalendarDaysIcon className="h-5 w-5 text-primary" />
                         <span className="font-bold text-slate-700 dark:text-slate-200">
-                            {new Date(selectedMonth + '-01').toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}
+                            {(() => {
+                                const [year, month] = selectedMonth.split('-').map(Number);
+                                return new Date(year, month - 1, 1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+                            })()}
                         </span>
                     </div>
                     <input 
@@ -669,8 +673,8 @@ const Pioneer: React.FC = () => {
                                                     <div key={act.id} className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
                                                         <div className="flex items-center gap-4">
                                                             <div className="h-12 w-12 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex flex-col items-center justify-center group-hover:bg-white dark:group-hover:bg-slate-700 transition-colors">
-                                                                <span className="text-[10px] font-bold text-slate-400 leading-none mb-0.5">{new Date(act.date).toLocaleString('pt-BR', { weekday: 'short' }).toUpperCase()}</span>
-                                                                <span className="text-base font-black text-slate-700 dark:text-slate-200">{new Date(act.date).getDate()}</span>
+                                                                <span className="text-[10px] font-bold text-slate-400 leading-none mb-0.5">{new Date(act.date + 'T12:00:00').toLocaleString('pt-BR', { weekday: 'short' }).toUpperCase()}</span>
+                                                                <span className="text-base font-black text-slate-700 dark:text-slate-200">{new Date(act.date + 'T12:00:00').getDate()}</span>
                                                             </div>
                                                             <div>
                                                                 <p className="font-bold text-slate-800 dark:text-white text-lg">{act.hours}h {act.minutes}m</p>
@@ -996,7 +1000,12 @@ const GoalModal: React.FC<{isOpen: boolean, onClose: () => void, onSave: (data: 
 };
 
 const ActivityModal: React.FC<{isOpen: boolean, onClose: () => void, onSave: (activity: PioneerActivity) => void, initialData: PioneerActivity | null}> = ({ isOpen, onClose, onSave, initialData }) => {
-    const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
+    const getTodayStr = () => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+
+    const [date, setDate] = useState(getTodayStr);
     const [hours, setHours] = useState(0);
     const [minutes, setMinutes] = useState(0);
     const [category, setCategory] = useState<'Pregação' | 'Estudos' | 'Outra'>('Pregação');
@@ -1009,7 +1018,7 @@ const ActivityModal: React.FC<{isOpen: boolean, onClose: () => void, onSave: (ac
                 setMinutes(initialData.minutes);
                 setCategory(initialData.category || 'Pregação');
             } else {
-                setDate(new Date().toISOString().split('T')[0]);
+                setDate(getTodayStr());
                 setHours(0);
                 setMinutes(0);
                 setCategory('Pregação');
