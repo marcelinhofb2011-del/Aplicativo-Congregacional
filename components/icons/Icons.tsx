@@ -330,3 +330,15 @@ export const BirdIcon: React.FC<{ className?: string }> = ({ className }) => (
         <path d="M45.8333 83.3333C55.3333 70.4167 62.5 62.5 62.5 62.5" stroke="currentColor" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
 );
+
+export const TrophyIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0V9.403c0-1.567-1.467-2.575-2.983-2.153a3.375 3.375 0 00-2.432 2.377L7.5 15.375m9 0a4.5 4.5 0 01-9 0m9 0h-9" />
+    </svg>
+);
+
+export const DocumentArrowDownIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m.75 12l3 3m0 0l3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+    </svg>
+);

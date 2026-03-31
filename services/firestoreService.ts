@@ -20,7 +20,7 @@ import {
 import { 
     LifeMinistrySchedule, FieldServiceReport, AttendanceRecord, Territory, BusTicket, Assignment, 
     CleaningSchedule, FieldServiceMeeting, ConductorMeeting, ShepherdingVisit, PublicTalkSchedule, BaseRecord, PublisherProfile, Announcement, PioneerRecord,
-    MonthlyFieldServiceReport, MeetingSchedule
+    MonthlyFieldServiceReport, MeetingSchedule, FirstSundayConductor
 } from '../types';
 
 
@@ -164,6 +164,12 @@ export const addConductorMeeting = (data: any, userUid: string) => addBaseRecord
 export const updateConductorMeeting = (id: string, data: any, userUid: string) => updateBaseRecord('dirigentes', id, data, userUid);
 export const archiveConductorMeeting = (id: string, userUid: string) => archiveBaseRecord('dirigentes', id, userUid);
 
+// First Sunday Conductors
+export const getFirstSundayConductors = () => getActiveCollection<FirstSundayConductor>('dirigentes_primeiro_domingo', 'month', 'desc');
+export const addFirstSundayConductor = (data: any, userUid: string) => addBaseRecord('dirigentes_primeiro_domingo', data, userUid);
+export const updateFirstSundayConductor = (id: string, data: any, userUid: string) => updateBaseRecord('dirigentes_primeiro_domingo', id, data, userUid);
+export const archiveFirstSundayConductor = (id: string, userUid: string) => archiveBaseRecord('dirigentes_primeiro_domingo', id, userUid);
+
 // Shepherding
 export const getShepherdingVisits = () => getActiveCollection<ShepherdingVisit>('pastoreio', 'date', 'desc');
 export const addShepherdingVisit = (data: any, userUid: string) => addBaseRecord('pastoreio', data, userUid);
@@ -253,6 +259,18 @@ export const getPioneerRecordsByUser = (userUid: string) => {
 
 export const addPioneerRecord = (data: any, userUid: string) => addBaseRecord<PioneerRecord>('planejamento_pioneiro', data, userUid);
 export const updatePioneerRecord = (id: string, data: any, userUid: string) => updateBaseRecord<PioneerRecord>('planejamento_pioneiro', id, data, userUid);
+export const setPioneerRecord = (data: PioneerRecord) => {
+    const db = getDbInstance();
+    const docRef = doc(db, "planejamento_pioneiro", data.id);
+    const now = new Date().toISOString();
+    const record = {
+        ...data,
+        createdAt: data.createdAt || now,
+        updatedAt: now,
+        isActive: true,
+    };
+    return setDoc(docRef, record);
+};
 export const deletePioneerRecord = (id: string) => {
     const db = getDbInstance();
     return deleteDoc(doc(db, 'planejamento_pioneiro', id));

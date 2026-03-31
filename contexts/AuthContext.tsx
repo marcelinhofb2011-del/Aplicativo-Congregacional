@@ -23,8 +23,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        ensurePersistence();
         const auth = getAuthInstance();
+        ensurePersistence();
         const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
             if (firebaseUser) {
                 // Lógica de perfil simples baseada no email
@@ -47,8 +47,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const login = useCallback(async (email: string, pass: string) => {
         setLoading(true);
         setError(null);
+        
+        const auth = getAuthInstance();
+
         try {
-            const auth = getAuthInstance();
             await signInWithEmailAndPassword(auth, email, pass);
             // onAuthStateChanged cuidará de definir o estado do usuário
         } catch (e: any) {
@@ -56,7 +58,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             // Isso garante que a conta de teste sempre funcione.
             if ((e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found') && email === PUBLISHER_EMAIL && pass === PUBLISHER_PASS) {
                 try {
-                    const auth = getAuthInstance();
                     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
                     await updateProfile(userCredential.user, { displayName: 'Publicador' });
                     // onAuthStateChanged irá lidar com o login automaticamente após a criação.
@@ -83,8 +84,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const logout = useCallback(async () => {
         setError(null);
+        const auth = getAuthInstance();
         try {
-            const auth = getAuthInstance();
             await signOut(auth);
             // onAuthStateChanged cuidará da limpeza
         } catch (e) {

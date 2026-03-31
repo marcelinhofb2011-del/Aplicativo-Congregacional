@@ -6,7 +6,8 @@ import {
     updatePioneerRecord, 
     deletePioneerRecord,
     getPublisherProfileByUid,
-    addMonthlyReport
+    addMonthlyReport,
+    setPioneerRecord
 } from '../services/firestoreService';
 import { PioneerRecord, PioneerActivity, PublisherProfile, UserRole } from '../types';
 import { 
@@ -22,6 +23,8 @@ import {
     ChartBarIcon,
     ArrowTrendingUpIcon,
     UserIcon,
+    TrophyIcon,
+    DocumentArrowDownIcon,
     ChevronRightIcon as ChevronRightIconSolid
 } from '../components/icons/Icons';
 import { 
@@ -36,6 +39,7 @@ import {
     LineChart,
     Line
 } from 'recharts';
+import { jsPDF } from 'jspdf';
 import Toast from '../components/Toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -53,7 +57,11 @@ const Pioneer: React.FC = () => {
         const now = new Date();
         return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     });
-    const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
+    const [selectedYear, setSelectedYear] = useState(() => {
+        const now = new Date();
+        const month = now.getMonth() + 1;
+        return month >= 9 ? now.getFullYear() + 1 : now.getFullYear();
+    });
     const [records, setRecords] = useState<PioneerRecord[]>([]);
     const [profile, setProfile] = useState<PublisherProfile | null>(null);
     const [loading, setLoading] = useState(true);
@@ -79,6 +87,7 @@ const Pioneer: React.FC = () => {
 
     // Daily Log States
     const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
+    const [isManualReportModalOpen, setIsManualReportModalOpen] = useState(false);
     const [editingActivity, setEditingActivity] = useState<PioneerActivity | null>(null);
     const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
 
@@ -86,6 +95,8 @@ const Pioneer: React.FC = () => {
     const [participated, setParticipated] = useState<boolean | null>(null);
     const [reportHours, setReportHours] = useState<number>(0);
     const [reportStudies, setReportStudies] = useState<number>(0);
+    const [reportRevisits, setReportRevisits] = useState<number>(0);
+    const [reportNotes, setReportNotes] = useState<string>('');
 
     useEffect(() => {
         if (user) {
@@ -121,6 +132,30 @@ const Pioneer: React.FC = () => {
         }, 0);
         return totalMinutes / 60;
     }, [currentRecord]);
+
+    const totalRevisits = useMemo(() => {
+        if (!currentRecord) return 0;
+        return currentRecord.activities.reduce((acc, act) => acc + (act.revisits || 0), 0);
+    }, [currentRecord]);
+
+    const totalStudies = useMemo(() => {
+        if (!currentRecord) return 0;
+        return currentRecord.activities.reduce((acc, act) => acc + (act.studies || 0), 0);
+    }, [currentRecord]);
+
+    useEffect(() => {
+        if (currentRecord) {
+            setReportHours(totalHoursCompleted);
+            setReportStudies(totalStudies || currentRecord.studentCount || 0);
+            setReportRevisits(totalRevisits || currentRecord.revisits || 0);
+            setReportNotes(currentRecord.notes || '');
+        } else {
+            setReportHours(0);
+            setReportStudies(0);
+            setReportRevisits(0);
+            setReportNotes('');
+        }
+    }, [currentRecord, totalHoursCompleted, totalStudies, totalRevisits]);
 
     const progressStats = useMemo(() => {
         if (!currentRecord || currentRecord.goalHours <= 0) return null;
@@ -230,20 +265,118 @@ const Pioneer: React.FC = () => {
         }
     };
 
-    const handleAddOrUpdateActivity = async (activity: PioneerActivity) => {
-        if (!user || !currentRecord) return;
+    const getServiceYearFromMonth = (monthStr: string) => {
+        const [year, month] = monthStr.split('-').map(Number);
+        const serviceYearStart = month >= 9 ? year : year - 1;
+        return `${serviceYearStart}-${serviceYearStart + 1}`;
+    };
+
+    const handleSaveManualReport = async (data: { month: string, hours: number, studies: number, revisits: number, notes: string }) => {
+        if (!user) return;
         try {
-            let updatedActivities = [...currentRecord.activities];
-            if (editingActivity) {
-                updatedActivities = updatedActivities.map(a => a.id === editingActivity.id ? activity : a);
+            const existing = records.find(r => r.month === data.month && r.createdBy === user.uid);
+            const recordId = existing?.id || `${user.uid}-${data.month}`;
+            
+            const hours = Math.floor(data.hours);
+            const minutes = Math.round((data.hours % 1) * 60);
+
+            const recordData: PioneerRecord = {
+                id: recordId,
+                month: data.month,
+                serviceYear: getServiceYearFromMonth(data.month),
+                goalHours: 0,
+                role: 'Publicador',
+                activities: existing?.activities.length ? existing.activities : [{
+                    id: crypto.randomUUID(),
+                    date: `${data.month}-01`,
+                    hours,
+                    minutes,
+                    category: 'Pregação',
+                    revisits: data.revisits,
+                    studies: data.studies,
+                    studyDetails: []
+                }],
+                studentCount: data.studies,
+                revisits: data.revisits,
+                notes: data.notes,
+                submitted: true,
+                submittedAt: new Date().toISOString(),
+                createdAt: existing?.createdAt || new Date().toISOString(),
+                isActive: true,
+                createdBy: user.uid
+            };
+
+            await setPioneerRecord(recordData);
+            await loadData();
+            setToastMessage('Relatório retroativo salvo!');
+            setIsManualReportModalOpen(false);
+        } catch (error) {
+            console.error('Error saving manual report:', error);
+            setToastMessage('Erro ao salvar relatório.');
+        }
+    };
+
+    const handleAddOrUpdateActivity = async (activity: PioneerActivity) => {
+        if (!user) return;
+        try {
+            const dateObj = new Date(activity.date + 'T12:00:00');
+            const monthStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
+            
+            // Find or create the record for the activity's month
+            let targetRecord = records.find(r => r.month === monthStr && r.createdBy === user.uid);
+            
+            if (!targetRecord) {
+                const newRecord: PioneerRecord = {
+                    id: `${user.uid}-${monthStr}`,
+                    month: monthStr,
+                    serviceYear: getServiceYearFromMonth(monthStr),
+                    goalHours: 0,
+                    role: profile?.isRegularPioneer ? 'Pioneiro Regular' : (profile?.isAuxiliaryPioneer ? 'Pioneiro Auxiliar' : 'Publicador'),
+                    activities: [activity],
+                    studentCount: 0,
+                    revisits: 0,
+                    notes: '',
+                    submitted: false,
+                    createdAt: new Date().toISOString(),
+                    isActive: true,
+                    createdBy: user.uid
+                };
+                await setPioneerRecord(newRecord);
             } else {
-                updatedActivities.push(activity);
+                let updatedActivities = [...targetRecord.activities];
+                
+                if (editingActivity) {
+                    const oldDateObj = new Date(editingActivity.date + 'T12:00:00');
+                    const oldMonthStr = `${oldDateObj.getFullYear()}-${String(oldDateObj.getMonth() + 1).padStart(2, '0')}`;
+                    
+                    if (oldMonthStr === monthStr) {
+                        updatedActivities = updatedActivities.map(a => a.id === editingActivity.id ? activity : a);
+                        await updatePioneerRecord(targetRecord.id, { activities: updatedActivities }, user.uid);
+                    } else {
+                        // Month changed: remove from old, add to new
+                        const oldRecord = records.find(r => r.month === oldMonthStr && r.createdBy === user.uid);
+                        if (oldRecord) {
+                            const filteredOld = oldRecord.activities.filter(a => a.id !== editingActivity.id);
+                            await updatePioneerRecord(oldRecord.id, { activities: filteredOld }, user.uid);
+                        }
+                        updatedActivities.push(activity);
+                        await updatePioneerRecord(targetRecord.id, { activities: updatedActivities }, user.uid);
+                    }
+                } else {
+                    updatedActivities.push(activity);
+                    await updatePioneerRecord(targetRecord.id, { activities: updatedActivities }, user.uid);
+                }
             }
-            await updatePioneerRecord(currentRecord.id, { activities: updatedActivities }, user.uid);
+            
             await loadData();
             setIsActivityModalOpen(false);
             setEditingActivity(null);
-            setToastMessage('Registro salvo!');
+            
+            if (monthStr !== selectedMonth) {
+                setToastMessage(`Registro salvo em ${dateObj.toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}`);
+            } else {
+                setToastMessage('Registro salvo!');
+            }
         } catch (error) {
             console.error('Error saving activity:', error);
             setToastMessage('Erro ao salvar.');
@@ -263,11 +396,125 @@ const Pioneer: React.FC = () => {
         }
     };
 
+    const generatePDF = () => {
+        const doc = new jsPDF();
+        const year = selectedYear;
+        const userName = profile?.name || user?.displayName || 'Publicador';
+
+        doc.setFontSize(20);
+        doc.text('Relatório Anual de Pioneiro', 105, 20, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.text(`Publicador: ${userName}`, 20, 40);
+        doc.text(`Ano de Serviço: ${year}`, 20, 50);
+        doc.text(`Total de Horas no Ano de Serviço: ${annualStats.totalHours.toFixed(1)}h`, 20, 60);
+        doc.text(`Meta Anual: ${annualStats.annualGoal}h (${annualStats.progressToGoal.toFixed(1)}%)`, 20, 70);
+        doc.text(`Crescimento vs Ano Anterior: ${annualStats.growth >= 0 ? '+' : ''}${annualStats.growth.toFixed(1)}%`, 20, 80);
+
+        doc.line(20, 85, 190, 85);
+
+        doc.setFont('helvetica', 'bold');
+        doc.text('Mês', 20, 95);
+        doc.text('Horas', 80, 95);
+        doc.text('Estudos', 120, 95);
+        doc.text('Revisitas', 160, 95);
+        doc.setFont('helvetica', 'normal');
+
+        let y = 105;
+        annualStats.monthlyData.forEach((m) => {
+            const record = records.find(r => r.month === m.monthStr && r.createdBy === user?.uid);
+            if (m.hours > 0 || (record && record.submitted)) {
+                doc.text(m.fullMonth, 20, y);
+                doc.text(`${m.hours.toFixed(1)}h`, 80, y);
+                doc.text(`${record?.studentCount || 0}`, 120, y);
+                doc.text(`${record?.revisits || 0}`, 160, y);
+                y += 10;
+                
+                if (y > 270) {
+                    doc.addPage();
+                    y = 20;
+                }
+            }
+        });
+
+        doc.save(`relatorio_pioneiro_${year}_${userName.replace(/\s+/g, '_')}.pdf`);
+        setToastMessage('PDF gerado com sucesso!');
+    };
+
+    const generateMonthlyPDF = () => {
+        const doc = new jsPDF();
+        const [year, monthNum] = selectedMonth.split('-').map(Number);
+        const monthName = MONTHS[monthNum - 1];
+        const userName = profile?.name || user?.displayName || 'Publicador';
+
+        doc.setFontSize(20);
+        doc.text(`Relatório de Serviço - ${monthName} / ${year}`, 105, 20, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.text(`Publicador: ${userName}`, 20, 40);
+        doc.text(`Modalidade: ${currentRecord?.role || 'Publicador'}`, 20, 50);
+        doc.text(`Alvo de Horas: ${currentRecord?.goalHours || 0}h`, 20, 60);
+        doc.text(`Total Realizado: ${totalHoursCompleted.toFixed(1)}h`, 20, 70);
+        doc.text(`Estudos Bíblicos: ${currentRecord?.studentCount || 0}`, 20, 80);
+        doc.text(`Revisitas: ${currentRecord?.revisits || 0}`, 20, 90);
+
+        doc.line(20, 95, 190, 95);
+
+        doc.setFont('helvetica', 'bold');
+        doc.text('Data', 20, 105);
+        doc.text('Dia', 60, 105);
+        doc.text('Horas', 100, 105);
+        doc.text('Categoria', 140, 105);
+        doc.setFont('helvetica', 'normal');
+
+        let y = 115;
+        const sortedActivities = [...(currentRecord?.activities || [])].sort((a, b) => a.date.localeCompare(b.date));
+        
+        sortedActivities.forEach((act) => {
+            const date = new Date(act.date + 'T12:00:00');
+            doc.text(act.date, 20, y);
+            doc.text(date.toLocaleString('pt-BR', { weekday: 'short' }), 60, y);
+            doc.text(`${act.hours}h ${act.minutes}m`, 100, y);
+            doc.text(act.category || 'Pregação', 140, y);
+            y += 10;
+            
+            if (y > 270) {
+                doc.addPage();
+                y = 20;
+            }
+        });
+
+        if (currentRecord?.notes) {
+            y += 10;
+            if (y > 250) { doc.addPage(); y = 20; }
+            doc.setFont('helvetica', 'bold');
+            doc.text('Observações:', 20, y);
+            doc.setFont('helvetica', 'normal');
+            y += 7;
+            const splitNotes = doc.splitTextToSize(currentRecord.notes, 170);
+            doc.text(splitNotes, 20, y);
+        }
+
+        doc.save(`relatorio_${monthName}_${year}_${userName.replace(/\s+/g, '_')}.pdf`);
+        setToastMessage('PDF mensal gerado!');
+    };
+
     const handleSubmitMonthlyReport = async () => {
         if (!user) return;
         if (!profile) {
             setToastMessage('Perfil não encontrado. Por favor, complete seu cadastro nas configurações.');
             return;
+        }
+
+        const [yearStr, monthNum] = selectedMonth.split('-');
+        const monthName = MONTHS[parseInt(monthNum) - 1];
+
+        // Check for duplicate
+        const existing = records.find(r => r.month === selectedMonth && r.createdBy === user.uid && r.submitted);
+        if (existing) {
+            if (!confirm(`Já existe um relatório enviado para ${monthName} / ${yearStr}. Deseja substituir?`)) {
+                return;
+            }
         }
         
         const isPioneer = profile.isRegularPioneer || profile.isAuxiliaryPioneer;
@@ -282,9 +529,6 @@ const Pioneer: React.FC = () => {
             return;
         }
 
-        const [yearStr, monthNum] = selectedMonth.split('-');
-        const monthName = MONTHS[parseInt(monthNum) - 1];
-
         try {
             // 1. Save to Firestore for congregation records
             await addMonthlyReport({
@@ -294,12 +538,31 @@ const Pioneer: React.FC = () => {
                 year: parseInt(yearStr),
                 hours: reportHours || 0,
                 studies: reportStudies || 0,
-                revisits: 0,
+                revisits: reportRevisits || 0,
                 publications: 0,
                 hasParticipated: participated ?? true,
-                notes: `Relatório gerado via aba Pioneiro.`,
+                notes: reportNotes || `Relatório gerado via aba Pioneiro.`,
                 status: 'Enviado'
             } as any, user.uid);
+
+            // 1.5 Save to PioneerRecord for history
+            const pioneerRecord: PioneerRecord = {
+                id: currentRecord?.id || `${user.uid}-${selectedMonth}`,
+                month: selectedMonth,
+                serviceYear: getServiceYearFromMonth(selectedMonth),
+                goalHours: currentRecord?.goalHours || 0,
+                role: isPioneer ? (profile.isRegularPioneer ? 'Pioneiro Regular' : 'Pioneiro Auxiliar') : 'Publicador',
+                activities: currentRecord?.activities || [],
+                studentCount: reportStudies || 0,
+                revisits: reportRevisits || 0,
+                notes: reportNotes || '',
+                submitted: true,
+                submittedAt: new Date().toISOString(),
+                createdAt: currentRecord?.createdAt || new Date().toISOString(),
+                isActive: true,
+                createdBy: user.uid
+            };
+            await setPioneerRecord(pioneerRecord);
             
             // 2. Generate share text for WhatsApp
             let shareText = `📋 *Relatório de Serviço de Campo*\n`;
@@ -317,6 +580,14 @@ const Pioneer: React.FC = () => {
             
             if (reportStudies > 0) {
                 shareText += `*Estudos Bíblicos:* ${reportStudies}\n`;
+            }
+
+            if (reportRevisits > 0) {
+                shareText += `*Revisitas:* ${reportRevisits}\n`;
+            }
+
+            if (reportNotes) {
+                shareText += `*Observações:* ${reportNotes}\n`;
             }
             
             shareText += `--------------------------------\n`;
@@ -389,10 +660,55 @@ const Pioneer: React.FC = () => {
 
     // Analysis Calculations
     const annualStats = useMemo(() => {
-        const yearRecords = records.filter(r => r.month.startsWith(String(selectedYear)) && r.createdBy === user?.uid);
+        if (!user) return { totalHours: 0, growth: 0, progressToGoal: 0, monthlyData: [], yearlyTotals: [] };
+
+        // Service Year logic: Sep (Year-1) to Aug (Year)
+        const getServiceYearRecords = (year: number) => {
+            return records.filter(r => {
+                const [rYear, rMonth] = r.month.split('-').map(Number);
+                const isPrevYearPart = (rYear === year - 1 && rMonth >= 9);
+                const isCurrentYearPart = (rYear === year && rMonth <= 8);
+                return (isPrevYearPart || isCurrentYearPart) && r.createdBy === user.uid;
+            });
+        };
+
+        const yearRecords = getServiceYearRecords(selectedYear);
+        const prevYearRecords = getServiceYearRecords(selectedYear - 1);
         
-        const monthlyData = MONTHS.map((name, index) => {
-            const monthStr = `${selectedYear}-${String(index + 1).padStart(2, '0')}`;
+        const calculateTotal = (recs: PioneerRecord[]) => {
+            return recs.reduce((acc, r) => {
+                const monthlyTotal = r.activities.reduce((a, act) => a + act.hours + (act.minutes / 60), 0);
+                return acc + monthlyTotal;
+            }, 0);
+        };
+
+        const totalHours = calculateTotal(yearRecords);
+        const prevTotalHours = calculateTotal(prevYearRecords);
+
+        const growth = prevTotalHours > 0 ? ((totalHours - prevTotalHours) / prevTotalHours) * 100 : 0;
+
+        const activeMonths = yearRecords.filter(r => r.activities.length > 0).length;
+        const averageHours = activeMonths > 0 ? totalHours / activeMonths : 0;
+
+        // Yearly Totals based on Service Year
+        const currentYear = new Date().getFullYear();
+        const years = [currentYear + 1, currentYear, currentYear - 1, currentYear - 2, currentYear - 3];
+        const yearlyTotals = years.map(year => {
+            const yearRecs = getServiceYearRecords(year);
+            const total = calculateTotal(yearRecs);
+            return { year: String(year), total: Number(total.toFixed(1)) };
+        }).filter(y => y.total > 0 || parseInt(y.year) === selectedYear).sort((a, b) => a.year.localeCompare(b.year));
+
+        const averageYearlyHours = yearlyTotals.length > 0 
+            ? yearlyTotals.reduce((a, b) => a + b.total, 0) / yearlyTotals.length 
+            : 0;
+
+        // Monthly Data ordered by Service Year (Sep to Aug)
+        const serviceMonths = [9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8];
+        const monthlyData = serviceMonths.map(monthNum => {
+            const year = monthNum >= 9 ? selectedYear - 1 : selectedYear;
+            const monthStr = `${year}-${String(monthNum).padStart(2, '0')}`;
+            const name = MONTHS[monthNum - 1];
             const record = yearRecords.find(r => r.month === monthStr);
             
             let hours = 0;
@@ -406,24 +722,21 @@ const Pioneer: React.FC = () => {
             return { name: name.substring(0, 3), fullMonth: name, hours, monthStr };
         });
 
-        const totalHours = monthlyData.reduce((acc, m) => acc + m.hours, 0);
-        const activeMonths = monthlyData.filter(m => m.hours > 0).length;
-        const averageHours = activeMonths > 0 ? totalHours / activeMonths : 0;
+        const annualGoal = 840;
+        const progressToGoal = (totalHours / annualGoal) * 100;
 
-        // Calculate average hours per year across all years
-        const allYears = Array.from(new Set(records.map(r => r.month.split('-')[0])));
-        const yearlyTotals = allYears.map(year => {
-            const yearRecs = records.filter(r => r.month.startsWith(year) && r.createdBy === user?.uid);
-            return yearRecs.reduce((acc, r) => {
-                const mins = r.activities.reduce((a, act) => a + (act.hours * 60) + act.minutes, 0);
-                return acc + (mins / 60);
-            }, 0);
-        });
-        const averageYearlyHours = yearlyTotals.length > 0 
-            ? yearlyTotals.reduce((a, b) => a + b, 0) / yearlyTotals.length 
-            : 0;
-
-        return { monthlyData, totalHours, averageHours, activeMonths, averageYearlyHours };
+        return { 
+            monthlyData, 
+            totalHours, 
+            prevTotalHours,
+            growth,
+            averageHours, 
+            activeMonths, 
+            averageYearlyHours,
+            annualGoal,
+            progressToGoal,
+            yearlyTotals
+        };
     }, [records, selectedYear, user]);
 
     if (loading) {
@@ -555,6 +868,39 @@ const Pioneer: React.FC = () => {
                             </div>
                         )}
 
+                        {/* Service Year Quick Access */}
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h4 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                                    <CalendarDaysIcon className="h-4 w-4 text-indigo-500" />
+                                    Ano de Serviço {selectedYear}
+                                </h4>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Set {selectedYear-1} - Ago {selectedYear}</span>
+                            </div>
+                            
+                            <div className="grid grid-cols-4 gap-2">
+                                {annualStats.monthlyData.map(m => (
+                                    <button
+                                        key={m.monthStr}
+                                        onClick={() => {
+                                            setSelectedMonth(m.monthStr);
+                                            navigateTo('daily');
+                                        }}
+                                        className={`p-2 rounded-xl text-center transition-all border ${
+                                            selectedMonth === m.monthStr
+                                            ? 'bg-primary border-primary text-white shadow-md shadow-primary/20'
+                                            : m.hours > 0
+                                            ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400'
+                                            : 'bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-400 hover:border-slate-300'
+                                        }`}
+                                    >
+                                        <p className="text-[10px] font-black uppercase">{m.name}</p>
+                                        <p className="text-[8px] opacity-70">{m.hours > 0 ? `${m.hours.toFixed(0)}h` : '-'}</p>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
                         {/* Action List */}
                         <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
                             <button 
@@ -590,6 +936,22 @@ const Pioneer: React.FC = () => {
                                     <div className="text-left">
                                         <h3 className="font-bold text-slate-800 dark:text-white">Criar Relatório</h3>
                                         <p className="text-xs text-slate-500">Fechamento mensal para a congregação</p>
+                                    </div>
+                                </div>
+                                <ChevronRightIconSolid className="h-5 w-5 text-slate-300" />
+                            </button>
+
+                            <button 
+                                onClick={() => setIsManualReportModalOpen(true)}
+                                className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className="h-12 w-12 rounded-2xl bg-amber-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <CalendarDaysIcon className="h-6 w-6 text-amber-500" />
+                                    </div>
+                                    <div className="text-left">
+                                        <h3 className="font-bold text-slate-800 dark:text-white">Relatório Retroativo</h3>
+                                        <p className="text-xs text-slate-500">Lançar meses ou anos passados</p>
                                     </div>
                                 </div>
                                 <ChevronRightIconSolid className="h-5 w-5 text-slate-300" />
@@ -659,6 +1021,9 @@ const Pioneer: React.FC = () => {
                                 <div className="flex gap-2">
                                     <button onClick={() => { setEditingActivity(null); setIsActivityModalOpen(true); }} className="flex-1 btn-primary flex items-center justify-center gap-2 py-3">
                                         <PlusIcon className="h-5 w-5" /> Novo Registro
+                                    </button>
+                                    <button onClick={generateMonthlyPDF} title="Gerar PDF Mensal" className="p-3 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 hover:bg-slate-50 transition-colors">
+                                        <DocumentArrowDownIcon className="h-5 w-5" />
                                     </button>
                                     <button onClick={handleShare} className="p-3 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 hover:bg-slate-50 transition-colors">
                                         <ShareIcon className="h-5 w-5" />
@@ -801,15 +1166,53 @@ const Pioneer: React.FC = () => {
                                         </div>
                                     </div>
                                 </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1 tracking-wider">
+                                        Revisitas
+                                    </label>
+                                    <div className="flex items-center gap-4">
+                                        <input 
+                                            type="number" 
+                                            value={reportRevisits} 
+                                            onChange={(e) => setReportRevisits(parseInt(e.target.value) || 0)}
+                                            className="input-style flex-1"
+                                            placeholder="Quantidade de revisitas"
+                                        />
+                                        <div className="flex gap-1">
+                                            <button onClick={() => setReportRevisits(Math.max(0, reportRevisits - 1))} className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 transition-colors">-</button>
+                                            <button onClick={() => setReportRevisits(reportRevisits + 1)} className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 transition-colors">+</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1 tracking-wider">
+                                        Observações
+                                    </label>
+                                    <textarea 
+                                        value={reportNotes} 
+                                        onChange={(e) => setReportNotes(e.target.value)}
+                                        className="input-style w-full min-h-[100px] py-3"
+                                        placeholder="Alguma observação importante?"
+                                    />
+                                </div>
                             </div>
                         </div>
 
-                        <div className="pt-6">
+                        <div className="pt-6 space-y-3">
                             <button 
                                 onClick={handleSubmitMonthlyReport}
                                 className="w-full py-4 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/30 hover:bg-primary-dark hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
                             >
                                 <ShareIcon className="h-6 w-6" /> Salvar e Compartilhar
+                            </button>
+                            
+                            <button 
+                                onClick={generateMonthlyPDF}
+                                className="w-full py-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
+                            >
+                                <DocumentArrowDownIcon className="h-5 w-5" /> Gerar PDF Mensal
                             </button>
                         </div>
                     </div>
@@ -821,15 +1224,21 @@ const Pioneer: React.FC = () => {
                         <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <CalendarDaysIcon className="h-5 w-5 text-indigo-500" />
-                                <span className="font-bold text-slate-700 dark:text-slate-200">Ano de {selectedYear}</span>
+                                <div>
+                                    <span className="font-bold text-slate-700 dark:text-slate-200 block">Ano de Serviço {selectedYear}</span>
+                                    <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Setembro {selectedYear - 1} - Agosto {selectedYear}</span>
+                                </div>
                             </div>
                             <select 
                                 value={selectedYear} 
                                 onChange={(e) => setSelectedYear(parseInt(e.target.value))}
                                 className="bg-transparent border-none text-sm font-bold text-indigo-500 focus:ring-0 cursor-pointer"
                             >
-                                {[0, 1, 2].map(offset => {
-                                    const year = new Date().getFullYear() - offset;
+                                {[0, 1, 2, 3, 4].map(offset => {
+                                    const now = new Date();
+                                    const month = now.getMonth() + 1;
+                                    const currentServiceYear = month >= 9 ? now.getFullYear() + 1 : now.getFullYear();
+                                    const year = currentServiceYear - offset;
                                     return <option key={year} value={year}>{year}</option>;
                                 })}
                             </select>
@@ -852,26 +1261,44 @@ const Pioneer: React.FC = () => {
                                     <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
                                         <ArrowTrendingUpIcon className="h-5 w-5 text-emerald-500" />
                                     </div>
-                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Média Mensal</p>
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Crescimento</p>
                                 </div>
-                                <p className="text-3xl font-black text-slate-800 dark:text-white">{annualStats.averageHours.toFixed(1)}h</p>
-                                <p className="text-xs text-slate-500 mt-1">Considerando meses ativos</p>
+                                <p className={`text-3xl font-black ${annualStats.growth >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                    {annualStats.growth >= 0 ? '+' : ''}{annualStats.growth.toFixed(1)}%
+                                </p>
+                                <p className="text-xs text-slate-500 mt-1">Comparado ao ano anterior</p>
                             </div>
                             <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 col-span-2">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-                                        <CalendarDaysIcon className="h-5 w-5 text-amber-500" />
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                                            <TrophyIcon className="h-5 w-5 text-amber-500" />
+                                        </div>
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Meta Anual (840h)</p>
                                     </div>
-                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Média Anual (Histórico)</p>
+                                    <span className="text-xs font-black text-amber-600">{annualStats.progressToGoal.toFixed(1)}%</span>
                                 </div>
-                                <p className="text-3xl font-black text-slate-800 dark:text-white">{annualStats.averageYearlyHours.toFixed(1)}h</p>
-                                <p className="text-xs text-slate-500 mt-1">Média de horas totais por ano registrado</p>
+                                <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mb-2">
+                                    <div 
+                                        className="h-full bg-amber-500 transition-all duration-1000"
+                                        style={{ width: `${Math.min(100, annualStats.progressToGoal)}%` }}
+                                    />
+                                </div>
+                                <p className="text-xs text-slate-500">Faltam {(840 - annualStats.totalHours).toFixed(1)}h para bater a meta.</p>
                             </div>
                         </div>
 
+                        {/* PDF Generation Button */}
+                        <button 
+                            onClick={generatePDF}
+                            className="w-full py-4 bg-slate-800 text-white font-bold rounded-2xl shadow-lg hover:bg-slate-900 transition-all flex items-center justify-center gap-2"
+                        >
+                            <DocumentArrowDownIcon className="h-5 w-5" /> Gerar Relatório PDF Anual
+                        </button>
+
                         {/* Monthly Chart */}
                         <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800">
-                            <h4 className="font-bold text-slate-800 dark:text-white mb-6">Comparativo Mensal</h4>
+                            <h4 className="font-bold text-slate-800 dark:text-white mb-6">Comparativo Mensal (Ano de Serviço {selectedYear})</h4>
                             <div className="h-64 w-full">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={annualStats.monthlyData}>
@@ -918,6 +1345,44 @@ const Pioneer: React.FC = () => {
                             </div>
                             <p className="text-[10px] text-center text-slate-400 mt-4 italic">Toque em uma barra para ver os detalhes do mês.</p>
                         </div>
+
+                        {/* Yearly Comparison Chart */}
+                        {annualStats.yearlyTotals && annualStats.yearlyTotals.length > 1 && (
+                            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800">
+                                <h4 className="font-bold text-slate-800 dark:text-white mb-6">Comparativo por Ano</h4>
+                                <div className="h-64 w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={annualStats.yearlyTotals}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                            <XAxis 
+                                                dataKey="year" 
+                                                axisLine={false} 
+                                                tickLine={false} 
+                                                tick={{ fontSize: 10, fontWeight: 600, fill: '#94a3b8' }}
+                                            />
+                                            <YAxis 
+                                                axisLine={false} 
+                                                tickLine={false} 
+                                                tick={{ fontSize: 10, fontWeight: 600, fill: '#94a3b8' }}
+                                            />
+                                            <Tooltip 
+                                                cursor={{ fill: 'transparent' }}
+                                                contentStyle={{ 
+                                                    borderRadius: '12px', 
+                                                    border: 'none', 
+                                                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                                                    backgroundColor: '#1e293b',
+                                                    color: '#fff'
+                                                }}
+                                                itemStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
+                                                labelStyle={{ display: 'none' }}
+                                            />
+                                            <Bar dataKey="total" fill="#10b981" radius={[4, 4, 0, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Monthly List Breakdown */}
                         <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
@@ -966,9 +1431,15 @@ const Pioneer: React.FC = () => {
             />
             <ActivityModal 
                 isOpen={isActivityModalOpen} 
-                onClose={() => setIsActivityModalOpen(false)} 
+                onClose={() => { setIsActivityModalOpen(false); setEditingActivity(null); }} 
                 onSave={handleAddOrUpdateActivity} 
                 initialData={editingActivity}
+                defaultMonth={selectedMonth}
+            />
+            <ManualReportModal
+                isOpen={isManualReportModalOpen}
+                onClose={() => setIsManualReportModalOpen(false)}
+                onSave={handleSaveManualReport}
             />
             
             <Toast message={toastMessage} onClear={() => setToastMessage('')} />
@@ -1046,16 +1517,104 @@ const GoalModal: React.FC<{isOpen: boolean, onClose: () => void, onSave: (data: 
     );
 };
 
-const ActivityModal: React.FC<{isOpen: boolean, onClose: () => void, onSave: (activity: PioneerActivity) => void, initialData: PioneerActivity | null}> = ({ isOpen, onClose, onSave, initialData }) => {
+const ManualReportModal: React.FC<{isOpen: boolean, onClose: () => void, onSave: (data: any) => void}> = ({ isOpen, onClose, onSave }) => {
+    const [month, setMonth] = useState(new Date().toISOString().substring(0, 7));
+    const [hours, setHours] = useState('');
+    const [studies, setStudies] = useState('');
+    const [revisits, setRevisits] = useState('');
+    const [notes, setNotes] = useState('');
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[60] p-4">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-6 w-full max-w-sm animate-scale-in max-h-[90vh] overflow-y-auto">
+                <h4 className="text-xl font-black mb-6 text-center text-slate-800 dark:text-white">Relatório Retroativo</h4>
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Mês e Ano</label>
+                        <input 
+                            type="month" 
+                            value={month} 
+                            onChange={(e) => setMonth(e.target.value)} 
+                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-slate-800 dark:text-white font-bold" 
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Total de Horas</label>
+                        <input 
+                            type="number" 
+                            value={hours} 
+                            onChange={(e) => setHours(e.target.value)} 
+                            placeholder="Ex: 50" 
+                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-slate-800 dark:text-white font-bold" 
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Estudos</label>
+                            <input 
+                                type="number" 
+                                value={studies} 
+                                onChange={(e) => setStudies(e.target.value)} 
+                                placeholder="0" 
+                                className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-slate-800 dark:text-white font-bold" 
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Revisitas</label>
+                            <input 
+                                type="number" 
+                                value={revisits} 
+                                onChange={(e) => setRevisits(e.target.value)} 
+                                placeholder="0" 
+                                className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-slate-800 dark:text-white font-bold" 
+                            />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Observações</label>
+                        <textarea 
+                            value={notes} 
+                            onChange={(e) => setNotes(e.target.value)} 
+                            placeholder="Notas adicionais..." 
+                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-slate-800 dark:text-white font-bold h-20 resize-none" 
+                        />
+                    </div>
+                </div>
+                <div className="flex gap-3 mt-8">
+                    <button onClick={onClose} className="flex-1 p-4 rounded-2xl font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">Cancelar</button>
+                    <button 
+                        onClick={() => onSave({ month, hours: Number(hours), studies: Number(studies), revisits: Number(revisits), notes })} 
+                        className="flex-1 p-4 bg-primary text-white rounded-2xl font-bold shadow-lg shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                    >
+                        Salvar
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const ActivityModal: React.FC<{isOpen: boolean, onClose: () => void, onSave: (activity: PioneerActivity) => void, initialData: PioneerActivity | null, defaultMonth: string}> = ({ isOpen, onClose, onSave, initialData, defaultMonth }) => {
     const getTodayStr = () => {
         const d = new Date();
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const todayMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        
+        if (todayMonth === defaultMonth) {
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        } else {
+            // Se não for o mês atual, retorna o primeiro dia do mês selecionado
+            return `${defaultMonth}-01`;
+        }
     };
 
     const [date, setDate] = useState(getTodayStr);
     const [hours, setHours] = useState(0);
     const [minutes, setMinutes] = useState(0);
     const [category, setCategory] = useState<'Pregação' | 'Estudos' | 'Outra'>('Pregação');
+    const [revisits, setRevisits] = useState(0);
+    const [studies, setStudies] = useState(0);
 
     useEffect(() => {
         if (isOpen) {
@@ -1064,11 +1623,15 @@ const ActivityModal: React.FC<{isOpen: boolean, onClose: () => void, onSave: (ac
                 setHours(initialData.hours);
                 setMinutes(initialData.minutes);
                 setCategory(initialData.category || 'Pregação');
+                setRevisits(initialData.revisits || 0);
+                setStudies(initialData.studies || 0);
             } else {
                 setDate(getTodayStr());
                 setHours(0);
                 setMinutes(0);
                 setCategory('Pregação');
+                setRevisits(0);
+                setStudies(0);
             }
         }
     }, [isOpen, initialData]);
@@ -1077,7 +1640,7 @@ const ActivityModal: React.FC<{isOpen: boolean, onClose: () => void, onSave: (ac
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[60] p-4">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-6 w-full max-w-sm animate-scale-in">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-6 w-full max-w-sm animate-scale-in max-h-[90vh] overflow-y-auto">
                 <h4 className="text-xl font-black mb-6 text-center text-slate-800 dark:text-white">{initialData ? 'Editar Registro' : 'Novo Registro'}</h4>
                 <div className="space-y-6">
                     <div>
@@ -1129,12 +1692,42 @@ const ActivityModal: React.FC<{isOpen: boolean, onClose: () => void, onSave: (ac
                             />
                         </div>
                     </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Estudos</label>
+                            <input 
+                                type="number" 
+                                value={studies} 
+                                onChange={e => setStudies(parseInt(e.target.value) || 0)} 
+                                className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-slate-800 dark:text-white font-bold" 
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Revisitas</label>
+                            <input 
+                                type="number" 
+                                value={revisits} 
+                                onChange={e => setRevisits(parseInt(e.target.value) || 0)} 
+                                className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-slate-800 dark:text-white font-bold" 
+                            />
+                        </div>
+                    </div>
                 </div>
                 
                 <div className="flex gap-3 mt-8">
                     <button onClick={onClose} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl font-bold hover:bg-slate-200 transition-colors">Cancelar</button>
                     <button 
-                        onClick={() => onSave({ id: initialData?.id || Date.now().toString(), date, hours, minutes, category, studies: [] })} 
+                        onClick={() => onSave({ 
+                            id: initialData?.id || Date.now().toString(), 
+                            date, 
+                            hours, 
+                            minutes, 
+                            category, 
+                            revisits, 
+                            studies, 
+                            studyDetails: initialData?.studyDetails || [] 
+                        })} 
                         className="flex-1 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-dark shadow-lg shadow-primary/20 transition-all"
                     >
                         Salvar

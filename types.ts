@@ -238,6 +238,13 @@ export interface ConductorMeeting extends BaseRecord {
     assignedUids?: string[];
 }
 
+export interface FirstSundayConductor extends BaseRecord {
+    month: string; // e.g., "Janeiro 2026" or "2026-01"
+    date: string; // ISO (Timestamp in Firestore) - The actual date of the first Sunday
+    conductorName: string;
+    notes?: string;
+}
+
 // Types for Shepherding Feature
 export interface ShepherdingVisit extends BaseRecord {
     date: string; // ISO (Timestamp in Firestore)
@@ -345,7 +352,9 @@ export interface PioneerActivity {
     hours: number;
     minutes: number;
     category: 'Pregação' | 'Estudos' | 'Outra';
-    studies: {
+    revisits?: number; // Added for daily tracking
+    studies?: number; // Added for daily tracking (count)
+    studyDetails?: { // Renamed from studies to avoid confusion with count
         id: string;
         name: string;
         hours: number;
@@ -355,9 +364,14 @@ export interface PioneerActivity {
 
 export interface PioneerRecord extends BaseRecord {
     month: string; // YYYY-MM format
+    serviceYear: string; // e.g., "2025-2026" (September to August)
     role: 'Publicador' | 'Pioneiro Auxiliar' | 'Pioneiro Regular';
-    isAuxiliaryPioneer: boolean;
+    isAuxiliaryPioneer?: boolean;
     goalHours: number;
     studentCount: number;
+    revisits?: number;
+    notes?: string;
+    submitted?: boolean;
+    submittedAt?: string;
     activities: PioneerActivity[];
 }

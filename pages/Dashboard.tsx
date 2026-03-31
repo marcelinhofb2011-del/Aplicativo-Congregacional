@@ -12,14 +12,15 @@ import {
     PublicTalkSchedule
 } from '../types';
 import AnnouncementsWidget from '../components/AnnouncementsWidget';
-import { getAnnouncements, cleanupExpiredRecords } from '../services/firestoreService';
+import { getAnnouncements, cleanupExpiredRecords, getFirstSundayConductors } from '../services/firestoreService';
 import ScheduleDetailModal from '../components/ScheduleDetailModal';
 import { Link } from 'react-router-dom';
-import { ChartBarIcon, AssignmentsIcon, MegaphoneIcon, ChevronRightIcon } from '../components/icons/Icons';
+import { ChartBarIcon, AssignmentsIcon, MegaphoneIcon, ChevronRightIcon, CalendarDaysIcon } from '../components/icons/Icons';
 import LifeMinistryWidget from '../components/LifeMinistryWidget';
 import AssignmentsWidget from '../components/AssignmentsWidget';
 import CombinedScheduleWidget from '../components/CombinedScheduleWidget';
 import PublicTalkWidget from '../components/PublicTalkWidget';
+import FirstSundayConductorWidget from '../components/FirstSundayConductorWidget';
 
 type UpcomingEvent = {
     date: Date;
@@ -72,6 +73,8 @@ const Dashboard: React.FC = () => {
     const [isLoadingAnnouncements, setIsLoadingAnnouncements] = useState(true);
     const [viewingSchedule, setViewingSchedule] = useState<DashboardSchedule | null>(null);
     const [nextAppointment, setNextAppointment] = useState<UpcomingEvent | null>(null);
+    const [firstSundayConductor, setFirstSundayConductor] = useState<any>();
+    const [isLoadingFirstSunday, setIsLoadingFirstSunday] = useState(true);
 
     // State for each type of schedule widget
     const [nextLifeMinistry, setNextLifeMinistry] = useState<LifeMinistrySchedule | undefined>();
@@ -100,7 +103,26 @@ const Dashboard: React.FC = () => {
                 setIsLoadingAnnouncements(false);
             }
         };
+
+        const fetchFirstSundayData = async () => {
+            if (!user) return;
+            setIsLoadingFirstSunday(true);
+            try {
+                const data = await getFirstSundayConductors();
+                // Get the one for current month or next month
+                const now = new Date();
+                const currentMonth = now.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+                const current = data.find(c => c.month.toLowerCase() === currentMonth.toLowerCase());
+                setFirstSundayConductor(current || data[0]);
+            } catch (error) {
+                console.error("Failed to fetch first sunday conductors:", error);
+            } finally {
+                setIsLoadingFirstSunday(false);
+            }
+        };
+
         fetchAnnouncementsData();
+        fetchFirstSundayData();
     }, [user]);
 
     useEffect(() => {
@@ -168,52 +190,70 @@ const Dashboard: React.FC = () => {
     return (
         <>
             <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{welcomeMessage}</h1>
-                    <p className="mt-2 text-slate-600 dark:text-slate-400">Aqui está um resumo de sua congregação.</p>
+                {/* Header Section */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                    <div className="md:col-span-7 lg:col-span-8 space-y-6">
+                        <div>
+                            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{welcomeMessage}</h1>
+                            <p className="mt-2 text-slate-600 dark:text-slate-400">Aqui está um resumo de sua congregação.</p>
+                        </div>
 
-                    <div className="mt-6 grid grid-cols-3 gap-3">
-                        <QuickAccessButton to="/resumo" icon={ChartBarIcon} label="Resumo" color="text-indigo-500" />
-                        <QuickAccessButton to="/designacoes" icon={AssignmentsIcon} label="Designações" color="text-orange-500" />
-                        <QuickAccessButton to="/anuncios" icon={MegaphoneIcon} label="Anúncios" color="text-sky-500" />
+                        <div className="grid grid-cols-3 gap-3">
+                            <QuickAccessButton to="/resumo" icon={ChartBarIcon} label="Resumo" color="text-indigo-500" />
+                            <QuickAccessButton to="/designacoes" icon={AssignmentsIcon} label="Designações" color="text-orange-500" />
+                            <QuickAccessButton to="/anuncios" icon={MegaphoneIcon} label="Anúncios" color="text-sky-500" />
+                        </div>
+                    </div>
+
+                    <div className="md:col-span-5 lg:col-span-4">
+                        <FirstSundayConductorWidget conductor={firstSundayConductor} isLoading={isLoadingFirstSunday} />
                     </div>
                 </div>
 
-                {nextAppointment && (
-                    <div className="bg-gradient-to-br from-primary to-blue-700 dark:from-slate-800 dark:to-slate-900 text-white rounded-3xl p-6 shadow-xl animate-fade-in-up">
-                        <p className="text-sm font-semibold uppercase tracking-wider text-blue-200 dark:text-blue-300">Seu Próximo Compromisso</p>
-                        <h3 className="text-xl font-bold mt-2">{nextAppointment.type}</h3>
-                        <p className="text-blue-100 dark:text-blue-200">{nextAppointment.title}</p>
-                        <p className="mt-3 font-semibold">{nextAppointment.date.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}</p>
-                        <button onClick={() => handleViewDetails(nextAppointment.fullData, nextAppointment.type)} className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition">
-                            Ver Detalhes <ChevronRightIcon className="h-4 w-4" />
-                        </button>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* Left Column: Personal and Announcements */}
+                    <div className="lg:col-span-5 space-y-6">
+                        {nextAppointment && (
+                            <div className="bg-gradient-to-br from-primary to-blue-700 dark:from-slate-800 dark:to-slate-900 text-white rounded-3xl p-6 shadow-xl animate-fade-in-up">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-blue-200 dark:text-blue-300">Seu Próximo Compromisso</p>
+                                <h3 className="text-xl font-bold mt-2">{nextAppointment.type}</h3>
+                                <p className="text-blue-100 dark:text-blue-200 text-sm">{nextAppointment.title}</p>
+                                <p className="mt-3 font-semibold">{nextAppointment.date.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}</p>
+                                <button onClick={() => handleViewDetails(nextAppointment.fullData, nextAppointment.type)} className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition text-sm">
+                                    Ver Detalhes <ChevronRightIcon className="h-4 w-4" />
+                                </button>
+                            </div>
+                        )}
+                        
+                        <AnnouncementsWidget announcements={announcements} isLoading={isLoadingAnnouncements} />
                     </div>
-                )}
-                
-                <AnnouncementsWidget announcements={announcements} isLoading={isLoadingAnnouncements} />
 
-                {/* Upcoming Congregation Schedules Grid */}
-                <div>
-                    <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 px-2">Próximas Programações</h2>
-                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        <LifeMinistryWidget
-                            schedule={nextLifeMinistry}
-                            isLoading={isLoadingSchedules}
-                            onDetailsClick={(schedule) => handleViewDetails(schedule, 'Vida e Ministério')}
-                        />
-                        <AssignmentsWidget
-                            schedule={nextAssignment}
-                            isLoading={isLoadingSchedules}
-                            onDetailsClick={(schedule) => handleViewDetails(schedule, 'Designações')}
-                        />
-                        <PublicTalkWidget
-                            schedule={nextPublicTalk}
-                            isLoading={isLoadingSchedules}
-                            onDetailsClick={(schedule) => handleViewDetails(schedule, 'Discurso Público')}
-                        />
-                         <div>
-                             <CombinedScheduleWidget
+                    {/* Right Column: Congregation Schedules */}
+                    <div className="lg:col-span-7 space-y-6">
+                        <div className="flex items-center justify-between px-2">
+                            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Próximas Programações</h2>
+                            <Link to="/calendario" className="text-sm font-medium text-primary hover:underline flex items-center gap-1">
+                                <CalendarDaysIcon className="h-4 w-4" /> Ver Calendário
+                            </Link>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <LifeMinistryWidget
+                                schedule={nextLifeMinistry}
+                                isLoading={isLoadingSchedules}
+                                onDetailsClick={(schedule) => handleViewDetails(schedule, 'Vida e Ministério')}
+                            />
+                            <AssignmentsWidget
+                                schedule={nextAssignment}
+                                isLoading={isLoadingSchedules}
+                                onDetailsClick={(schedule) => handleViewDetails(schedule, 'Designações')}
+                            />
+                            <PublicTalkWidget
+                                schedule={nextPublicTalk}
+                                isLoading={isLoadingSchedules}
+                                onDetailsClick={(schedule) => handleViewDetails(schedule, 'Discurso Público')}
+                            />
+                            <CombinedScheduleWidget
                                 cleaningSchedule={nextCleaning}
                                 fieldServiceMeeting={nextFieldService}
                                 isLoading={isLoadingSchedules}
@@ -221,7 +261,6 @@ const Dashboard: React.FC = () => {
                         </div>
                     </div>
                 </div>
-
             </div>
             
             <ScheduleDetailModal
