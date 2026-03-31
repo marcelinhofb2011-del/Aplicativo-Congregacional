@@ -51,7 +51,9 @@ export interface StudentPart {
     theme: string;
     time: number;
     student: string;
+    studentUid?: string;
     helper?: string;
+    helperUid?: string;
 }
 
 export interface ChristianLifePart {
@@ -59,19 +61,23 @@ export interface ChristianLifePart {
     theme: string;
     time: number;
     speaker: string;
+    speakerUid?: string;
 }
 
 export interface TreasuresPart {
     theme: string;
     speaker: string;
+    speakerUid?: string;
 }
 
 export interface SpiritualGemsPart {
-    speaker:string;
+    speaker: string;
+    speakerUid?: string;
 }
 
 export interface BibleReadingPart {
     student: string; // The reader's name
+    studentUid?: string;
 }
 
 export interface LifeMinistrySchedule extends BaseRecord {
@@ -80,7 +86,9 @@ export interface LifeMinistrySchedule extends BaseRecord {
     date: string; // ISO (Timestamp in Firestore)
     initialSong: string;
     president: string;
+    presidentUid?: string;
     initialPrayer: string;
+    initialPrayerUid?: string;
 
     // Treasures of God's Word
     treasuresTheme: TreasuresPart;
@@ -97,10 +105,13 @@ export interface LifeMinistrySchedule extends BaseRecord {
     // Congregation Bible Study
     congregationBibleStudy: {
         conductor: string;
+        conductorUid?: string;
         reader: string;
+        readerUid?: string;
     };
     finalSong: string;
     finalPrayer: string;
+    finalPrayerUid?: string;
     assignedUids?: string[];
 }
 
@@ -197,13 +208,21 @@ export interface BusTicket {
 export interface Assignment extends BaseRecord {
     date: string; // ISO (Timestamp in Firestore)
     president?: string;
+    presidentUid?: string;
     indicator1?: string;
+    indicator1Uid?: string;
     indicator2?: string;
+    indicator2Uid?: string;
     mic1?: string;
+    mic1Uid?: string;
     mic2?: string;
+    mic2Uid?: string;
     reader?: string;
+    readerUid?: string;
     audio?: string;
+    audioUid?: string;
     video?: string;
+    videoUid?: string;
     notes?: string;
     assignedUids?: string[];
 }

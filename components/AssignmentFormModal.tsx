@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Assignment, BaseRecord } from '../types';
+import { Assignment, BaseRecord, PublisherProfile } from '../types';
 import { XIcon } from './icons/Icons';
+import PublisherAutocomplete from './PublisherAutocomplete';
+import { getPublisherProfiles } from '../services/firestoreService';
 
 interface AssignmentFormModalProps {
     isOpen: boolean;
@@ -10,16 +12,39 @@ interface AssignmentFormModalProps {
 }
 
 type RoleField = 'president' | 'indicator1' | 'indicator2' | 'mic1' | 'mic2' | 'reader' | 'audio' | 'video';
+type UidField = `${RoleField}Uid`;
 
-const BLANK_ASSIGNMENT_STATE: Record<RoleField, string> & { date: string; notes: string; } = {
+interface FormState extends Record<RoleField, string>, Record<UidField, string> {
+    date: string;
+    notes: string;
+    assignedUids: string[];
+}
+
+const BLANK_ASSIGNMENT_STATE: FormState = {
     date: new Date().toISOString().split('T')[0],
-    president: '',
-    indicator1: '', indicator2: '', mic1: '', mic2: '',
-    reader: '', audio: '', video: '', notes: ''
+    president: '', presidentUid: '',
+    indicator1: '', indicator1Uid: '',
+    indicator2: '', indicator2Uid: '',
+    mic1: '', mic1Uid: '',
+    mic2: '', mic2Uid: '',
+    reader: '', readerUid: '',
+    audio: '', audioUid: '',
+    video: '', videoUid: '',
+    notes: '',
+    assignedUids: []
 };
 
 const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
-    const [formData, setFormData] = useState(BLANK_ASSIGNMENT_STATE);
+    const [formData, setFormData] = useState<FormState>(BLANK_ASSIGNMENT_STATE);
+    const [publishers, setPublishers] = useState<PublisherProfile[]>([]);
+
+    useEffect(() => {
+        const fetchPublishers = async () => {
+            const data = await getPublisherProfiles();
+            setPublishers(data);
+        };
+        fetchPublishers();
+    }, []);
 
     useEffect(() => {
         if (isOpen) {
@@ -27,14 +52,23 @@ const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({ isOpen, onClo
                 setFormData({
                     date: new Date(initialData.date).toISOString().split('T')[0],
                     president: initialData.president || '',
+                    presidentUid: initialData.presidentUid || '',
                     indicator1: initialData.indicator1 || '',
+                    indicator1Uid: initialData.indicator1Uid || '',
                     indicator2: initialData.indicator2 || '',
+                    indicator2Uid: initialData.indicator2Uid || '',
                     mic1: initialData.mic1 || '',
+                    mic1Uid: initialData.mic1Uid || '',
                     mic2: initialData.mic2 || '',
+                    mic2Uid: initialData.mic2Uid || '',
                     reader: initialData.reader || '',
+                    readerUid: initialData.readerUid || '',
                     audio: initialData.audio || '',
+                    audioUid: initialData.audioUid || '',
                     video: initialData.video || '',
-                    notes: initialData.notes || ''
+                    videoUid: initialData.videoUid || '',
+                    notes: initialData.notes || '',
+                    assignedUids: initialData.assignedUids || []
                 });
             } else {
                 setFormData(BLANK_ASSIGNMENT_STATE);
@@ -50,31 +84,51 @@ const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({ isOpen, onClo
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const handlePublisherSelect = (field: RoleField, publisher: PublisherProfile | null) => {
+        const name = publisher?.name || '';
+        const uid = publisher?.uid || '';
+        const uidField = `${field}Uid` as UidField;
+
+        setFormData(prev => ({ 
+            ...prev, 
+            [field]: name,
+            [uidField]: uid
+        }));
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         
-        const assignedRoles: RoleField[] = (Object.keys(formData) as (keyof typeof formData)[])
-            .filter((key): key is RoleField => 
-                key !== 'date' && key !== 'notes' && typeof formData[key] === 'string' && (formData[key] as string).trim() !== ''
-            );
+        // Collect all UIDs from the UID fields
+        const uidsSet = new Set<string>();
+        const uidFields: UidField[] = ['presidentUid', 'indicator1Uid', 'indicator2Uid', 'mic1Uid', 'mic2Uid', 'readerUid', 'audioUid', 'videoUid'];
+        
+        uidFields.forEach(field => {
+            if (formData[field]) uidsSet.add(formData[field]);
+        });
 
-        if (assignedRoles.length === 0) {
-            alert('Preencha pelo menos uma designação.');
-            return;
-        }
+        const uids = Array.from(uidsSet);
 
         const dataToSave: Omit<Assignment, 'id' | keyof BaseRecord> = {
-            date: new Date(formData.date + 'T00:00:00Z').toISOString(), // Treat date as UTC
+            date: new Date(formData.date + 'T00:00:00Z').toISOString(),
             notes: formData.notes || '',
             president: formData.president || '',
+            presidentUid: formData.presidentUid || '',
             indicator1: formData.indicator1 || '',
+            indicator1Uid: formData.indicator1Uid || '',
             indicator2: formData.indicator2 || '',
+            indicator2Uid: formData.indicator2Uid || '',
             mic1: formData.mic1 || '',
+            mic1Uid: formData.mic1Uid || '',
             mic2: formData.mic2 || '',
+            mic2Uid: formData.mic2Uid || '',
             reader: formData.reader || '',
+            readerUid: formData.readerUid || '',
             audio: formData.audio || '',
+            audioUid: formData.audioUid || '',
             video: formData.video || '',
-            assignedUids: [] // UIDs are no longer tracked with simple text inputs
+            videoUid: formData.videoUid || '',
+            assignedUids: uids
         };
         onSave(dataToSave);
     };
@@ -102,15 +156,30 @@ const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({ isOpen, onClo
                              {/* Presidente */}
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Presidente 👔</label>
-                                <input type="text" name="president" value={formData.president} onChange={handleInputChange} placeholder="Nome do presidente..." className="input-style" />
+                                <PublisherAutocomplete 
+                                    publishers={publishers}
+                                    selectedPublisher={publishers.find(p => p.uid === formData.presidentUid) || null}
+                                    onSelect={(pub) => handlePublisherSelect('president', pub)}
+                                    placeholder="Nome do presidente..."
+                                />
                             </div>
 
                             {/* Indicadores */}
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Indicadores 👤</label>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <input type="text" name="indicator1" value={formData.indicator1} onChange={handleInputChange} placeholder="Nome do indicador 1..." className="input-style" />
-                                    <input type="text" name="indicator2" value={formData.indicator2} onChange={handleInputChange} placeholder="Nome do indicador 2..." className="input-style" />
+                                    <PublisherAutocomplete 
+                                        publishers={publishers}
+                                        selectedPublisher={publishers.find(p => p.uid === formData.indicator1Uid) || null}
+                                        onSelect={(pub) => handlePublisherSelect('indicator1', pub)}
+                                        placeholder="Nome do indicador 1..."
+                                    />
+                                    <PublisherAutocomplete 
+                                        publishers={publishers}
+                                        selectedPublisher={publishers.find(p => p.uid === formData.indicator2Uid) || null}
+                                        onSelect={(pub) => handlePublisherSelect('indicator2', pub)}
+                                        placeholder="Nome do indicador 2..."
+                                    />
                                 </div>
                             </div>
                             
@@ -118,8 +187,18 @@ const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({ isOpen, onClo
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Microfones 🎤</label>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <input type="text" name="mic1" value={formData.mic1} onChange={handleInputChange} placeholder="Nome do microfone 1..." className="input-style" />
-                                    <input type="text" name="mic2" value={formData.mic2} onChange={handleInputChange} placeholder="Nome do microfone 2..." className="input-style" />
+                                    <PublisherAutocomplete 
+                                        publishers={publishers}
+                                        selectedPublisher={publishers.find(p => p.uid === formData.mic1Uid) || null}
+                                        onSelect={(pub) => handlePublisherSelect('mic1', pub)}
+                                        placeholder="Nome do microfone 1..."
+                                    />
+                                    <PublisherAutocomplete 
+                                        publishers={publishers}
+                                        selectedPublisher={publishers.find(p => p.uid === formData.mic2Uid) || null}
+                                        onSelect={(pub) => handlePublisherSelect('mic2', pub)}
+                                        placeholder="Nome do microfone 2..."
+                                    />
                                 </div>
                             </div>
 
@@ -127,16 +206,31 @@ const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({ isOpen, onClo
                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Leitor 📖</label>
-                                    <input type="text" name="reader" value={formData.reader} onChange={handleInputChange} placeholder="Nome do leitor..." className="input-style" />
+                                    <PublisherAutocomplete 
+                                        publishers={publishers}
+                                        selectedPublisher={publishers.find(p => p.uid === formData.readerUid) || null}
+                                        onSelect={(pub) => handlePublisherSelect('reader', pub)}
+                                        placeholder="Nome do leitor..."
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Áudio 🎶</label>
-                                    <input type="text" name="audio" value={formData.audio} onChange={handleInputChange} placeholder="Nome do responsável..." className="input-style" />
+                                    <PublisherAutocomplete 
+                                        publishers={publishers}
+                                        selectedPublisher={publishers.find(p => p.uid === formData.audioUid) || null}
+                                        onSelect={(pub) => handlePublisherSelect('audio', pub)}
+                                        placeholder="Nome do responsável..."
+                                    />
                                 </div>
                              </div>
                              <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Vídeo 🖥️</label>
-                                <input type="text" name="video" value={formData.video} onChange={handleInputChange} placeholder="Nome do responsável..." className="input-style" />
+                                <PublisherAutocomplete 
+                                    publishers={publishers}
+                                    selectedPublisher={publishers.find(p => p.uid === formData.videoUid) || null}
+                                    onSelect={(pub) => handlePublisherSelect('video', pub)}
+                                    placeholder="Nome do responsável..."
+                                />
                             </div>
                         </div>
                         
