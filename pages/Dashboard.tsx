@@ -205,10 +205,10 @@ const Dashboard: React.FC = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                     {/* Left Column: Personal Assignments */}
                     <div className="lg:col-span-5">
-                        <div className="bg-white dark:bg-slate-800 rounded-3xl p-3 shadow-sm border border-slate-100 dark:border-slate-700 h-full min-h-[120px] flex flex-col justify-center">
+                        <div className="bg-white dark:bg-slate-800 rounded-3xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 h-full min-h-[120px] flex flex-col justify-center">
                             <div className="flex items-center justify-between mb-2">
-                                <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                    <AssignmentsIcon className="h-4 w-4 text-primary" />
+                                <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <AssignmentsIcon className="h-5 w-5 text-primary" />
                                     Sua Próxima Designação
                                 </h2>
                             </div>
@@ -218,26 +218,26 @@ const Dashboard: React.FC = () => {
                             ) : nextAppointment ? (
                                 <button 
                                     onClick={() => handleViewDetails(nextAppointment.fullData, nextAppointment.type)}
-                                    className="w-full flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all group text-left"
+                                    className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all group text-left"
                                 >
-                                    <div className="flex items-center gap-2">
-                                        <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                                            <AssignmentsIcon className="h-3.5 w-3.5" />
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                            <AssignmentsIcon className="h-4 w-4" />
                                         </div>
                                         <div>
-                                            <p className="text-xs font-bold text-slate-900 dark:text-white">
+                                            <p className="text-sm font-bold text-slate-900 dark:text-white">
                                                 {nextAppointment.type === 'Designações' ? 'Partes Mecânicas' : nextAppointment.type}
                                             </p>
-                                            <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">
                                                 {nextAppointment.date.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })}
                                             </p>
                                         </div>
                                     </div>
-                                    <ChevronRightIcon className="h-3.5 w-3.5 text-slate-400 group-hover:text-primary transition-colors" />
+                                    <ChevronRightIcon className="h-4 w-4 text-slate-400 group-hover:text-primary transition-colors" />
                                 </button>
                             ) : (
                                 <div className="text-center py-2">
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">Nenhuma próxima.</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Nenhuma próxima.</p>
                                 </div>
                             )}
                         </div>
@@ -277,27 +277,27 @@ const Dashboard: React.FC = () => {
                 {/* Announcements Section */}
                 <div className="mt-4 px-2">
                     <div className="flex items-center gap-2 mb-3">
-                        <MegaphoneIcon className="h-4 w-4 text-primary" />
-                        <h2 className="text-base font-bold text-slate-900 dark:text-white">Anúncios e Eventos</h2>
+                        <MegaphoneIcon className="h-5 w-5 text-primary" />
+                        <h2 className="text-lg font-bold text-slate-900 dark:text-white">Anúncios e Eventos</h2>
                     </div>
                     
                     {isLoadingAnnouncements ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {[1, 2, 3].map(i => (
-                                <div key={i} className="h-20 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl"></div>
+                                <div key={i} className="h-24 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl"></div>
                             ))}
                         </div>
                     ) : announcements.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {announcements.map(ann => (
-                                <div key={ann.id} className="bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
-                                    <div className="flex items-start justify-between gap-2 mb-1">
-                                        <h3 className="font-bold text-slate-900 dark:text-white text-xs">{ann.title}</h3>
+                                <div key={ann.id} className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="flex items-start justify-between gap-2 mb-2">
+                                        <h3 className="font-bold text-slate-900 dark:text-white text-sm">{ann.title}</h3>
                                         {ann.isPinned && (
-                                            <span className="flex-shrink-0 h-1.5 w-1.5 rounded-full bg-primary"></span>
+                                            <span className="flex-shrink-0 h-2 w-2 rounded-full bg-primary"></span>
                                         )}
                                     </div>
-                                    <p className="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                                    <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-3 leading-relaxed">
                                         {ann.body}
                                     </p>
                                     <div className="mt-2 flex justify-end">

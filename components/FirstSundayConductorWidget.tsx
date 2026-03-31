@@ -22,18 +22,18 @@ const FirstSundayConductorWidget: React.FC<FirstSundayConductorWidgetProps> = ({
     if (!conductor) return null;
 
     return (
-        <div className="bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-3xl p-3 shadow-lg transform hover:scale-[1.01] transition-all duration-300">
+        <div className="bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-3xl p-4 shadow-lg transform hover:scale-[1.01] transition-all duration-300">
             <div className="flex items-center justify-between mb-1">
-                <p className="text-[9px] font-bold uppercase tracking-widest text-amber-100">Dirigente 1º Dom</p>
-                <div className="p-1 bg-white/20 rounded-full">
-                    <UserIcon className="h-3 w-3 text-white" />
+                <p className="text-xs font-bold uppercase tracking-widest text-amber-100">Dirigente 1º Dom</p>
+                <div className="p-1.5 bg-white/20 rounded-full">
+                    <UserIcon className="h-4 w-4 text-white" />
                 </div>
             </div>
-            <h3 className="text-lg font-bold mb-0">{conductor.conductorName}</h3>
+            <h3 className="text-xl font-bold mb-0">{conductor.conductorName}</h3>
             <div className="flex items-center gap-2">
-                <p className="text-[10px] text-amber-100 font-medium">{conductor.month}</p>
+                <p className="text-xs text-amber-100 font-medium">{conductor.month}</p>
                 {conductor.date && (
-                    <p className="text-[9px] text-amber-200">
+                    <p className="text-xs text-amber-200">
                         • {new Date(conductor.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', timeZone: 'UTC' })}
                     </p>
                 )}
