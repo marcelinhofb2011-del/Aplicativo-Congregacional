@@ -9,13 +9,13 @@ import {
     CleaningSchedule,
     ConductorMeeting,
     DashboardSchedule,
-    PublicTalkSchedule
+    PublicTalkSchedule,
+    Announcement
 } from '../types';
-import AnnouncementsWidget from '../components/AnnouncementsWidget';
-import { getAnnouncements, cleanupExpiredRecords, getFirstSundayConductors } from '../services/firestoreService';
+import { cleanupExpiredRecords, getFirstSundayConductors, getAnnouncements } from '../services/firestoreService';
 import ScheduleDetailModal from '../components/ScheduleDetailModal';
 import { Link } from 'react-router-dom';
-import { ChartBarIcon, AssignmentsIcon, MegaphoneIcon, ChevronRightIcon, CalendarDaysIcon } from '../components/icons/Icons';
+import { AssignmentsIcon, ChevronRightIcon, CalendarDaysIcon, MegaphoneIcon } from '../components/icons/Icons';
 import LifeMinistryWidget from '../components/LifeMinistryWidget';
 import AssignmentsWidget from '../components/AssignmentsWidget';
 import CombinedScheduleWidget from '../components/CombinedScheduleWidget';
@@ -69,12 +69,13 @@ const findNextUpcoming = <T extends { date: string }>(items: T[]): T | undefined
 const Dashboard: React.FC = () => {
     const { user } = useAuth();
     const { schedules, isLoading: isLoadingSchedules } = useSchedules();
-    const [announcements, setAnnouncements] = useState<any[]>([]);
-    const [isLoadingAnnouncements, setIsLoadingAnnouncements] = useState(true);
     const [viewingSchedule, setViewingSchedule] = useState<DashboardSchedule | null>(null);
     const [nextAppointment, setNextAppointment] = useState<UpcomingEvent | null>(null);
+    const [userAssignments, setUserAssignments] = useState<UpcomingEvent[]>([]);
     const [firstSundayConductor, setFirstSundayConductor] = useState<any>();
     const [isLoadingFirstSunday, setIsLoadingFirstSunday] = useState(true);
+    const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+    const [isLoadingAnnouncements, setIsLoadingAnnouncements] = useState(true);
 
     // State for each type of schedule widget
     const [nextLifeMinistry, setNextLifeMinistry] = useState<LifeMinistrySchedule | undefined>();
@@ -91,29 +92,18 @@ const Dashboard: React.FC = () => {
     }, [user]);
 
     useEffect(() => {
-        const fetchAnnouncementsData = async () => {
-            if (!user) return;
-            setIsLoadingAnnouncements(true);
-            try {
-                const fetchedAnnouncements = await getAnnouncements();
-                setAnnouncements(fetchedAnnouncements);
-            } catch (error) {
-                console.error("Failed to fetch announcements:", error);
-            } finally {
-                setIsLoadingAnnouncements(false);
-            }
-        };
-
         const fetchFirstSundayData = async () => {
             if (!user) return;
             setIsLoadingFirstSunday(true);
             try {
                 const data = await getFirstSundayConductors();
-                // Get the one for current month or next month
                 const now = new Date();
-                const currentMonth = now.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
-                const current = data.find(c => c.month.toLowerCase() === currentMonth.toLowerCase());
-                setFirstSundayConductor(current || data[0]);
+                const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+                const today = new Date(todayStr + 'T00:00:00Z');
+
+                // Find the first conductor whose date is today or in the future
+                const nextConductor = data.find(c => new Date(c.date) >= today);
+                setFirstSundayConductor(nextConductor || data[data.length - 1]);
             } catch (error) {
                 console.error("Failed to fetch first sunday conductors:", error);
             } finally {
@@ -121,9 +111,23 @@ const Dashboard: React.FC = () => {
             }
         };
 
-        fetchAnnouncementsData();
         fetchFirstSundayData();
     }, [user]);
+
+    useEffect(() => {
+        const fetchAnnouncements = async () => {
+            setIsLoadingAnnouncements(true);
+            try {
+                const data = await getAnnouncements();
+                setAnnouncements(data);
+            } catch (error) {
+                console.error("Failed to fetch announcements:", error);
+            } finally {
+                setIsLoadingAnnouncements(false);
+            }
+        };
+        fetchAnnouncements();
+    }, []);
 
     useEffect(() => {
         if (!user || isLoadingSchedules) return;
@@ -142,11 +146,12 @@ const Dashboard: React.FC = () => {
         }).filter((e): e is UpcomingEvent => e !== null && e.date >= today)
           .sort((a, b) => a.date.getTime() - b.date.getTime());
 
-        const userAssignments = allUpcomingEvents.filter(event => 
+        const userAssignmentsList = allUpcomingEvents.filter(event => 
             event.fullData.assignedUids?.includes(user.uid)
         );
         
-        setNextAppointment(userAssignments.length > 0 ? userAssignments[0] : null);
+        setUserAssignments(userAssignmentsList);
+        setNextAppointment(userAssignmentsList.length > 0 ? userAssignmentsList[0] : null);
 
         // Separate schedules by type for the widgets
         const lifeMinistrySchedules = schedules.filter(s => 'week' in s && 'president' in s) as LifeMinistrySchedule[];
@@ -180,28 +185,15 @@ const Dashboard: React.FC = () => {
 
     const welcomeMessage = `Olá, ${user?.displayName || user?.email?.split('@')[0] || 'irmão'}!`;
 
-    const QuickAccessButton: React.FC<{ to: string; icon: React.FC<any>; label: string; color: string }> = ({ to, icon: Icon, label, color }) => (
-        <Link to={to} className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-white dark:bg-slate-800 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200`}>
-            <Icon className={`h-7 w-7 ${color}`} />
-            <span className="font-semibold text-sm text-slate-700 dark:text-slate-200">{label}</span>
-        </Link>
-    );
-    
     return (
         <>
-            <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+            <div className="p-4 sm:p-6 lg:p-8 space-y-4">
                 {/* Header Section */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-                    <div className="md:col-span-7 lg:col-span-8 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
+                    <div className="md:col-span-7 lg:col-span-8">
                         <div>
-                            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{welcomeMessage}</h1>
-                            <p className="mt-2 text-slate-600 dark:text-slate-400">Aqui está um resumo de sua congregação.</p>
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-3">
-                            <QuickAccessButton to="/resumo" icon={ChartBarIcon} label="Resumo" color="text-indigo-500" />
-                            <QuickAccessButton to="/designacoes" icon={AssignmentsIcon} label="Designações" color="text-orange-500" />
-                            <QuickAccessButton to="/anuncios" icon={MegaphoneIcon} label="Anúncios" color="text-sky-500" />
+                            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{welcomeMessage}</h1>
+                            <p className="text-sm text-slate-600 dark:text-slate-400">Resumo da congregação.</p>
                         </div>
                     </div>
 
@@ -210,31 +202,51 @@ const Dashboard: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    {/* Left Column: Personal and Announcements */}
-                    <div className="lg:col-span-5 space-y-6">
-                        {nextAppointment && (
-                            <div className="bg-gradient-to-br from-primary to-blue-700 dark:from-slate-800 dark:to-slate-900 text-white rounded-3xl p-6 shadow-xl animate-fade-in-up">
-                                <p className="text-xs font-semibold uppercase tracking-wider text-blue-200 dark:text-blue-300">Seu Próximo Compromisso</p>
-                                <h3 className="text-xl font-bold mt-2">{nextAppointment.type}</h3>
-                                <p className="text-blue-100 dark:text-blue-200 text-sm">{nextAppointment.title}</p>
-                                <p className="mt-3 font-semibold">{nextAppointment.date.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}</p>
-                                <button onClick={() => handleViewDetails(nextAppointment.fullData, nextAppointment.type)} className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition text-sm">
-                                    Ver Detalhes <ChevronRightIcon className="h-4 w-4" />
-                                </button>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                    {/* Left Column: Personal Assignments */}
+                    <div className="lg:col-span-5">
+                        <div className="bg-white dark:bg-slate-800 rounded-3xl p-3 shadow-sm border border-slate-100 dark:border-slate-700 h-full min-h-[120px] flex flex-col justify-center">
+                            <div className="flex items-center justify-between mb-2">
+                                <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <AssignmentsIcon className="h-4 w-4 text-primary" />
+                                    Sua Próxima Designação
+                                </h2>
                             </div>
-                        )}
-                        
-                        <AnnouncementsWidget announcements={announcements} isLoading={isLoadingAnnouncements} />
+                            
+                            {isLoadingSchedules ? (
+                                <div className="h-12 bg-slate-100 dark:bg-slate-700 animate-pulse rounded-xl"></div>
+                            ) : nextAppointment ? (
+                                <button 
+                                    onClick={() => handleViewDetails(nextAppointment.fullData, nextAppointment.type)}
+                                    className="w-full flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all group text-left"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                            <AssignmentsIcon className="h-3.5 w-3.5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-slate-900 dark:text-white">
+                                                {nextAppointment.type === 'Designações' ? 'Partes Mecânicas' : nextAppointment.type}
+                                            </p>
+                                            <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                                                {nextAppointment.date.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <ChevronRightIcon className="h-3.5 w-3.5 text-slate-400 group-hover:text-primary transition-colors" />
+                                </button>
+                            ) : (
+                                <div className="text-center py-2">
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">Nenhuma próxima.</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Right Column: Congregation Schedules */}
-                    <div className="lg:col-span-7 space-y-6">
-                        <div className="flex items-center justify-between px-2">
-                            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Próximas Programações</h2>
-                            <Link to="/calendario" className="text-sm font-medium text-primary hover:underline flex items-center gap-1">
-                                <CalendarDaysIcon className="h-4 w-4" /> Ver Calendário
-                            </Link>
+                    <div className="lg:col-span-7 space-y-4">
+                        <div className="px-2">
+                            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Próximas Programações</h2>
                         </div>
                         
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -260,6 +272,47 @@ const Dashboard: React.FC = () => {
                             />
                         </div>
                     </div>
+                </div>
+
+                {/* Announcements Section */}
+                <div className="mt-4 px-2">
+                    <div className="flex items-center gap-2 mb-3">
+                        <MegaphoneIcon className="h-4 w-4 text-primary" />
+                        <h2 className="text-base font-bold text-slate-900 dark:text-white">Anúncios e Eventos</h2>
+                    </div>
+                    
+                    {isLoadingAnnouncements ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="h-20 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl"></div>
+                            ))}
+                        </div>
+                    ) : announcements.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {announcements.map(ann => (
+                                <div key={ann.id} className="bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="flex items-start justify-between gap-2 mb-1">
+                                        <h3 className="font-bold text-slate-900 dark:text-white text-xs">{ann.title}</h3>
+                                        {ann.isPinned && (
+                                            <span className="flex-shrink-0 h-1.5 w-1.5 rounded-full bg-primary"></span>
+                                        )}
+                                    </div>
+                                    <p className="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                                        {ann.body}
+                                    </p>
+                                    <div className="mt-2 flex justify-end">
+                                        <span className="text-[9px] text-slate-400">
+                                            {new Date(ann.createdAt).toLocaleDateString('pt-BR')}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-6 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Nenhum anúncio no momento.</p>
+                        </div>
+                    )}
                 </div>
             </div>
             

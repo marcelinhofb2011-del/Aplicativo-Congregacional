@@ -85,7 +85,7 @@ const archiveBaseRecord = (collectionName: string, id: string, userUid: string):
 // --- API IMPLEMENTATIONS ---
 
 // Life & Ministry
-export const getSchedules = () => getCollection<LifeMinistrySchedule>('programacao', 'date', 'desc');
+export const getSchedules = () => getCollection<LifeMinistrySchedule>('programacao', 'date', 'asc');
 export const addSchedule = (data: any, userUid: string) => addBaseRecord('programacao', data, userUid);
 export const updateSchedule = (id: string, data: any, userUid: string) => updateBaseRecord('programacao', id, data, userUid);
 export const archiveSchedule = (id: string, userUid: string) => archiveBaseRecord('programacao', id, userUid);
@@ -165,7 +165,7 @@ export const updateConductorMeeting = (id: string, data: any, userUid: string) =
 export const archiveConductorMeeting = (id: string, userUid: string) => archiveBaseRecord('dirigentes', id, userUid);
 
 // First Sunday Conductors
-export const getFirstSundayConductors = () => getActiveCollection<FirstSundayConductor>('dirigentes_primeiro_domingo', 'month', 'desc');
+export const getFirstSundayConductors = () => getActiveCollection<FirstSundayConductor>('dirigentes_primeiro_domingo', 'date', 'asc');
 export const addFirstSundayConductor = (data: any, userUid: string) => addBaseRecord('dirigentes_primeiro_domingo', data, userUid);
 export const updateFirstSundayConductor = (id: string, data: any, userUid: string) => updateBaseRecord('dirigentes_primeiro_domingo', id, data, userUid);
 export const archiveFirstSundayConductor = (id: string, userUid: string) => archiveBaseRecord('dirigentes_primeiro_domingo', id, userUid);

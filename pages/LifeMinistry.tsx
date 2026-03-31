@@ -38,7 +38,7 @@ const LifeMinistry: React.FC = () => {
             const dateB = b?.date ? new Date(b.date).getTime() : 0;
             if (!dateA || isNaN(dateA)) return 1;
             if (!dateB || isNaN(dateB)) return -1;
-            return dateB - dateA; // Sort descending (most recent first)
+            return dateA - dateB; // Sort ascending (closest dates first)
         });
     }, [schedules]);
 
