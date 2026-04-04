@@ -19,7 +19,6 @@ import {
     Megaphone,
     BookOpen,
     Home,
-    Trash2,
     Users,
     Book,
     User,
@@ -346,9 +345,6 @@ const Dashboard: React.FC = () => {
                             <p className="text-xs font-bold text-amber-600/70 dark:text-amber-400/70 font-sans tracking-wide">
                                 {nextCleaning ? `${new Date(nextCleaning.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} — ${new Date(nextCleaning.endDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}` : 'Sem data'}
                             </p>
-                            <div className="h-10 w-10 bg-amber-100 dark:bg-amber-900/40 rounded-2xl flex items-center justify-center">
-                                <Trash2 className="h-5 w-5 text-amber-600" />
-                            </div>
                         </div>
                     </motion.div>
 
