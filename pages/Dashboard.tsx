@@ -8,13 +8,13 @@ import {
     ConductorMeeting,
     DashboardSchedule,
     PublicTalkSchedule,
-    Announcement
+    Announcement,
+    FirstSundayConductor
 } from '../types';
 import { getAnnouncements } from '../services/firestoreService';
 import ScheduleDetailModal from '../components/ScheduleDetailModal';
 import { Link } from 'react-router-dom';
 import { 
-    Calendar, 
     ChevronRight, 
     Megaphone,
     BookOpen,
@@ -87,6 +87,7 @@ const Dashboard: React.FC = () => {
     const [nextCleaning, setNextCleaning] = useState<CleaningSchedule | undefined>();
     const [nextFieldService, setNextFieldService] = useState<ConductorMeeting | undefined>();
     const [nextPublicTalk, setNextPublicTalk] = useState<PublicTalkSchedule | undefined>();
+    const [nextFirstSundayConductor, setNextFirstSundayConductor] = useState<FirstSundayConductor | undefined>();
 
     useEffect(() => {
         const fetchAnnouncements = async () => {
@@ -128,14 +129,16 @@ const Dashboard: React.FC = () => {
         const lifeMinistrySchedules = schedules.filter(s => 'week' in s && 'president' in s) as LifeMinistrySchedule[];
         const assignmentSchedules = schedules.filter(s => 'president' in s && !('week' in s)) as Assignment[];
         const cleaningSchedules = schedules.filter(s => 'group' in s && 'endDate' in s) as CleaningSchedule[];
-        const fieldServiceSchedules = schedules.filter(s => 'conductorName' in s) as ConductorMeeting[];
+        const fieldServiceSchedules = schedules.filter(s => 'conductorName' in s && !('month' in s)) as ConductorMeeting[];
         const publicTalkSchedules = schedules.filter(s => 'speakerName' in s && 'theme' in s) as PublicTalkSchedule[];
+        const firstSundaySchedules = schedules.filter(s => 'conductorName' in s && 'month' in s) as FirstSundayConductor[];
 
         setNextLifeMinistry(findNextUpcomingRange(lifeMinistrySchedules));
         setNextAssignment(findNextUpcoming(assignmentSchedules));
         setNextCleaning(findNextUpcomingRange(cleaningSchedules));
         setNextFieldService(findNextUpcoming(fieldServiceSchedules));
         setNextPublicTalk(findNextUpcoming(publicTalkSchedules));
+        setNextFirstSundayConductor(findNextUpcoming(firstSundaySchedules));
 
     }, [user, schedules, isLoadingSchedules]);
     
@@ -167,9 +170,6 @@ const Dashboard: React.FC = () => {
                 <div className="flex items-center gap-2">
                     <button onClick={toggleTheme} className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
                         {theme === 'dark' ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
-                    </button>
-                    <button className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
-                        <Calendar className="h-6 w-6" />
                     </button>
                     <button onClick={() => logout()} className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
                         <LogOut className="h-6 w-6" />
@@ -366,6 +366,29 @@ const Dashboard: React.FC = () => {
                             </p>
                             <div className="h-10 w-10 bg-sky-100 dark:bg-sky-900/40 rounded-2xl flex items-center justify-center">
                                 <Users className="h-6 w-6 text-sky-600" />
+                            </div>
+                        </div>
+                    </motion.div>
+
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.45 }}
+                        className="bg-gradient-to-br from-rose-50 to-white dark:from-rose-900/20 dark:to-slate-900 rounded-[32px] p-6 flex flex-col justify-between min-h-[160px] relative overflow-hidden border border-rose-100 dark:border-rose-800/30 shadow-lg shadow-rose-100/20 dark:shadow-none col-span-2"
+                    >
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-rose-500/5 rounded-full -mr-12 -mt-12"></div>
+                        <div>
+                            <p className="text-[10px] font-bold tracking-[0.2em] text-rose-600 dark:text-rose-400 uppercase mb-3 font-sans">DIRIGENTE 1º DOMINGO</p>
+                            <p className="text-xl font-bold text-slate-800 dark:text-white font-outfit">
+                                {nextFirstSundayConductor?.conductorName || 'Não definido'}
+                            </p>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <p className="text-xs font-bold text-rose-600/70 dark:text-rose-400/70 font-sans tracking-wide">
+                                {nextFirstSundayConductor ? new Date(nextFirstSundayConductor.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' }) : 'Sem data'}
+                            </p>
+                            <div className="h-10 w-10 bg-rose-100 dark:bg-rose-900/40 rounded-2xl flex items-center justify-center">
+                                <Users className="h-6 w-6 text-rose-600" />
                             </div>
                         </div>
                     </motion.div>

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { UserRole } from './types';
-import { DashboardIcon, AttendanceIcon, LifeMinistryIcon, AssignmentsIcon, CleaningIcon, FieldServiceIcon, PublicTalkIcon, TerritoriesIcon, BusIcon, SettingsIcon, ConductorIcon, ShepherdingIcon, Squares2X2Icon, ChartBarIcon, DocumentTextIcon, MegaphoneIcon, CalendarDaysIcon } from './components/icons/Icons';
+import { DashboardIcon, AttendanceIcon, LifeMinistryIcon, AssignmentsIcon, CleaningIcon, FieldServiceIcon, PublicTalkIcon, TerritoriesIcon, BusIcon, SettingsIcon, ConductorIcon, ShepherdingIcon, Squares2X2Icon, ChartBarIcon, DocumentTextIcon, MegaphoneIcon, CalendarDaysIcon, TrophyIcon, UsersIcon, BookOpenIcon } from './components/icons/Icons';
 
 export interface NavItem {
     path: string;
@@ -14,8 +14,8 @@ export interface NavItem {
 // For Bottom Navigation
 export const BOTTOM_NAV_ITEMS: NavItem[] = [
     { path: '/dashboard', label: 'Página inicial', icon: DashboardIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-blue-500' },
-    { path: '/calendario', label: 'Calendário', icon: CalendarDaysIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-rose-500' },
-    { path: '/assistencia', label: 'Assistência', icon: AttendanceIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-teal-500' },
+    { path: '/pioneiro', label: 'Pioneiro', icon: BookOpenIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-amber-500' },
+    { path: '/assistencia', label: 'Assistência', icon: UsersIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-teal-500' },
 ];
 
 // For Secondary Menu (Servant/Elder only)

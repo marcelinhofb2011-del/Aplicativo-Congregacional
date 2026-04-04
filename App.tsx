@@ -28,7 +28,6 @@ import AttendanceList from './pages/AttendanceList';
 import Resumo from './pages/Resumo';
 import Publishers from './pages/Publishers';
 import Announcements from './pages/Announcements';
-import Calendar from './pages/Calendar';
 import SpeechRecord from './pages/SpeechRecord';
 import Pioneer from './pages/Pioneer';
 
@@ -72,7 +71,6 @@ const AppContent: React.FC = () => {
                         
                         <Route element={<RoleProtectedRoute roles={[UserRole.PUBLISHER, UserRole.SERVANT]} />}>
                             <Route path="dashboard" element={<Dashboard />} />
-                            <Route path="calendario" element={<Calendar />} />
                             <Route path="pioneiro" element={<Pioneer />} />
                             <Route path="relatorio" element={<Report />} />
                             <Route path="assistencia" element={<Attendance />} />

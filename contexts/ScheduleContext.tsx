@@ -6,11 +6,12 @@ import {
     getCleaningSchedules,
     getConductorMeetings,
     getPublicTalks,
-    getShepherdingVisits
+    getShepherdingVisits,
+    getFirstSundayConductors
 } from '../services/firestoreService';
-import type { LifeMinistrySchedule, Assignment, CleaningSchedule, ConductorMeeting, PublicTalkSchedule, ShepherdingVisit } from '../types';
+import type { LifeMinistrySchedule, Assignment, CleaningSchedule, ConductorMeeting, PublicTalkSchedule, ShepherdingVisit, FirstSundayConductor } from '../types';
 
-export type ScheduleItem = LifeMinistrySchedule | Assignment | CleaningSchedule | ConductorMeeting | PublicTalkSchedule | ShepherdingVisit;
+export type ScheduleItem = LifeMinistrySchedule | Assignment | CleaningSchedule | ConductorMeeting | PublicTalkSchedule | ShepherdingVisit | FirstSundayConductor;
 
 interface ScheduleContextType {
     schedules: ScheduleItem[];
@@ -46,6 +47,7 @@ export const ScheduleProvider: React.FC<{ children: ReactNode }> = ({ children }
                         getConductorMeetings(),
                         getPublicTalks(),
                         getShepherdingVisits(),
+                        getFirstSundayConductors(),
                     ]);
                     
                     const allSchedules = results.flat();
