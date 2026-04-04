@@ -89,7 +89,7 @@ const Programations: React.FC = () => {
                                             </div>
                                             <div>
                                                 <p className="text-sm font-bold text-slate-900 dark:text-white">
-                                                    {new Date(schedule.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                                                    {new Date(schedule.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'UTC' })}
                                                 </p>
                                                 <p className="text-xs text-slate-500 dark:text-slate-400">
                                                     {new Date(schedule.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}

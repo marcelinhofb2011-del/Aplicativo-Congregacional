@@ -209,7 +209,7 @@ const Dashboard: React.FC = () => {
                                     <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-0.5 font-sans">Sua Próxima Designação</p>
                                     <p className="text-xl font-bold text-slate-900 dark:text-white leading-tight font-outfit">{nextAppointment.type}</p>
                                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-sans">
-                                        {new Date(nextAppointment.date).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}
+                                        {new Date(nextAppointment.date).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', timeZone: 'UTC' })}
                                     </p>
                                 </div>
                             </div>
@@ -343,7 +343,7 @@ const Dashboard: React.FC = () => {
                         </div>
                         <div className="flex items-center justify-between">
                             <p className="text-xs font-bold text-amber-600/70 dark:text-amber-400/70 font-sans tracking-wide">
-                                {nextCleaning ? `${new Date(nextCleaning.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} — ${new Date(nextCleaning.endDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}` : 'Sem data'}
+                                {nextCleaning ? `${new Date(nextCleaning.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })} — ${new Date(nextCleaning.endDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}` : 'Sem data'}
                             </p>
                         </div>
                     </motion.div>
@@ -362,7 +362,7 @@ const Dashboard: React.FC = () => {
                         </div>
                         <div className="flex items-center justify-between">
                             <p className="text-xs font-bold text-sky-600/70 dark:text-sky-400/70 font-sans tracking-wide">
-                                {nextFieldService ? new Date(nextFieldService.date).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' }) : 'Sem data'}
+                                {nextFieldService ? new Date(nextFieldService.date).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: 'UTC' }) : 'Sem data'}
                             </p>
                             <div className="h-10 w-10 bg-sky-100 dark:bg-sky-900/40 rounded-2xl flex items-center justify-center">
                                 <Users className="h-6 w-6 text-sky-600" />
@@ -385,7 +385,7 @@ const Dashboard: React.FC = () => {
                         </div>
                         <div className="flex items-center justify-between">
                             <p className="text-xs font-bold text-rose-600/70 dark:text-rose-400/70 font-sans tracking-wide">
-                                {nextFirstSundayConductor ? new Date(nextFirstSundayConductor.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' }) : 'Sem data'}
+                                {nextFirstSundayConductor ? new Date(nextFirstSundayConductor.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', timeZone: 'UTC' }) : 'Sem data'}
                             </p>
                             <div className="h-10 w-10 bg-rose-100 dark:bg-rose-900/40 rounded-2xl flex items-center justify-center">
                                 <Users className="h-6 w-6 text-rose-600" />
