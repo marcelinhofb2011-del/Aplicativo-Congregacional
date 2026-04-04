@@ -331,6 +331,12 @@ export const BirdIcon: React.FC<{ className?: string }> = ({ className }) => (
     </svg>
 );
 
+export const UsersSolidIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.896 1.756 11.308 11.308 0 005.147-1.756.75.75 0 00.364-.63v-.122c0-2.097-1.355-3.877-3.246-4.508a6.375 6.375 0 011.368 4.223l-.001.144z" />
+  </svg>
+);
+
 export const TrophyIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0V9.403c0-1.567-1.467-2.575-2.983-2.153a3.375 3.375 0 00-2.432 2.377L7.5 15.375m9 0a4.5 4.5 0 01-9 0m9 0h-9" />

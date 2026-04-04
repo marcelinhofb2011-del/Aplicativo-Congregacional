@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { UserRole } from './types';
-import { DashboardIcon, AttendanceIcon, LifeMinistryIcon, AssignmentsIcon, CleaningIcon, FieldServiceIcon, PublicTalkIcon, TerritoriesIcon, BusIcon, SettingsIcon, ConductorIcon, ShepherdingIcon, Squares2X2Icon, ChartBarIcon, DocumentTextIcon, MegaphoneIcon, CalendarDaysIcon, TrophyIcon, UsersIcon, BookOpenIcon } from './components/icons/Icons';
+import { DashboardIcon, AttendanceIcon, LifeMinistryIcon, AssignmentsIcon, CleaningIcon, FieldServiceIcon, PublicTalkIcon, TerritoriesIcon, BusIcon, SettingsIcon, ConductorIcon, ShepherdingIcon, Squares2X2Icon, ChartBarIcon, DocumentTextIcon, MegaphoneIcon, CalendarDaysIcon, TrophyIcon, UsersIcon, BookOpenIcon, UsersSolidIcon } from './components/icons/Icons';
 
 export interface NavItem {
     path: string;
@@ -15,7 +15,7 @@ export interface NavItem {
 export const BOTTOM_NAV_ITEMS: NavItem[] = [
     { path: '/dashboard', label: 'Página inicial', icon: DashboardIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-blue-500' },
     { path: '/pioneiro', label: 'Pioneiro', icon: BookOpenIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-amber-500' },
-    { path: '/assistencia', label: 'Assistência', icon: UsersIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-teal-500' },
+    { path: '/assistencia', label: 'Assistência', icon: UsersSolidIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-teal-500' },
 ];
 
 // For Secondary Menu (Servant/Elder only)
@@ -41,7 +41,7 @@ export const RESUMO_NAV_ITEM: NavItem = { path: '/resumo', label: 'Resumo', icon
 export const ANNOUNCEMENTS_NAV_ITEM: NavItem = { path: '/anuncios', label: 'Anúncios', icon: MegaphoneIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-sky-500' };
 
 // Nav Items for Secretary sub-pages (for Header titles)
-export const ATTENDANCE_LIST_NAV_ITEM: NavItem = { path: '/secretario/assistencia', label: 'Pasta de Assistência', icon: AttendanceIcon, roles: [UserRole.SERVANT], color: 'text-emerald-600' };
+export const ATTENDANCE_LIST_NAV_ITEM: NavItem = { path: '/secretario/assistencia', label: 'Pasta de Assistência', icon: UsersSolidIcon, roles: [UserRole.SERVANT], color: 'text-emerald-600' };
 
 
 // Combined for routing and other lookups
