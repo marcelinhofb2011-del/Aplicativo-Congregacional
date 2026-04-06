@@ -34,11 +34,12 @@ const Assignments: React.FC = () => {
 
     const upcomingAssignments = useMemo(() => {
         const now = new Date();
-        const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-        const today = new Date(todayStr + 'T00:00:00Z');
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const lastWeek = new Date(today);
+        lastWeek.setDate(today.getDate() - 7);
         
         return assignments
-            .filter(a => new Date(a.date) >= today)
+            .filter(a => new Date(a.date) >= lastWeek)
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     }, [assignments]);
 

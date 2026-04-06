@@ -305,10 +305,10 @@ export const cleanupExpiredRecords = async (userUid: string) => {
     const today = new Date(todayStr + 'T00:00:00Z');
 
     const collectionsToCleanup = [
-        { name: 'vida_ministerio', type: 'range' },
+        { name: 'programacao', type: 'range' },
         { name: 'programacoes_reuniao', type: 'single' },
         { name: 'designacoes', type: 'single' },
-        { name: 'discurso_publico', type: 'single' },
+        { name: 'discursos_publicos', type: 'single' },
         { name: 'limpeza', type: 'range' },
     ];
 
@@ -319,9 +319,18 @@ export const cleanupExpiredRecords = async (userUid: string) => {
                 let isExpired = false;
                 if (coll.type === 'range') {
                     const startDate = new Date(record.date);
-                    const endDate = record.endDate ? new Date(record.endDate) : new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+                    // Use endDate if exists, otherwise assume 7 days from startDate
+                    let endDate: Date;
+                    if (record.endDate) {
+                        endDate = new Date(record.endDate);
+                    } else {
+                        endDate = new Date(startDate.getTime());
+                        endDate.setUTCDate(startDate.getUTCDate() + 6); // End of the week
+                    }
+                    // Only expire if the LAST day of the range has passed
                     if (endDate < today) isExpired = true;
                 } else if (coll.type === 'single') {
+                    // Expire if the date has passed
                     if (record.date && new Date(record.date) < today) isExpired = true;
                 }
                 

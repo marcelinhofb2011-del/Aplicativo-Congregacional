@@ -30,50 +30,39 @@ const LifeMinistry: React.FC = () => {
         fetchSchedules();
     }, []);
 
-    const displaySchedules = useMemo(() => {
-        // Remove all filters to ensure data is displayed.
-        // Sort safely, putting items without a valid date at the end.
-        return [...schedules].sort((a, b) => {
-            const dateA = a?.date ? new Date(a.date).getTime() : 0;
-            const dateB = b?.date ? new Date(b.date).getTime() : 0;
-            if (!dateA || isNaN(dateA)) return 1;
-            if (!dateB || isNaN(dateB)) return -1;
-            return dateA - dateB; // Sort ascending (closest dates first)
-        });
-    }, [schedules]);
-
-
     const fetchSchedules = async () => {
         setIsLoading(true);
         try {
-            let fetchedSchedules = await getSchedules();
-            const today = new Date();
-            today.setHours(0, 0, 0, 0); // Set to start of day for comparison
-
-            const expiredSchedules = fetchedSchedules.filter(schedule => {
-                if (!schedule.date) return false;
-                const scheduleDate = new Date(schedule.date);
-                return scheduleDate < today;
-            });
-
-            if (expiredSchedules.length > 0) {
-                // This is a simplified approach. In a real app, you might want to batch deletes.
-                for (const schedule of expiredSchedules) {
-                    await archiveSchedule(schedule.id, user?.uid || 'system-cleanup'); // Using archive as a soft-delete
-                }
-                // Re-fetch or filter locally
-                fetchedSchedules = fetchedSchedules.filter(schedule => !expiredSchedules.some(expired => expired.id === schedule.id));
-                setToastMessage(`${expiredSchedules.length} programações vencidas foram limpas.`);
-            }
-
+            const fetchedSchedules = await getSchedules();
             setSchedules(fetchedSchedules);
         } catch (error) {
-            console.error("Failed to fetch and clean schedules:", error);
-            setToastMessage('Falha ao carregar ou limpar programações.');
+            console.error("Failed to fetch schedules:", error);
+            setToastMessage('Falha ao carregar programações.');
         } finally {
             setIsLoading(false);
         }
     };
+
+    const displaySchedules = useMemo(() => {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const lastWeek = new Date(today);
+        lastWeek.setDate(today.getDate() - 7);
+
+        return [...schedules]
+            .filter(s => {
+                if (!s.date) return false;
+                const scheduleDate = new Date(s.date);
+                return scheduleDate >= lastWeek;
+            })
+            .sort((a, b) => {
+                const dateA = a?.date ? new Date(a.date).getTime() : 0;
+                const dateB = b?.date ? new Date(b.date).getTime() : 0;
+                if (!dateA || isNaN(dateA)) return 1;
+                if (!dateB || isNaN(dateB)) return -1;
+                return dateA - dateB;
+            });
+    }, [schedules]);
     
     const toggleItem = (id: string) => {
         setExpandedItems(prev => {

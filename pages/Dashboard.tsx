@@ -11,7 +11,7 @@ import {
     Announcement,
     FirstSundayConductor
 } from '../types';
-import { getAnnouncements } from '../services/firestoreService';
+import { getAnnouncements, cleanupExpiredRecords } from '../services/firestoreService';
 import ScheduleDetailModal from '../components/ScheduleDetailModal';
 import { Link } from 'react-router-dom';
 import { 
@@ -83,7 +83,8 @@ const Dashboard: React.FC = () => {
     const [isLoadingAnnouncements, setIsLoadingAnnouncements] = useState(true);
 
     const [nextLifeMinistry, setNextLifeMinistry] = useState<LifeMinistrySchedule | undefined>();
-    const [nextAssignment, setNextAssignment] = useState<Assignment | undefined>();
+    const [nextMidweekAssignment, setNextMidweekAssignment] = useState<Assignment | undefined>();
+    const [nextWeekendAssignment, setNextWeekendAssignment] = useState<Assignment | undefined>();
     const [nextCleaning, setNextCleaning] = useState<CleaningSchedule | undefined>();
     const [nextFieldService, setNextFieldService] = useState<ConductorMeeting | undefined>();
     const [nextPublicTalk, setNextPublicTalk] = useState<PublicTalkSchedule | undefined>();
@@ -93,6 +94,9 @@ const Dashboard: React.FC = () => {
         const fetchAnnouncements = async () => {
             setIsLoadingAnnouncements(true);
             try {
+                if (user) {
+                    await cleanupExpiredRecords(user.uid);
+                }
                 const data = await getAnnouncements();
                 setAnnouncements(data);
             } catch (error) {
@@ -102,7 +106,7 @@ const Dashboard: React.FC = () => {
             }
         };
         fetchAnnouncements();
-    }, []);
+    }, [user]);
 
     useEffect(() => {
         if (!user || isLoadingSchedules) return;
@@ -110,6 +114,9 @@ const Dashboard: React.FC = () => {
         const now = new Date();
         const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
         const today = new Date(todayStr + 'T00:00:00Z');
+
+        const bufferDate = new Date(today);
+        bufferDate.setUTCDate(today.getUTCDate() - 3);
 
         const allUpcomingEvents: UpcomingEvent[] = schedules.map(s => {
             if ('week' in s) return { date: new Date(s.date), type: 'Vida e Ministério', title: s.week, description: `Presidente: ${s.president || 'Não definido'}`, fullData: s };
@@ -127,14 +134,46 @@ const Dashboard: React.FC = () => {
         setNextAppointment(userAssignmentsList.length > 0 ? userAssignmentsList[0] : null);
 
         const lifeMinistrySchedules = schedules.filter(s => 'week' in s && 'president' in s) as LifeMinistrySchedule[];
+        const currentLifeMinistry = findNextUpcomingRange(lifeMinistrySchedules);
+        setNextLifeMinistry(currentLifeMinistry);
+
         const assignmentSchedules = schedules.filter(s => 'president' in s && !('week' in s)) as Assignment[];
         const cleaningSchedules = schedules.filter(s => 'group' in s && 'endDate' in s) as CleaningSchedule[];
         const fieldServiceSchedules = schedules.filter(s => 'conductorName' in s && !('month' in s)) as ConductorMeeting[];
         const publicTalkSchedules = schedules.filter(s => 'speakerName' in s && 'theme' in s) as PublicTalkSchedule[];
         const firstSundaySchedules = schedules.filter(s => 'conductorName' in s && 'month' in s) as FirstSundayConductor[];
 
-        setNextLifeMinistry(findNextUpcomingRange(lifeMinistrySchedules));
-        setNextAssignment(findNextUpcoming(assignmentSchedules));
+        // Filter assignments to be within the current week if possible
+        let midweekAssignments = assignmentSchedules.filter(a => {
+            const day = new Date(a.date).getUTCDay();
+            return day >= 1 && day <= 5;
+        });
+        let weekendAssignments = assignmentSchedules.filter(a => {
+            const day = new Date(a.date).getUTCDay();
+            return day === 0 || day === 6;
+        });
+
+        if (currentLifeMinistry) {
+            const weekStart = new Date(currentLifeMinistry.date);
+            const weekEnd = new Date(weekStart.getTime());
+            weekEnd.setUTCDate(weekStart.getUTCDate() + 6);
+
+            const midweekInWeek = midweekAssignments.filter(a => {
+                const d = new Date(a.date);
+                return d >= weekStart && d <= weekEnd;
+            });
+            const weekendInWeek = weekendAssignments.filter(a => {
+                const d = new Date(a.date);
+                return d >= weekStart && d <= weekEnd;
+            });
+
+            if (midweekInWeek.length > 0) midweekAssignments = midweekInWeek;
+            if (weekendInWeek.length > 0) weekendAssignments = weekendInWeek;
+        }
+
+        setNextMidweekAssignment(findNextUpcoming(midweekAssignments));
+        setNextWeekendAssignment(findNextUpcoming(weekendAssignments));
+        
         setNextCleaning(findNextUpcomingRange(cleaningSchedules));
         setNextFieldService(findNextUpcoming(fieldServiceSchedules));
         setNextPublicTalk(findNextUpcoming(publicTalkSchedules));
@@ -242,22 +281,22 @@ const Dashboard: React.FC = () => {
                     <div className="space-y-8">
                         <DutyItem 
                             label="ÁUDIO E VÍDEO" 
-                            value={`${nextAssignment?.audio || 'Não definido'}${nextAssignment?.video ? ` / ${nextAssignment.video}` : ''}`} 
+                            value={`${nextMidweekAssignment?.audio || 'Não definido'}${nextMidweekAssignment?.video ? ` / ${nextMidweekAssignment.video}` : ''}`} 
                             dotColor="bg-indigo-400"
                         />
                         <DutyItem 
                             label="INDICADORES" 
-                            value={`${nextAssignment?.indicator1 || 'Não definido'}${nextAssignment?.indicator2 ? ` / ${nextAssignment.indicator2}` : ''}`} 
+                            value={`${nextMidweekAssignment?.indicator1 || 'Não definido'}${nextMidweekAssignment?.indicator2 ? ` / ${nextMidweekAssignment.indicator2}` : ''}`} 
                             dotColor="bg-indigo-400"
                         />
                         <DutyItem 
                             label="MICROFONES" 
-                            value={`${nextAssignment?.mic1 || 'Não definido'}${nextAssignment?.mic2 ? ` / ${nextAssignment.mic2}` : ''}`} 
+                            value={`${nextMidweekAssignment?.mic1 || 'Não definido'}${nextMidweekAssignment?.mic2 ? ` / ${nextMidweekAssignment.mic2}` : ''}`} 
                             dotColor="bg-indigo-400"
                         />
                         <DutyItem 
                             label="PRESIDENTE" 
-                            value={nextLifeMinistry?.president || 'Não definido'} 
+                            value={nextMidweekAssignment?.president || nextLifeMinistry?.president || 'Não definido'} 
                             dotColor="bg-indigo-400"
                         />
                     </div>
@@ -297,13 +336,13 @@ const Dashboard: React.FC = () => {
                         <div>
                             <p className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase mb-2 font-sans">PRESIDENTE</p>
                             <p className="text-lg font-bold text-slate-800 dark:text-white font-outfit">
-                                {nextAssignment?.president || 'Não definido'}
+                                {nextWeekendAssignment?.president || 'Não definido'}
                             </p>
                         </div>
                         <div className="text-right">
                             <p className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase mb-2 font-sans">LEITOR</p>
                             <p className="text-lg font-bold text-slate-800 dark:text-white font-outfit">
-                                {nextAssignment?.reader || 'Não definido'}
+                                {nextWeekendAssignment?.reader || 'Não definido'}
                             </p>
                         </div>
                     </div>
@@ -311,17 +350,17 @@ const Dashboard: React.FC = () => {
                     <div className="space-y-6 border-t border-slate-100 dark:border-slate-800 pt-8">
                         <DutyItem 
                             label="ÁUDIO E VÍDEO" 
-                            value={`${nextAssignment?.audio || 'Não definido'}${nextAssignment?.video ? ` / ${nextAssignment.video}` : ''}`} 
+                            value={`${nextWeekendAssignment?.audio || 'Não definido'}${nextWeekendAssignment?.video ? ` / ${nextWeekendAssignment.video}` : ''}`} 
                             dotColor="bg-emerald-400"
                         />
                         <DutyItem 
                             label="INDICADORES" 
-                            value={`${nextAssignment?.indicator1 || 'Não definido'}${nextAssignment?.indicator2 ? ` / ${nextAssignment.indicator2}` : ''}`} 
+                            value={`${nextWeekendAssignment?.indicator1 || 'Não definido'}${nextWeekendAssignment?.indicator2 ? ` / ${nextWeekendAssignment.indicator2}` : ''}`} 
                             dotColor="bg-emerald-400"
                         />
                         <DutyItem 
                             label="MICROFONES" 
-                            value={`${nextAssignment?.mic1 || 'Não definido'}${nextAssignment?.mic2 ? ` / ${nextAssignment.mic2}` : ''}`} 
+                            value={`${nextWeekendAssignment?.mic1 || 'Não definido'}${nextWeekendAssignment?.mic2 ? ` / ${nextWeekendAssignment.mic2}` : ''}`} 
                             dotColor="bg-emerald-400"
                         />
                     </div>
