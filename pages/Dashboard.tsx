@@ -27,7 +27,8 @@ import {
     Moon,
     Monitor,
     ShieldCheck,
-    Info
+    Info,
+    Calendar
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from '../contexts/ThemeContext';
@@ -207,6 +208,13 @@ const Dashboard: React.FC = () => {
                 </div>
                 {/* ... rest of header ... */}
                 <div className="flex items-center gap-2">
+                    <Link 
+                        to="/calendario" 
+                        className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                        title="Agenda Pessoal"
+                    >
+                        <Calendar className="h-6 w-6" />
+                    </Link>
                     <button onClick={toggleTheme} className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
                         {theme === 'dark' ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
                     </button>

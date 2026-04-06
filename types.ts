@@ -394,3 +394,19 @@ export interface PioneerRecord extends BaseRecord {
     submittedAt?: string;
     activities: PioneerActivity[];
 }
+
+export interface CalendarNote extends BaseRecord {
+    date: string; // ISO date string
+    time?: string; // HH:mm
+    title: string;
+    description: string;
+    category: 'SAÚDE' | 'VIAGEM' | 'NOTAS' | 'LEMBRETE';
+    isCompleted: boolean;
+}
+
+export interface CalendarEvent extends BaseRecord {
+    date: string; // ISO date string
+    title: string;
+    description?: string;
+    type: 'EVENTO' | 'REUNIÃO' | 'OUTRO';
+}

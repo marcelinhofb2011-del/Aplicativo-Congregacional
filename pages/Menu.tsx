@@ -13,12 +13,15 @@ import {
     SettingsIcon,
     MegaphoneIcon,
     CalendarDaysIcon,
+    CalendarSolidIcon,
+    BookOpenIcon,
 } from '../components/icons/Icons';
 
 // Itens de menu para a grade principal
 const MENU_GRID_ITEMS = [
-    { path: '/pioneiro', label: 'Pioneiro', icon: CalendarDaysIcon, color: 'text-teal-500' },
-    { path: '/resumo', label: 'Resumo', icon: ChartBarIcon, color: 'text-indigo-500' },
+    { path: '/calendario', label: 'Calendário', icon: CalendarSolidIcon, color: 'text-blue-500' },
+    { path: '/pioneiro', label: 'Pioneiro', icon: BookOpenIcon, color: 'text-teal-500' },
+    { path: '/resumo', label: 'Análise', icon: ChartBarIcon, color: 'text-indigo-500' },
     { path: '/anuncios', label: 'Anúncios', icon: MegaphoneIcon, color: 'text-sky-500' },
     { path: '/vida-e-ministerio', label: 'Ministério', icon: LifeMinistryIcon, color: 'text-green-500' },
     { path: '/designacoes', label: 'Designações', icon: AssignmentsIcon, color: 'text-orange-500' },

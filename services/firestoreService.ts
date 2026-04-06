@@ -20,7 +20,7 @@ import {
 import { 
     LifeMinistrySchedule, FieldServiceReport, AttendanceRecord, Territory, BusTicket, Assignment, 
     CleaningSchedule, FieldServiceMeeting, ConductorMeeting, ShepherdingVisit, PublicTalkSchedule, BaseRecord, PublisherProfile, Announcement, PioneerRecord,
-    MonthlyFieldServiceReport, MeetingSchedule, FirstSundayConductor
+    MonthlyFieldServiceReport, MeetingSchedule, FirstSundayConductor, CalendarNote, CalendarEvent
 } from '../types';
 
 
@@ -275,6 +275,29 @@ export const deletePioneerRecord = (id: string) => {
     const db = getDbInstance();
     return deleteDoc(doc(db, 'planejamento_pioneiro', id));
 };
+
+// Calendar Notes
+export const getCalendarNotes = (userUid: string) => {
+    const db = getDbInstance();
+    const q = query(
+        collection(db, "calendario_notas"),
+        where('createdBy', '==', userUid),
+        where('isActive', '==', true)
+    );
+    return getDocs(q).then(snapshot => {
+        const notes = snapshot.docs.map(doc => fromFirestore(doc) as CalendarNote);
+        return notes.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    });
+};
+export const addCalendarNote = (data: any, userUid: string) => addBaseRecord<CalendarNote>('calendario_notas', data, userUid);
+export const updateCalendarNote = (id: string, data: any, userUid: string) => updateBaseRecord<CalendarNote>('calendario_notas', id, data, userUid);
+export const archiveCalendarNote = (id: string, userUid: string) => archiveBaseRecord('calendario_notas', id, userUid);
+
+// Calendar Events
+export const getCalendarEvents = () => getActiveCollection<CalendarEvent>('calendario_eventos', 'date', 'asc');
+export const addCalendarEvent = (data: any, userUid: string) => addBaseRecord<CalendarEvent>('calendario_eventos', data, userUid);
+export const updateCalendarEvent = (id: string, data: any, userUid: string) => updateBaseRecord<CalendarEvent>('calendario_eventos', id, data, userUid);
+export const archiveCalendarEvent = (id: string, userUid: string) => archiveBaseRecord('calendario_eventos', id, userUid);
 
 // Notifications
 export const getUnreadNotifications = async (userUid: string) => {

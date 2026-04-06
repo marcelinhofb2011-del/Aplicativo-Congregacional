@@ -25,11 +25,12 @@ import Conductors from './pages/Conductors';
 import Shepherding from './pages/Shepherding';
 import ReportList from './pages/ReportList';
 import AttendanceList from './pages/AttendanceList';
-import Resumo from './pages/Resumo';
+import AttendanceAnalysis from './pages/AttendanceAnalysis';
 import Publishers from './pages/Publishers';
 import Announcements from './pages/Announcements';
 import SpeechRecord from './pages/SpeechRecord';
 import Pioneer from './pages/Pioneer';
+import Calendar from './pages/Calendar';
 
 
 
@@ -72,10 +73,11 @@ const AppContent: React.FC = () => {
                         <Route element={<RoleProtectedRoute roles={[UserRole.PUBLISHER, UserRole.SERVANT]} />}>
                             <Route path="dashboard" element={<Dashboard />} />
                             <Route path="pioneiro" element={<Pioneer />} />
+                            <Route path="calendario" element={<Calendar />} />
                             <Route path="relatorio" element={<Report />} />
                             <Route path="assistencia" element={<Attendance />} />
                             <Route path="menu" element={<Menu />} />
-                            <Route path="resumo" element={<Resumo />} />
+                            <Route path="resumo" element={<AttendanceAnalysis />} />
                             <Route path="vida-e-ministerio" element={<LifeMinistry />} />
                             <Route path="designacoes" element={<Assignments />} />
                             <Route path="limpeza" element={<Cleaning />} />

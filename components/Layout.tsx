@@ -8,7 +8,7 @@ import NotificationModal from './NotificationModal';
 const Layout: React.FC = () => {
     const { user } = useAuth();
     const location = useLocation();
-    const showHeader = location.pathname !== '/' && location.pathname !== '/dashboard';
+    const showHeader = location.pathname !== '/' && location.pathname !== '/dashboard' && location.pathname !== '/calendario';
 
     if (!user) return null;
 
