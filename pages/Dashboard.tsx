@@ -210,10 +210,11 @@ const Dashboard: React.FC = () => {
                 <div className="flex items-center gap-2">
                     <Link 
                         to="/calendario" 
-                        className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-full transition-all hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/50 dark:border-slate-700/50"
                         title="Agenda Pessoal"
                     >
-                        <Calendar className="h-6 w-6" />
+                        <Calendar className="h-5 w-5 text-primary" />
+                        <span className="text-xs font-bold font-sans uppercase tracking-wider">Agenda</span>
                     </Link>
                     <button onClick={toggleTheme} className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
                         {theme === 'dark' ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
