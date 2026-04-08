@@ -4,6 +4,8 @@ import { XIcon } from './icons/Icons';
 import PublisherAutocomplete from './PublisherAutocomplete';
 import { getPublisherProfiles } from '../services/firestoreService';
 
+import { getLocalDateString } from '../utils/dateUtils';
+
 interface LifeMinistryFormModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -31,7 +33,7 @@ const calculateWeekRange = (dateString: string) => {
     return { weekString, startDateISO: monday.toISOString() };
 };
 
-const initialDateStr = new Date().toISOString().split('T')[0];
+const initialDateStr = getLocalDateString();
 const initialWeekData = calculateWeekRange(initialDateStr);
 
 const BLANK_SCHEDULE: Omit<LifeMinistrySchedule, 'id' | keyof BaseRecord> = {
@@ -76,7 +78,7 @@ const FormField: React.FC<{ name: string, label: string, value: string, onChange
 
 const LifeMinistryFormModal: React.FC<LifeMinistryFormModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
     const [formData, setFormData] = useState<Omit<LifeMinistrySchedule, 'id' | keyof BaseRecord>>(BLANK_SCHEDULE);
-    const [datePickerValue, setDatePickerValue] = useState(new Date().toISOString().split('T')[0]);
+    const [datePickerValue, setDatePickerValue] = useState(getLocalDateString());
     const [publishers, setPublishers] = useState<PublisherProfile[]>([]);
 
     useEffect(() => {
@@ -114,9 +116,9 @@ const LifeMinistryFormModal: React.FC<LifeMinistryFormModalProps> = ({ isOpen, o
                 finalPrayerUid: initialData.finalPrayerUid || '',
                 assignedUids: initialData.assignedUids || []
             });
-            setDatePickerValue(new Date(initialData.date).toISOString().split('T')[0]);
+            setDatePickerValue(getLocalDateString(new Date(initialData.date)));
         } else {
-            const todayStr = new Date().toISOString().split('T')[0];
+            const todayStr = getLocalDateString();
             const currentWeekData = calculateWeekRange(todayStr);
             setFormData({ ...BLANK_SCHEDULE, date: currentWeekData.startDateISO, week: currentWeekData.weekString });
             setDatePickerValue(todayStr);

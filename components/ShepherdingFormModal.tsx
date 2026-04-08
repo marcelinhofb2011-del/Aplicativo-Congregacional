@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { ShepherdingVisit, BaseRecord } from '../types';
 import { XIcon } from './icons/Icons';
 
+import { getLocalDateString, formatToLocalDate } from '../utils/dateUtils';
+
 interface ShepherdingFormModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -11,7 +13,7 @@ interface ShepherdingFormModalProps {
 }
 
 const BLANK_VISIT: Omit<ShepherdingVisit, 'id' | keyof BaseRecord> = {
-    date: new Date().toISOString().split('T')[0],
+    date: getLocalDateString(),
     time: '19:00',
     brotherName: '',
     responsibleElder1: '',
@@ -27,7 +29,7 @@ const ShepherdingFormModal: React.FC<ShepherdingFormModalProps> = ({ isOpen, onC
         if (initialData) {
             // Handle potential old data structure for backward compatibility
             const data: Omit<ShepherdingVisit, 'id' | keyof BaseRecord> = {
-                date: new Date(initialData.date).toISOString().split('T')[0],
+                date: formatToLocalDate(initialData.date),
                 time: initialData.time || '19:00',
                 brotherName: initialData.brotherName,
                 responsibleElder1: (initialData as any).responsibleElder1 || (initialData as any).responsibleElder || '',

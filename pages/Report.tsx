@@ -20,7 +20,9 @@ const Report: React.FC = () => {
     const [group, setGroup] = useState<'1' | '2' | '3' | ''>('');
     const [date, setDate] = useState(() => {
         const today = new Date();
-        return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        return `${year}-${month}`;
     });
     const [privilege, setPrivilege] = useState<'PIONEER' | 'PUBLISHER'>('PUBLISHER');
     const [hasParticipated, setHasParticipated] = useState<boolean>(false);
@@ -50,7 +52,9 @@ const Report: React.FC = () => {
         setGroup('');
         setDate(() => {
             const today = new Date();
-            return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            return `${year}-${month}`;
         });
         setPrivilege('PUBLISHER');
         setHasParticipated(false);

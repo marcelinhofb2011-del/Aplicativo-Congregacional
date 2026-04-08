@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { AttendanceRecord, BaseRecord } from '../types';
 import { XIcon, CalendarDaysIcon } from './icons/Icons';
 
+import { getLocalDateString, formatToLocalDate } from '../utils/dateUtils';
+
 interface AttendanceFormModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -10,7 +12,7 @@ interface AttendanceFormModalProps {
 }
 
 const BLANK_RECORD: Omit<AttendanceRecord, 'id' | keyof BaseRecord> = {
-    date: new Date().toISOString().split('T')[0],
+    date: getLocalDateString(),
     submitterName: '',
     presentCount: 0,
     onlineCount: 0,
@@ -23,7 +25,7 @@ const AttendanceFormModal: React.FC<AttendanceFormModalProps> = ({ isOpen, onClo
     useEffect(() => {
         if (initialData) {
             setFormData({
-                date: new Date(initialData.date).toISOString().split('T')[0],
+                date: formatToLocalDate(initialData.date),
                 submitterName: initialData.submitterName,
                 presentCount: initialData.presentCount,
                 onlineCount: initialData.onlineCount,

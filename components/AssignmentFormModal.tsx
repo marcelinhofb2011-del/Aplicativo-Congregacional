@@ -3,6 +3,7 @@ import { Assignment, BaseRecord, PublisherProfile } from '../types';
 import { XIcon } from './icons/Icons';
 import PublisherAutocomplete from './PublisherAutocomplete';
 import { getPublisherProfiles } from '../services/firestoreService';
+import { getLocalDateString, formatToLocalDate } from '../utils/dateUtils';
 
 interface AssignmentFormModalProps {
     isOpen: boolean;
@@ -21,7 +22,7 @@ interface FormState extends Record<RoleField, string>, Record<UidField, string> 
 }
 
 const BLANK_ASSIGNMENT_STATE: FormState = {
-    date: new Date().toISOString().split('T')[0],
+    date: getLocalDateString(),
     president: '', presidentUid: '',
     indicator1: '', indicator1Uid: '',
     indicator2: '', indicator2Uid: '',
@@ -50,7 +51,7 @@ const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({ isOpen, onClo
         if (isOpen) {
             if (initialData) {
                 setFormData({
-                    date: new Date(initialData.date).toISOString().split('T')[0],
+                    date: formatToLocalDate(initialData.date),
                     president: initialData.president || '',
                     presidentUid: initialData.presidentUid || '',
                     indicator1: initialData.indicator1 || '',

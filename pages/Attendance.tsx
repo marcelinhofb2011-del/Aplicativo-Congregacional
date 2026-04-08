@@ -8,12 +8,14 @@ import { CalendarDaysIcon, UsersSolidIcon } from '../components/icons/Icons';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 
+import { getLocalDateString } from '../utils/dateUtils';
+
 const Attendance: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [toastMessage, setToastMessage] = useState('');
 
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [date, setDate] = useState(getLocalDateString());
     const [submitterName, setSubmitterName] = useState('');
     const [presentCount, setPresentCount] = useState<number | ''>('');
     const [onlineCount, setOnlineCount] = useState<number | ''>('');
@@ -44,7 +46,7 @@ const Attendance: React.FC = () => {
             setToastMessage('Registro de assistência salvo com sucesso!');
             
             // Reset form
-            setDate(new Date().toISOString().split('T')[0]);
+            setDate(getLocalDateString());
             setSubmitterName('');
             setPresentCount('');
             setOnlineCount('');

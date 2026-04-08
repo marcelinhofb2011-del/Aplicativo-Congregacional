@@ -7,12 +7,14 @@ import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
 import { PencilIcon, TrashIcon } from '../components/icons/Icons';
 
+import { getLocalDateString, formatToLocalDate } from '../utils/dateUtils';
+
 const FieldService: React.FC = () => {
     const { user } = useAuth();
     const [meetings, setMeetings] = useState<FieldServiceMeeting[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [formData, setFormData] = useState<Omit<FieldServiceMeeting, 'id' | 'createdAt' | 'createdBy' | 'isActive' | 'updatedAt' | 'updatedBy'>>({
-        date: new Date().toISOString().split('T')[0],
+        date: getLocalDateString(),
         conductor: '',
         reader: '',
         notes: ''
@@ -45,7 +47,7 @@ const FieldService: React.FC = () => {
 
     const resetForm = () => {
         setFormData({
-            date: new Date().toISOString().split('T')[0],
+            date: getLocalDateString(),
             conductor: '',
             reader: '',
             notes: ''
@@ -81,7 +83,7 @@ const FieldService: React.FC = () => {
     const handleEdit = (meeting: FieldServiceMeeting) => {
         setEditingId(meeting.id);
         setFormData({
-            date: new Date(meeting.date).toISOString().split('T')[0],
+            date: formatToLocalDate(meeting.date),
             conductor: meeting.conductor,
             reader: meeting.reader,
             notes: meeting.notes || ''

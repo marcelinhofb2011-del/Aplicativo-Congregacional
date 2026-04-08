@@ -30,6 +30,8 @@ import { motion } from 'motion/react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
+import { getLocalDateString } from '../utils/dateUtils';
+
 const AttendanceAnalysis: React.FC = () => {
     const { user } = useAuth();
     const [records, setRecords] = useState<AttendanceRecord[]>([]);
@@ -205,7 +207,7 @@ const AttendanceAnalysis: React.FC = () => {
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
             
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            pdf.save(`Analise_Assistencia_${new Date().toISOString().split('T')[0]}.pdf`);
+            pdf.save(`Analise_Assistencia_${getLocalDateString()}.pdf`);
         } catch (error) {
             console.error("PDF generation error:", error);
         }
