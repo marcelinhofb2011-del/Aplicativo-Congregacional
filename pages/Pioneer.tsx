@@ -25,7 +25,12 @@ import {
     UserIcon,
     TrophyIcon,
     DocumentArrowDownIcon,
-    ChevronRightIcon as ChevronRightIconSolid
+    ChevronRightIcon as ChevronRightIconSolid,
+    DashboardIcon as HomeIcon,
+    BookOpenIcon,
+    UsersIcon,
+    SettingsIcon,
+    MegaphoneIcon
 } from '../components/icons/Icons';
 import { 
     BarChart, 
@@ -37,11 +42,14 @@ import {
     ResponsiveContainer,
     Cell,
     LineChart,
-    Line
+    Line,
+    PieChart,
+    Pie
 } from 'recharts';
 import { jsPDF } from 'jspdf';
 import Toast from '../components/Toast';
-import { useNavigate } from 'react-router-dom';
+import ConfirmationModal from '../components/ConfirmationModal';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -53,8 +61,8 @@ const MONTHS = [
 const Pioneer: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const [view, setView] = useState<'hub' | 'daily' | 'report' | 'analysis'>('hub');
-    const [viewHistory, setViewHistory] = useState<string[]>(['hub']);
+    const location = useLocation();
+    const [view, setView] = useState<'hub' | 'daily' | 'report' | 'analysis' | 'profile'>('hub');
     const [selectedMonth, setSelectedMonth] = useState(() => {
         const now = new Date();
         return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -68,24 +76,107 @@ const Pioneer: React.FC = () => {
     const [profile, setProfile] = useState<PublisherProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [toastMessage, setToastMessage] = useState('');
+    const [yearType, setYearType] = useState<'service' | 'calendar'>('service');
 
-    const navigateTo = (newView: 'hub' | 'daily' | 'report' | 'analysis') => {
-        setViewHistory(prev => [...prev, newView]);
-        setView(newView);
+    const navigateTo = (newView: 'hub' | 'daily' | 'report' | 'analysis' | 'profile') => {
+        if (newView === 'hub') navigate('/pioneiro');
+        else if (newView === 'daily') navigate('/pioneiro/registro');
+        else if (newView === 'report') navigate('/pioneiro/relatorio');
+        else if (newView === 'analysis') navigate('/pioneiro/analise');
+        else if (newView === 'profile') navigate('/pioneiro/perfil');
     };
+
+    useEffect(() => {
+        const path = location.pathname.split('/').filter(Boolean).pop();
+        if (path === 'registro') setView('daily');
+        else if (path === 'relatorio') setView('report');
+        else if (path === 'analise') setView('analysis');
+        else if (path === 'perfil') setView('profile');
+        else setView('hub');
+    }, [location.pathname]);
 
     const handleBack = () => {
-        if (viewHistory.length > 1) {
-            const newHistory = [...viewHistory];
-            newHistory.pop(); // Remove current view
-            const prevView = newHistory[newHistory.length - 1] as any;
-            setViewHistory(newHistory);
-            setView(prevView);
+        navigate(-1);
+    };
+
+    const handleMonthChange = (newMonth: string) => {
+        setSelectedMonth(newMonth);
+        const [year, month] = newMonth.split('-').map(Number);
+        
+        const isPioneer = profile?.isRegularPioneer || profile?.isAuxiliaryPioneer || 
+                         currentRecord?.role === 'Pioneiro Regular' || currentRecord?.role === 'Pioneiro Auxiliar';
+
+        if (isPioneer) {
+            // JW Service Year: starts in September. 
+            // If month is Sep-Dec (9-12), service year is next year.
+            // If month is Jan-Aug (1-8), service year is current year.
+            const sYear = month >= 9 ? year + 1 : year;
+            setSelectedYear(sYear);
         } else {
-            setView('hub');
-            setViewHistory(['hub']);
+            // Standard Calendar Year
+            setSelectedYear(year);
         }
     };
+
+    const handlePrevMonth = () => {
+        const [year, month] = selectedMonth.split('-').map(Number);
+        const d = new Date(year, month - 2, 1);
+        const newMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        handleMonthChange(newMonth);
+    };
+
+    const handleNextMonth = () => {
+        const [year, month] = selectedMonth.split('-').map(Number);
+        const d = new Date(year, month, 1);
+        const newMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        handleMonthChange(newMonth);
+    };
+
+    const handleSaveGoal = async (data: { role?: 'Publicador' | 'Pioneiro Auxiliar' | 'Pioneiro Regular', goalHours: number, studentCount?: number }) => {
+        if (!user) return;
+        try {
+            const currentRole = data.role || currentRecord?.role || profile?.role || 'Publicador';
+            
+            const updatedProfile = {
+                ...profile,
+                role: currentRole as any,
+                isRegularPioneer: currentRole === 'Pioneiro Regular',
+                isAuxiliaryPioneer: currentRole === 'Pioneiro Auxiliar'
+            } as PublisherProfile;
+            
+            setProfile(updatedProfile);
+            
+            if (currentRecord) {
+                await setPioneerRecord({
+                    ...currentRecord,
+                    role: currentRole,
+                    goalHours: data.goalHours,
+                    studentCount: data.studentCount ?? currentRecord.studentCount,
+                    isAuxiliaryPioneer: currentRole === 'Pioneiro Auxiliar'
+                });
+            } else {
+                await addPioneerRecord({
+                    month: selectedMonth,
+                    serviceYear: getServiceYearFromMonth(selectedMonth),
+                    activities: [],
+                    role: currentRole,
+                    goalHours: data.goalHours,
+                    studentCount: data.studentCount || 0,
+                    isAuxiliaryPioneer: currentRole === 'Pioneiro Auxiliar',
+                }, user.uid);
+            }
+            
+            await loadData();
+            setToastMessage('Configurações atualizadas!');
+        } catch (error) {
+            console.error('Error saving goal:', error);
+            setToastMessage('Erro ao salvar.');
+        }
+    };
+
+    // Settings States
+    const [reminderEnabled, setReminderEnabled] = useState(true);
+    const [autoShareEnabled, setAutoShareEnabled] = useState(false);
 
     // Daily Log States
     const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
@@ -100,11 +191,33 @@ const Pioneer: React.FC = () => {
     const [reportRevisits, setReportRevisits] = useState<number>(0);
     const [reportNotes, setReportNotes] = useState<string>('');
 
+    // Confirmation States
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+    const [activityToDelete, setActivityToDelete] = useState<string | null>(null);
+    const [isReportOverwriteConfirmOpen, setIsReportOverwriteConfirmOpen] = useState(false);
+
     useEffect(() => {
         if (user) {
             loadData();
         }
     }, [user]);
+
+    useEffect(() => {
+        if (profile) {
+            const now = new Date();
+            const month = now.getMonth() + 1;
+            const isPioneer = profile.isRegularPioneer || profile.isAuxiliaryPioneer;
+            
+            setYearType(isPioneer ? 'service' : 'calendar');
+
+            if (isPioneer) {
+                const sYear = month >= 9 ? now.getFullYear() + 1 : now.getFullYear();
+                setSelectedYear(sYear);
+            } else {
+                setSelectedYear(now.getFullYear());
+            }
+        }
+    }, [profile]);
 
     const loadData = async () => {
         if (!user) return;
@@ -240,82 +353,10 @@ const Pioneer: React.FC = () => {
         };
     }, [currentRecord, totalHoursCompleted, selectedMonth]);
 
-    const handleSaveGoal = async (data: Partial<PioneerRecord>) => {
-        if (!user) return;
-        try {
-            if (currentRecord) {
-                await updatePioneerRecord(currentRecord.id, {
-                    ...data,
-                    isAuxiliaryPioneer: data.role === 'Pioneiro Auxiliar',
-                }, user.uid);
-            } else {
-                await addPioneerRecord({
-                    month: selectedMonth,
-                    activities: [],
-                    role: data.role || 'Publicador',
-                    goalHours: data.goalHours || 0,
-                    studentCount: data.studentCount || 0,
-                    isAuxiliaryPioneer: data.role === 'Pioneiro Auxiliar',
-                }, user.uid);
-            }
-            await loadData();
-            setIsGoalModalOpen(false);
-            setToastMessage('Configurações salvas!');
-        } catch (error) {
-            console.error('Error saving goal:', error);
-            setToastMessage('Erro ao salvar.');
-        }
-    };
-
     const getServiceYearFromMonth = (monthStr: string) => {
         const [year, month] = monthStr.split('-').map(Number);
         const serviceYearStart = month >= 9 ? year : year - 1;
         return `${serviceYearStart}-${serviceYearStart + 1}`;
-    };
-
-    const handleSaveManualReport = async (data: { month: string, hours: number, studies: number, revisits: number, notes: string }) => {
-        if (!user) return;
-        try {
-            const existing = records.find(r => r.month === data.month && r.createdBy === user.uid);
-            const recordId = existing?.id || `${user.uid}-${data.month}`;
-            
-            const hours = Math.floor(data.hours);
-            const minutes = Math.round((data.hours % 1) * 60);
-
-            const recordData: PioneerRecord = {
-                id: recordId,
-                month: data.month,
-                serviceYear: getServiceYearFromMonth(data.month),
-                goalHours: 0,
-                role: 'Publicador',
-                activities: existing?.activities.length ? existing.activities : [{
-                    id: crypto.randomUUID(),
-                    date: `${data.month}-01`,
-                    hours,
-                    minutes,
-                    category: 'Pregação',
-                    revisits: data.revisits,
-                    studies: data.studies,
-                    studyDetails: []
-                }],
-                studentCount: data.studies,
-                revisits: data.revisits,
-                notes: data.notes,
-                submitted: true,
-                submittedAt: new Date().toISOString(),
-                createdAt: existing?.createdAt || new Date().toISOString(),
-                isActive: true,
-                createdBy: user.uid
-            };
-
-            await setPioneerRecord(recordData);
-            await loadData();
-            setToastMessage('Relatório retroativo salvo!');
-            setIsManualReportModalOpen(false);
-        } catch (error) {
-            console.error('Error saving manual report:', error);
-            setToastMessage('Erro ao salvar relatório.');
-        }
     };
 
     const handleAddOrUpdateActivity = async (activity: PioneerActivity) => {
@@ -328,11 +369,12 @@ const Pioneer: React.FC = () => {
             let targetRecord = records.find(r => r.month === monthStr && r.createdBy === user.uid);
             
             if (!targetRecord) {
+                const defaultGoal = profile?.isRegularPioneer ? 50 : (profile?.isAuxiliaryPioneer ? 30 : 0);
                 const newRecord: PioneerRecord = {
                     id: `${user.uid}-${monthStr}`,
                     month: monthStr,
                     serviceYear: getServiceYearFromMonth(monthStr),
-                    goalHours: 0,
+                    goalHours: defaultGoal,
                     role: profile?.isRegularPioneer ? 'Pioneiro Regular' : (profile?.isAuxiliaryPioneer ? 'Pioneiro Auxiliar' : 'Publicador'),
                     activities: [activity],
                     studentCount: 0,
@@ -385,16 +427,24 @@ const Pioneer: React.FC = () => {
         }
     };
 
-    const handleDeleteActivity = async (activityId: string) => {
-        if (!user || !currentRecord) return;
-        if (!confirm('Deseja excluir este registro?')) return;
+    const handleDeleteActivity = (activityId: string) => {
+        setActivityToDelete(activityId);
+        setIsDeleteConfirmOpen(true);
+    };
+
+    const confirmDeleteActivity = async () => {
+        if (!user || !currentRecord || !activityToDelete) return;
         try {
-            const updatedActivities = currentRecord.activities.filter(a => a.id !== activityId);
+            const updatedActivities = currentRecord.activities.filter(a => a.id !== activityToDelete);
             await updatePioneerRecord(currentRecord.id, { activities: updatedActivities }, user.uid);
             await loadData();
             setToastMessage('Registro excluído.');
         } catch (error) {
             console.error('Error deleting activity:', error);
+            setToastMessage('Erro ao excluir registro.');
+        } finally {
+            setActivityToDelete(null);
+            setIsDeleteConfirmOpen(false);
         }
     };
 
@@ -514,20 +564,27 @@ const Pioneer: React.FC = () => {
         // Check for duplicate
         const existing = records.find(r => r.month === selectedMonth && r.createdBy === user.uid && r.submitted);
         if (existing) {
-            if (!confirm(`Já existe um relatório enviado para ${monthName} / ${yearStr}. Deseja substituir?`)) {
-                return;
-            }
+            setIsReportOverwriteConfirmOpen(true);
+            return;
         }
         
+        await processReportSubmission();
+    };
+
+    const processReportSubmission = async () => {
+        if (!user || !profile) return;
+
+        const [yearStr, monthNum] = selectedMonth.split('-');
+        const monthName = MONTHS[parseInt(monthNum) - 1];
         const isPioneer = profile.isRegularPioneer || profile.isAuxiliaryPioneer;
         
         if (!isPioneer && participated === null) {
-            alert('Por favor, informe se participou da congregação.');
+            setToastMessage('Por favor, informe se participou da congregação.');
             return;
         }
 
         if (isPioneer && !reportHours) {
-            alert('Campo Horas é obrigatório para pioneiros.');
+            setToastMessage('Campo Horas é obrigatório para pioneiros.');
             return;
         }
 
@@ -604,12 +661,14 @@ const Pioneer: React.FC = () => {
                         title: `Relatório - ${monthName}/${yearStr}`,
                         text: shareText
                     });
-                } catch (err) {
-                    console.log('Share cancelled or failed', err);
+                } catch (err: any) {
+                    if (err.name !== 'AbortError') {
+                        console.error('Error sharing monthly report:', err);
+                    }
                 }
             } else {
                 await navigator.clipboard.writeText(shareText);
-                alert('Relatório salvo e copiado! Agora você pode colar no WhatsApp do irmão responsável.');
+                setToastMessage('Relatório salvo e copiado! Agora você pode colar no WhatsApp.');
             }
             
             navigateTo('hub');
@@ -647,16 +706,23 @@ const Pioneer: React.FC = () => {
 
         try {
             if (navigator.share) {
-                await navigator.share({
-                    title: `Relatório de Serviço - ${monthName}`,
-                    text: report,
-                });
+                try {
+                    await navigator.share({
+                        title: `Relatório de Serviço - ${monthName}`,
+                        text: report,
+                    });
+                } catch (shareError: any) {
+                    // Ignore cancellation errors
+                    if (shareError.name !== 'AbortError') {
+                        console.error('Error sharing:', shareError);
+                    }
+                }
             } else {
                 await navigator.clipboard.writeText(report);
-                alert('Relatório copiado!');
+                setToastMessage('Relatório copiado!');
             }
         } catch (error) {
-            console.error('Error sharing:', error);
+            console.error('Clipboard error:', error);
         }
     };
 
@@ -664,18 +730,24 @@ const Pioneer: React.FC = () => {
     const annualStats = useMemo(() => {
         if (!user) return { totalHours: 0, growth: 0, progressToGoal: 0, monthlyData: [], yearlyTotals: [] };
 
-        // Service Year logic: Sep (Year-1) to Aug (Year)
-        const getServiceYearRecords = (year: number) => {
+        const isServiceYear = yearType === 'service';
+
+        // Year logic: Service Year (Sep-Aug) or Calendar Year (Jan-Dec)
+        const getYearRecords = (year: number) => {
             return records.filter(r => {
                 const [rYear, rMonth] = r.month.split('-').map(Number);
-                const isPrevYearPart = (rYear === year - 1 && rMonth >= 9);
-                const isCurrentYearPart = (rYear === year && rMonth <= 8);
-                return (isPrevYearPart || isCurrentYearPart) && r.createdBy === user.uid;
+                if (isServiceYear) {
+                    const isPrevYearPart = (rYear === year - 1 && rMonth >= 9);
+                    const isCurrentYearPart = (rYear === year && rMonth <= 8);
+                    return (isPrevYearPart || isCurrentYearPart) && r.createdBy === user.uid;
+                } else {
+                    return rYear === year && r.createdBy === user.uid;
+                }
             });
         };
 
-        const yearRecords = getServiceYearRecords(selectedYear);
-        const prevYearRecords = getServiceYearRecords(selectedYear - 1);
+        const yearRecords = getYearRecords(selectedYear);
+        const prevYearRecords = getYearRecords(selectedYear - 1);
         
         const calculateTotal = (recs: PioneerRecord[]) => {
             return recs.reduce((acc, r) => {
@@ -692,11 +764,11 @@ const Pioneer: React.FC = () => {
         const activeMonths = yearRecords.filter(r => r.activities.length > 0).length;
         const averageHours = activeMonths > 0 ? totalHours / activeMonths : 0;
 
-        // Yearly Totals based on Service Year
+        // Yearly Totals
         const currentYear = new Date().getFullYear();
         const years = [currentYear + 1, currentYear, currentYear - 1, currentYear - 2, currentYear - 3];
         const yearlyTotals = years.map(year => {
-            const yearRecs = getServiceYearRecords(year);
+            const yearRecs = getYearRecords(year);
             const total = calculateTotal(yearRecs);
             return { year: String(year), total: Number(total.toFixed(1)) };
         }).filter(y => y.total > 0 || parseInt(y.year) === selectedYear).sort((a, b) => a.year.localeCompare(b.year));
@@ -705,13 +777,18 @@ const Pioneer: React.FC = () => {
             ? yearlyTotals.reduce((a, b) => a + b.total, 0) / yearlyTotals.length 
             : 0;
 
-        // Monthly Data ordered by Service Year (Sep to Aug)
-        const serviceMonths = [9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8];
-        const monthlyData = serviceMonths.map(monthNum => {
-            const year = monthNum >= 9 ? selectedYear - 1 : selectedYear;
+        // Monthly Data ordered by Year type
+        const monthsOrder = isServiceYear 
+            ? [9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8] 
+            : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+        const monthlyData = monthsOrder.map(monthNum => {
+            const year = isServiceYear 
+                ? (monthNum >= 9 ? selectedYear - 1 : selectedYear)
+                : selectedYear;
             const monthStr = `${year}-${String(monthNum).padStart(2, '0')}`;
             const name = MONTHS[monthNum - 1];
-            const record = yearRecords.find(r => r.month === monthStr);
+            const record = records.find(r => r.month === monthStr && r.createdBy === user.uid);
             
             let hours = 0;
             if (record) {
@@ -724,8 +801,8 @@ const Pioneer: React.FC = () => {
             return { name: name.substring(0, 3), fullMonth: name, hours, monthStr };
         });
 
-        const annualGoal = 840;
-        const progressToGoal = (totalHours / annualGoal) * 100;
+        const annualGoal = currentRecord?.role === 'Pioneiro Regular' ? 600 : (currentRecord?.role === 'Pioneiro Auxiliar' ? (currentRecord.goalHours * 12) : 0);
+        const progressToGoal = annualGoal > 0 ? (totalHours / annualGoal) * 100 : 0;
 
         return { 
             monthlyData, 
@@ -737,9 +814,10 @@ const Pioneer: React.FC = () => {
             averageYearlyHours,
             annualGoal,
             progressToGoal,
-            yearlyTotals
+            yearlyTotals,
+            isServiceYear
         };
-    }, [records, selectedYear, user]);
+    }, [records, selectedYear, user, profile, currentRecord, yearType]);
 
     if (loading) {
         return (
@@ -750,148 +828,493 @@ const Pioneer: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#F8F9FB] dark:bg-slate-950 font-sans pb-24">
-            <main className="px-6 space-y-8 max-w-2xl mx-auto pt-8">
-                {/* Page Title Section */}
-                <div className="flex items-center gap-4">
-                    {view !== 'hub' && (
-                        <button onClick={handleBack} className="h-10 w-10 flex items-center justify-center bg-white dark:bg-slate-900 rounded-full shadow-sm border border-slate-100 dark:border-slate-800 text-slate-500">
-                            <ChevronLeftIcon className="h-5 w-5" />
-                        </button>
-                    )}
-                    <motion.section 
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.5 }}
-                        className="flex-1"
-                    >
-                        <p className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase mb-1 font-sans">MINISTÉRIO</p>
-                        <div className="relative inline-block">
-                            <h2 className="text-4xl font-extrabold text-slate-800 dark:text-white tracking-tight font-outfit">
-                                {view === 'hub' ? 'Pioneiro' : view === 'daily' ? 'Registros Diários' : view === 'report' ? 'Relatório Mensal' : 'Análise Anual'}
-                            </h2>
-                            <div className="h-1.5 w-20 bg-amber-500 mt-3 rounded-full shadow-[0_0_10px_rgba(245,158,11,0.3)]"></div>
-                        </div>
-                    </motion.section>
-                </div>
-
-                {/* Month Selector */}
-                <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-white dark:bg-slate-900 p-6 rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-between"
-                >
-                    <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-amber-50 dark:bg-amber-900/20 rounded-2xl flex items-center justify-center">
-                            <CalendarDaysIcon className="h-5 w-5 text-amber-600" />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-sans">Mês de Referência</p>
-                            <span className="font-bold text-slate-800 dark:text-slate-200 font-outfit">
-                                {(() => {
-                                    const [year, month] = selectedMonth.split('-').map(Number);
-                                    return new Date(year, month - 1, 1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
-                                })()}
-                            </span>
-                        </div>
-                    </div>
-                    <div className="relative">
-                        <input 
-                            type="month" 
-                            value={selectedMonth} 
-                            onChange={(e) => setSelectedMonth(e.target.value)}
-                            className="absolute inset-0 opacity-0 cursor-pointer"
-                        />
-                        <button className="px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl text-xs font-bold text-primary font-sans">Alterar</button>
-                    </div>
-                </motion.div>
-
-                {!profile && !loading && (
-                    <motion.div 
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="bg-gradient-to-br from-amber-50 to-white dark:from-amber-900/20 dark:to-slate-900 p-8 rounded-[40px] border border-amber-100 dark:border-amber-800/30 flex flex-col items-center text-center space-y-6 shadow-lg shadow-amber-100/20 dark:shadow-none"
-                    >
-                        <div className="h-16 w-16 bg-amber-100 dark:bg-amber-900/40 rounded-3xl flex items-center justify-center">
-                            <UserIcon className="h-8 w-8 text-amber-600 dark:text-amber-400" />
-                        </div>
-                        <div>
-                            <h3 className="text-2xl font-bold text-slate-800 dark:text-amber-200 font-outfit">Perfil Incompleto</h3>
-                            <p className="text-sm text-slate-500 dark:text-amber-400/70 font-sans mt-2">Você precisa configurar seu perfil de publicador para enviar relatórios.</p>
-                        </div>
+        <div className="min-h-screen bg-[#F8F9FB] dark:bg-slate-950 font-sans pb-32">
+            {/* Sub-navigation Header */}
+            <header className="px-6 pt-6 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    {view !== 'hub' ? (
                         <button 
-                            onClick={() => navigate('/configuracoes')}
-                            className="w-full py-4 bg-amber-600 text-white rounded-2xl font-bold hover:bg-amber-700 transition-all shadow-lg shadow-amber-600/25 active:scale-[0.98] font-sans"
+                            onClick={handleBack}
+                            className="h-10 w-10 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-slate-400 hover:text-primary transition-all shadow-sm"
                         >
-                            Configurar Agora
+                            <ChevronLeftIcon className="h-6 w-6" />
                         </button>
+                    ) : (
+                        <div className="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center overflow-hidden border-2 border-white dark:border-slate-700 shadow-sm">
+                            <UserIcon className="h-6 w-6 text-slate-400" />
+                        </div>
+                    )}
+                    <div>
+                        <h1 className="text-sm font-bold text-slate-700 dark:text-slate-200 font-outfit">
+                            {view === 'hub' ? 'Área do Pioneiro' : 
+                             view === 'daily' ? 'Registro Diário' :
+                             view === 'report' ? 'Fechamento Mensal' :
+                             view === 'analysis' ? 'Análise Anual' : 'Configurações'}
+                        </h1>
+                        {view === 'hub' && <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Gestão de Atividades</p>}
+                    </div>
+                </div>
+                {view === 'hub' && (
+                    <button 
+                        onClick={() => navigateTo('profile')}
+                        className="p-2 text-slate-400 hover:text-primary transition-colors"
+                    >
+                        <SettingsIcon className="h-6 w-6" />
+                    </button>
+                )}
+            </header>
+
+            <main className="px-6 space-y-8 max-w-2xl mx-auto pt-4">
+                {view === 'profile' && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="space-y-8"
+                    >
+                        {/* Title Section */}
+                        <section>
+                            <h2 className="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight font-outfit">Meu Perfil</h2>
+                            <p className="text-slate-500 dark:text-slate-400 mt-1 font-sans">Gerencie sua jornada e compromissos espirituais.</p>
+                        </section>
+
+                        {/* Role Selection */}
+                        <section className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-xl font-bold text-slate-800 dark:text-white font-outfit">Papel no Serviço</h3>
+                                <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold rounded-full uppercase tracking-wider">Ativo</span>
+                            </div>
+
+                            <div className="space-y-3">
+                                {/* Publicador */}
+                                <button 
+                                    onClick={() => handleSaveGoal({ role: 'Publicador', goalHours: 0 })}
+                                    className={`w-full p-6 rounded-[32px] border transition-all flex items-start justify-between text-left ${
+                                        currentRecord?.role === 'Publicador' || (!currentRecord && profile?.role === 'Publicador')
+                                        ? 'bg-white dark:bg-slate-900 border-primary/20 shadow-lg shadow-primary/5' 
+                                        : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'
+                                    }`}
+                                >
+                                    <div className="flex gap-4">
+                                        <div className="h-12 w-12 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600">
+                                            <BookOpenIcon className="h-6 w-6" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-lg font-bold text-slate-800 dark:text-white font-outfit">Publicador</h4>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-sans max-w-[200px]">Focado em participação ativa e estudos pessoais regulares.</p>
+                                        </div>
+                                    </div>
+                                    <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center ${
+                                        currentRecord?.role === 'Publicador' ? 'border-primary bg-primary' : 'border-slate-200 dark:border-slate-700'
+                                    }`}>
+                                        {currentRecord?.role === 'Publicador' && <CheckIcon className="h-4 w-4 text-white" />}
+                                    </div>
+                                </button>
+
+                                {/* Pioneiro Auxiliar */}
+                                <div className={`w-full p-6 rounded-[32px] border transition-all space-y-4 ${
+                                    currentRecord?.role === 'Pioneiro Auxiliar'
+                                    ? 'bg-blue-600 border-blue-500 shadow-xl shadow-blue-500/20' 
+                                    : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'
+                                }`}>
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex gap-4">
+                                            <div className={`h-12 w-12 rounded-2xl flex items-center justify-center ${
+                                                currentRecord?.role === 'Pioneiro Auxiliar' ? 'bg-white/20 text-white' : 'bg-rose-50 dark:bg-rose-900/20 text-rose-500'
+                                            }`}>
+                                                <TrophyIcon className="h-6 w-6" />
+                                            </div>
+                                            <div>
+                                                <h4 className={`text-lg font-bold font-outfit ${currentRecord?.role === 'Pioneiro Auxiliar' ? 'text-white' : 'text-slate-800 dark:text-white'}`}>Pioneiro Auxiliar</h4>
+                                                <div className="flex gap-2 mt-3">
+                                                    <button 
+                                                        onClick={() => handleSaveGoal({ role: 'Pioneiro Auxiliar', goalHours: 15 })}
+                                                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+                                                            currentRecord?.role === 'Pioneiro Auxiliar' && currentRecord.goalHours === 15
+                                                            ? 'bg-white text-blue-600' 
+                                                            : 'bg-white/10 text-white border border-white/20'
+                                                        }`}
+                                                    >
+                                                        15h
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleSaveGoal({ role: 'Pioneiro Auxiliar', goalHours: 30 })}
+                                                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+                                                            currentRecord?.role === 'Pioneiro Auxiliar' && currentRecord.goalHours === 30
+                                                            ? 'bg-white text-blue-600' 
+                                                            : 'bg-white/10 text-white border border-white/20'
+                                                        }`}
+                                                    >
+                                                        30h
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button 
+                                            onClick={() => handleSaveGoal({ role: 'Pioneiro Auxiliar', goalHours: 30 })}
+                                            className={`h-6 w-6 rounded-full border-2 flex items-center justify-center ${
+                                                currentRecord?.role === 'Pioneiro Auxiliar' ? 'border-white bg-white' : 'border-slate-200 dark:border-slate-700'
+                                            }`}
+                                        >
+                                            {currentRecord?.role === 'Pioneiro Auxiliar' && <CheckIcon className="h-4 w-4 text-blue-600" />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Pioneiro Regular */}
+                                <button 
+                                    onClick={() => handleSaveGoal({ role: 'Pioneiro Regular', goalHours: 50 })}
+                                    className={`w-full p-6 rounded-[32px] border transition-all flex items-start justify-between text-left ${
+                                        currentRecord?.role === 'Pioneiro Regular'
+                                        ? 'bg-white dark:bg-slate-900 border-primary/20 shadow-lg shadow-primary/5' 
+                                        : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'
+                                    }`}
+                                >
+                                    <div className="flex gap-4">
+                                        <div className="h-12 w-12 rounded-2xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center text-amber-600">
+                                            <TrophyIcon className="h-6 w-6" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-lg font-bold text-slate-800 dark:text-white font-outfit">Pioneiro Regular</h4>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-sans max-w-[200px]">Compromisso mensal de 50h para expansão do ministério.</p>
+                                        </div>
+                                    </div>
+                                    <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center ${
+                                        currentRecord?.role === 'Pioneiro Regular' ? 'border-primary bg-primary' : 'border-slate-200 dark:border-slate-700'
+                                    }`}>
+                                        {currentRecord?.role === 'Pioneiro Regular' && <CheckIcon className="h-4 w-4 text-white" />}
+                                    </div>
+                                </button>
+                            </div>
+
+                            <button 
+                                onClick={() => setIsGoalModalOpen(true)}
+                                className="w-full p-6 bg-slate-50 dark:bg-slate-800 rounded-[24px] border border-slate-200 dark:border-slate-700 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-700 transition-all group"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <PencilIcon className="h-6 w-6 text-primary" />
+                                    </div>
+                                    <div className="text-left">
+                                        <h4 className="font-bold text-slate-800 dark:text-white">Alvo Personalizado</h4>
+                                        <p className="text-xs text-slate-500">Defina uma meta de horas específica</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-lg font-black text-primary">{currentRecord?.goalHours || 0}h</span>
+                                    <ChevronRightIconSolid className="h-5 w-5 text-slate-300" />
+                                </div>
+                            </button>
+                        </section>
+
+                        {/* Service Year Stats */}
+                        <section className="space-y-4">
+                            <h3 className="text-xl font-bold text-slate-800 dark:text-white font-outfit">Ano de Serviço {selectedYear-1}–{selectedYear}</h3>
+                            
+                            <div className="bg-white dark:bg-slate-900 rounded-[32px] p-8 border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
+                                <div>
+                                    <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-2 font-sans">TOTAL ACUMULADO</p>
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="text-6xl font-black text-blue-900 dark:text-white font-outfit">{Math.floor(annualStats.totalHours)}</span>
+                                        <span className="text-2xl font-bold text-slate-400 font-outfit">h</span>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                        <motion.div 
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${Math.min(100, annualStats.progressToGoal)}%` }}
+                                            className="h-full bg-emerald-500 rounded-full"
+                                        />
+                                    </div>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">
+                                        {annualStats.progressToGoal.toFixed(0)}% da meta anual de {annualStats.annualGoal}h atingida
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4">
+                                <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-100 dark:border-slate-800 flex items-center gap-4">
+                                    <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-600">
+                                        <ArrowTrendingUpIcon className="h-5 w-5" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-sans">Média Mensal</p>
+                                        <p className="text-xl font-bold text-slate-800 dark:text-white font-outfit">{annualStats.averageHours.toFixed(1)}h</p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-100 dark:border-slate-800 flex items-center gap-4">
+                                    <div className="h-10 w-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600">
+                                        <UsersIcon className="h-5 w-5" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-sans">Estudos</p>
+                                        <p className="text-xl font-bold text-slate-800 dark:text-white font-outfit">{currentRecord?.studentCount || 0} Ativos</p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-blue-50 dark:bg-blue-900/10 p-6 rounded-[32px] border border-blue-100 dark:border-blue-800/30 flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div>
+                                            <p className="text-lg font-bold text-slate-800 dark:text-white font-outfit">Período Atual</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">Setembro - Agosto</p>
+                                        </div>
+                                    </div>
+                                    <CalendarDaysIcon className="h-6 w-6 text-slate-800 dark:text-white" />
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Report Settings */}
+                        <section className="bg-slate-50 dark:bg-slate-900/50 p-8 rounded-[40px] space-y-6">
+                            <h3 className="text-xl font-bold text-slate-800 dark:text-white font-outfit text-center">Configurações de Relatório</h3>
+                            
+                            <div className="space-y-3">
+                                <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] flex items-center justify-between border border-slate-100 dark:border-slate-800">
+                                    <div className="flex gap-4">
+                                        <div className="h-10 w-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600">
+                                            <MegaphoneIcon className="h-5 w-5" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-bold text-slate-800 dark:text-white font-outfit">Lembrete de Fechamento</h4>
+                                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-sans">Notificar no dia 25 de cada mês</p>
+                                        </div>
+                                    </div>
+                                    <button 
+                                        onClick={() => setReminderEnabled(!reminderEnabled)}
+                                        className={`w-12 h-6 rounded-full transition-colors relative ${reminderEnabled ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'}`}
+                                    >
+                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${reminderEnabled ? 'left-7' : 'left-1'}`} />
+                                    </button>
+                                </div>
+
+                                <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] flex items-center justify-between border border-slate-100 dark:border-slate-800">
+                                    <div className="flex gap-4">
+                                        <div className="h-10 w-10 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                                            <ShareIcon className="h-5 w-5" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-bold text-slate-800 dark:text-white font-outfit">Compartilhamento Automático</h4>
+                                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-sans">Enviar PDF para o grupo de serviço</p>
+                                        </div>
+                                    </div>
+                                    <button 
+                                        onClick={() => setAutoShareEnabled(!autoShareEnabled)}
+                                        className={`w-12 h-6 rounded-full transition-colors relative ${autoShareEnabled ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'}`}
+                                    >
+                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${autoShareEnabled ? 'left-7' : 'left-1'}`} />
+                                    </button>
+                                </div>
+                            </div>
+                        </section>
                     </motion.div>
                 )}
 
                 {view === 'hub' && (
-                    <div className="space-y-4">
-                        {/* Stats Overview */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total no Mês</p>
-                                <p className="text-2xl font-black text-slate-800 dark:text-white">{totalHoursCompleted.toFixed(1)}h</p>
-                            </div>
-                            <button 
-                                onClick={() => setIsGoalModalOpen(true)}
-                                className="bg-white dark:bg-slate-900 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 text-left hover:border-primary transition-all relative group"
+                    <div className="space-y-8">
+                        {/* Page Title Section */}
+                        <div className="flex items-center gap-4">
+                            <motion.section 
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.5 }}
+                                className="flex-1"
                             >
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Alvo Mensal</p>
-                                <div className="flex items-center justify-between">
-                                    <p className="text-2xl font-black text-primary">{currentRecord?.goalHours || 0}h</p>
-                                    <PencilIcon className="h-4 w-4 text-slate-300 group-hover:text-primary transition-colors" />
+                                <p className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase mb-1 font-sans">MINISTÉRIO</p>
+                                <div className="relative inline-block">
+                                    <h2 className="text-4xl font-extrabold text-slate-800 dark:text-white tracking-tight font-outfit">
+                                        {currentRecord?.role === 'Publicador' ? 'Publicador' : 'Pioneiro'}
+                                    </h2>
+                                    <div className="h-1.5 w-20 bg-amber-500 mt-3 rounded-full shadow-[0_0_10px_rgba(245,158,11,0.3)]"></div>
                                 </div>
-                                <p className="text-[9px] text-slate-400 mt-1">Toque para alterar</p>
-                            </button>
+                            </motion.section>
                         </div>
 
-                        {progressStats && (
-                            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <h4 className="text-sm font-bold text-slate-800 dark:text-white">Progresso do Mês</h4>
-                                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${progressStats.statusBg} ${progressStats.statusColor}`}>
-                                        Status: {progressStats.status}
-                                    </span>
-                                </div>
-                                
-                                <div className="relative h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                    <div 
-                                        className="absolute top-0 left-0 h-full bg-primary transition-all duration-1000"
-                                        style={{ width: `${Math.min(100, progressStats.progressPercent)}%` }}
-                                    />
-                                    {progressStats.daysRemaining > 0 && (
-                                        <div 
-                                            className="absolute top-0 h-full w-0.5 bg-slate-400/30 z-10"
-                                            style={{ left: `${progressStats.timePercent}%` }}
-                                        />
+                        {/* Dynamic Dashboard Content */}
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="space-y-6"
+                        >
+                            <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col items-center space-y-6">
+                                <div className="flex flex-col items-center">
+                                    <h3 className="text-xl font-bold text-slate-800 dark:text-white font-outfit">Progresso do Mês</h3>
+                                    {progressStats && (
+                                        <span className={`mt-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${progressStats.statusBg} ${progressStats.statusColor}`}>
+                                            Status: {progressStats.status}
+                                        </span>
+                                    )}
+                                    {!progressStats && (
+                                        <span className="mt-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-500">
+                                            Relatório de Publicador
+                                        </span>
                                     )}
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-6 pt-2">
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <ArrowTrendingUpIcon className="h-4 w-4 text-indigo-500" />
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Média Necessária</p>
-                                        </div>
-                                        <p className="text-lg font-black text-slate-800 dark:text-white">
-                                            {progressStats.formattedDailyAverage}<span className="text-[10px] font-medium text-slate-400 ml-1">/dia</span>
+                                <div className="relative h-64 w-64">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={[
+                                                    { name: 'Completed', value: totalHoursCompleted },
+                                                    { name: 'Remaining', value: Math.max(0, (currentRecord?.goalHours || 0) - totalHoursCompleted) }
+                                                ]}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={80}
+                                                outerRadius={100}
+                                                startAngle={90}
+                                                endAngle={-270}
+                                                paddingAngle={0}
+                                                dataKey="value"
+                                            >
+                                                <Cell fill="#3b82f6" />
+                                                <Cell fill="#f1f5f9" />
+                                            </Pie>
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                            {currentRecord?.goalHours ? 'PROGRESSO' : 'HORAS'}
                                         </p>
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <CalendarDaysIcon className="h-4 w-4 text-amber-500" />
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Faltam</p>
-                                        </div>
-                                        <p className="text-lg font-black text-slate-800 dark:text-white">
-                                            {progressStats.formattedRemaining}
+                                        <p className="text-5xl font-black text-slate-800 dark:text-white font-outfit">
+                                            {currentRecord?.goalHours 
+                                                ? `${Math.min(100, Math.round((totalHoursCompleted / currentRecord.goalHours) * 100))}%`
+                                                : totalHoursCompleted.toFixed(0)
+                                            }
+                                        </p>
+                                        <p className="text-xs font-bold text-blue-600 mt-1">
+                                            {totalHoursCompleted.toFixed(1)}h {currentRecord?.goalHours ? `/ ${currentRecord.goalHours}h` : ''}
                                         </p>
                                     </div>
                                 </div>
+
+                                <div className="grid grid-cols-2 gap-4 w-full">
+                                    <div className="p-5 bg-slate-50 dark:bg-slate-800 rounded-3xl text-center">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Participação</p>
+                                        <p className="text-xl font-black text-emerald-600">{participated ? 'SIM' : 'NÃO'}</p>
+                                    </div>
+                                    <div className="p-5 bg-slate-50 dark:bg-slate-800 rounded-3xl text-center">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Estudos</p>
+                                        <p className="text-xl font-black text-blue-600">{reportStudies}</p>
+                                    </div>
+                                </div>
+
+                                {progressStats && (
+                                    <div className="grid grid-cols-2 gap-4 w-full">
+                                        <div className="p-5 bg-slate-50 dark:bg-slate-800 rounded-3xl text-center">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Faltam</p>
+                                            <p className="text-xl font-black text-amber-600">{progressStats?.formattedRemaining}</p>
+                                        </div>
+                                        <div className="p-5 bg-slate-50 dark:bg-slate-800 rounded-3xl text-center">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Média Diária</p>
+                                            <p className="text-xl font-black text-indigo-600">{progressStats?.formattedDailyAverage}</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
+                        </motion.div>
+
+                        {/* Month Selector */}
+                        <motion.div 
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-white dark:bg-slate-900 p-6 rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-between"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 bg-amber-50 dark:bg-amber-900/20 rounded-2xl flex items-center justify-center">
+                                    <CalendarDaysIcon className="h-5 w-5 text-amber-600" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-sans">Mês de Referência</p>
+                                    <div className="flex items-center gap-2">
+                                        <button 
+                                            onClick={handlePrevMonth}
+                                            className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                                        >
+                                            <ChevronLeftIcon className="h-4 w-4 text-slate-400" />
+                                        </button>
+                                        <span className="font-bold text-slate-800 dark:text-slate-200 font-outfit min-w-[120px] text-center">
+                                            {(() => {
+                                                const [year, month] = selectedMonth.split('-').map(Number);
+                                                return new Date(year, month - 1, 1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+                                            })()}
+                                        </span>
+                                        <button 
+                                            onClick={handleNextMonth}
+                                            className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                                        >
+                                            <ChevronRightIconSolid className="h-4 w-4 text-slate-400" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="relative">
+                                <input 
+                                    type="month" 
+                                    value={selectedMonth} 
+                                    onChange={(e) => handleMonthChange(e.target.value)}
+                                    className="absolute inset-0 opacity-0 cursor-pointer"
+                                />
+                                <button className="px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl text-xs font-bold text-primary font-sans">Alterar</button>
+                            </div>
+                        </motion.div>
+
+                        {/* Year Summary Card */}
+                        <motion.div 
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 }}
+                            className="bg-gradient-to-br from-indigo-500 to-purple-600 p-6 rounded-[32px] shadow-lg shadow-indigo-500/20 text-white"
+                        >
+                            <div className="flex justify-between items-start mb-4">
+                                <div>
+                                    <p className="text-[10px] font-bold text-indigo-100 uppercase tracking-widest opacity-80">
+                                        {annualStats.isServiceYear ? `Ano de Serviço ${selectedYear}` : `Ano ${selectedYear}`}
+                                    </p>
+                                    <h3 className="text-2xl font-black font-outfit mt-1">{annualStats.totalHours.toFixed(1)}h <span className="text-sm font-normal opacity-70">acumuladas</span></h3>
+                                </div>
+                                <div className="bg-white/20 p-2 rounded-xl backdrop-blur-md">
+                                    <TrophyIcon className="h-5 w-5 text-white" />
+                                </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                                    <span>Progresso Anual</span>
+                                    <span>{annualStats.progressToGoal.toFixed(1)}%</span>
+                                </div>
+                                <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                                    <div 
+                                        className="h-full bg-white rounded-full transition-all duration-1000" 
+                                        style={{ width: `${Math.min(100, annualStats.progressToGoal)}%` }}
+                                    />
+                                </div>
+                                <p className="text-[10px] opacity-80 italic">Meta anual: {annualStats.annualGoal}h</p>
+                            </div>
+                        </motion.div>
+
+                        {!profile && !loading && (
+                            <motion.div 
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="bg-gradient-to-br from-amber-50 to-white dark:from-amber-900/20 dark:to-slate-900 p-8 rounded-[40px] border border-amber-100 dark:border-amber-800/30 flex flex-col items-center text-center space-y-6 shadow-lg shadow-amber-100/20 dark:shadow-none"
+                            >
+                                <div className="h-16 w-16 bg-amber-100 dark:bg-amber-900/40 rounded-3xl flex items-center justify-center">
+                                    <UserIcon className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-bold text-slate-800 dark:text-amber-200 font-outfit">Perfil Incompleto</h3>
+                                    <p className="text-sm text-slate-500 dark:text-amber-400/70 font-sans mt-2">Você precisa configurar seu perfil de publicador para enviar relatórios.</p>
+                                </div>
+                                <button 
+                                    onClick={() => navigate('/configuracoes')}
+                                    className="w-full py-4 bg-amber-600 text-white rounded-2xl font-bold hover:bg-amber-700 transition-all shadow-lg shadow-amber-600/25 active:scale-[0.98] font-sans"
+                                >
+                                    Configurar Agora
+                                </button>
+                            </motion.div>
                         )}
 
                         {/* Service Year Quick Access */}
@@ -968,7 +1391,7 @@ const Pioneer: React.FC = () => {
                             </button>
 
                             <button 
-                                onClick={() => setIsManualReportModalOpen(true)}
+                                onClick={() => navigateTo('report')}
                                 className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group"
                             >
                                 <div className="flex items-center gap-4">
@@ -976,8 +1399,8 @@ const Pioneer: React.FC = () => {
                                         <CalendarDaysIcon className="h-6 w-6 text-amber-500" />
                                     </div>
                                     <div className="text-left">
-                                        <h3 className="font-bold text-slate-800 dark:text-white">Relatório Retroativo</h3>
-                                        <p className="text-xs text-slate-500">Lançar meses ou anos passados</p>
+                                        <h3 className="font-bold text-slate-800 dark:text-white">Relatórios Passados</h3>
+                                        <p className="text-xs text-slate-500">Lançar ou revisar meses anteriores</p>
                                     </div>
                                 </div>
                                 <ChevronRightIconSolid className="h-5 w-5 text-slate-300" />
@@ -1004,33 +1427,14 @@ const Pioneer: React.FC = () => {
 
                 {view === 'daily' && (
                     <div className="space-y-6 animate-fade-in">
-                        {!currentRecord ? (
-                            <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl text-center space-y-4 border-2 border-dashed border-slate-200 dark:border-slate-800">
-                                <div className="h-20 w-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto">
-                                    <PlusIcon className="h-10 w-10 text-slate-400" />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-bold text-slate-800 dark:text-white">Nenhum planejamento</h3>
-                                    <p className="text-sm text-slate-500">Comece definindo seu alvo para este mês.</p>
-                                </div>
-                                <button onClick={() => setIsGoalModalOpen(true)} className="btn-primary w-full max-w-xs mx-auto">
-                                    Configurar Mês
-                                </button>
-                            </div>
-                        ) : (
-                            <>
-                                {/* Stats Cards */}
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 text-center">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase">Alvo Mensal</p>
-                                        <p className="text-xl font-black text-primary">{currentRecord.goalHours}h</p>
-                                    </div>
-                                    <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 text-center">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase">Total Realizado</p>
-                                        <p className="text-xl font-black text-emerald-500">{totalHoursCompleted.toFixed(1)}h</p>
+                        {/* Stats Cards */}
+                                <div className="grid grid-cols-1 gap-3">
+                                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 text-center">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Realizado</p>
+                                        <p className="text-3xl font-black text-emerald-500 font-outfit">{totalHoursCompleted.toFixed(1)}h</p>
                                     </div>
                                     {progressStats && (
-                                        <>
+                                        <div className="grid grid-cols-2 gap-3">
                                             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 text-center">
                                                 <p className="text-[10px] font-bold text-slate-400 uppercase">Faltam</p>
                                                 <p className="text-xl font-black text-amber-500">{progressStats.formattedRemaining}</p>
@@ -1039,7 +1443,7 @@ const Pioneer: React.FC = () => {
                                                 <p className="text-[10px] font-bold text-slate-400 uppercase">Média Diária</p>
                                                 <p className="text-xl font-black text-indigo-500">{progressStats.formattedDailyAverage}</p>
                                             </div>
-                                        </>
+                                        </div>
                                     )}
                                 </div>
 
@@ -1048,14 +1452,8 @@ const Pioneer: React.FC = () => {
                                     <button onClick={() => { setEditingActivity(null); setIsActivityModalOpen(true); }} className="flex-1 btn-primary flex items-center justify-center gap-2 py-3">
                                         <PlusIcon className="h-5 w-5" /> Novo Registro
                                     </button>
-                                    <button onClick={generateMonthlyPDF} title="Gerar PDF Mensal" className="p-3 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 hover:bg-slate-50 transition-colors">
-                                        <DocumentArrowDownIcon className="h-5 w-5" />
-                                    </button>
                                     <button onClick={handleShare} className="p-3 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 hover:bg-slate-50 transition-colors">
                                         <ShareIcon className="h-5 w-5" />
-                                    </button>
-                                    <button onClick={() => setIsGoalModalOpen(true)} className="p-3 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 hover:bg-slate-50 transition-colors">
-                                        <PencilIcon className="h-5 w-5" />
                                     </button>
                                 </div>
 
@@ -1064,11 +1462,11 @@ const Pioneer: React.FC = () => {
                                     <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                                         <h4 className="font-bold text-slate-800 dark:text-white">Registros do Mês</h4>
                                         <span className="text-xs font-medium text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg">
-                                            {currentRecord.activities.length} {currentRecord.activities.length === 1 ? 'dia' : 'dias'}
+                                            {currentRecord?.activities.length || 0} {(currentRecord?.activities.length || 0) === 1 ? 'dia' : 'dias'}
                                         </span>
                                     </div>
                                     <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                                        {currentRecord.activities.length === 0 ? (
+                                        {!currentRecord || currentRecord.activities.length === 0 ? (
                                             <div className="p-10 text-center">
                                                 <div className="h-12 w-12 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3">
                                                     <CalendarDaysIcon className="h-6 w-6 text-slate-300" />
@@ -1099,16 +1497,28 @@ const Pioneer: React.FC = () => {
                                         )}
                                     </div>
                                 </div>
-                            </>
+                            </div>
                         )}
-                    </div>
-                )}
 
                 {view === 'report' && (
                     <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-lg border border-slate-200 dark:border-slate-800 space-y-6 animate-fade-in">
                         <div className="text-center">
                             <h3 className="text-xl font-bold text-slate-800 dark:text-white">Fechamento Mensal</h3>
                             <p className="text-sm text-slate-500 mt-1">Confirme os dados para enviar à congregação.</p>
+                        </div>
+
+                        {/* Month Selector inside Report View */}
+                        <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-2xl flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <CalendarDaysIcon className="h-5 w-5 text-primary" />
+                                <span className="font-bold text-slate-700 dark:text-slate-200">Mês de Referência</span>
+                            </div>
+                            <input 
+                                type="month" 
+                                value={selectedMonth}
+                                onChange={(e) => handleMonthChange(e.target.value)}
+                                className="bg-transparent font-bold text-primary outline-none"
+                            />
                         </div>
 
                         <div className="space-y-4">
@@ -1251,8 +1661,15 @@ const Pioneer: React.FC = () => {
                             <div className="flex items-center gap-3">
                                 <CalendarDaysIcon className="h-5 w-5 text-indigo-500" />
                                 <div>
-                                    <span className="font-bold text-slate-700 dark:text-slate-200 block">Ano de Serviço {selectedYear}</span>
-                                    <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Setembro {selectedYear - 1} - Agosto {selectedYear}</span>
+                                    <span className="font-bold text-slate-700 dark:text-slate-200 block">
+                                        {annualStats.isServiceYear ? `Ano de Serviço ${selectedYear}` : `Ano ${selectedYear}`}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
+                                        {annualStats.isServiceYear 
+                                            ? `Setembro ${selectedYear - 1} - Agosto ${selectedYear}`
+                                            : `Janeiro ${selectedYear} - Dezembro ${selectedYear}`
+                                        }
+                                    </span>
                                 </div>
                             </div>
                             <select 
@@ -1263,8 +1680,11 @@ const Pioneer: React.FC = () => {
                                 {[0, 1, 2, 3, 4].map(offset => {
                                     const now = new Date();
                                     const month = now.getMonth() + 1;
-                                    const currentServiceYear = month >= 9 ? now.getFullYear() + 1 : now.getFullYear();
-                                    const year = currentServiceYear - offset;
+                                    const isServiceYear = annualStats.isServiceYear;
+                                    const currentYear = isServiceYear 
+                                        ? (month >= 9 ? now.getFullYear() + 1 : now.getFullYear())
+                                        : now.getFullYear();
+                                    const year = currentYear - offset;
                                     return <option key={year} value={year}>{year}</option>;
                                 })}
                             </select>
@@ -1300,7 +1720,9 @@ const Pioneer: React.FC = () => {
                                         <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
                                             <TrophyIcon className="h-5 w-5 text-amber-500" />
                                         </div>
-                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Meta Anual (840h)</p>
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                            Meta Anual {annualStats.annualGoal > 0 ? `(${annualStats.annualGoal}h)` : ''}
+                                        </p>
                                     </div>
                                     <span className="text-xs font-black text-amber-600">{annualStats.progressToGoal.toFixed(1)}%</span>
                                 </div>
@@ -1310,7 +1732,7 @@ const Pioneer: React.FC = () => {
                                         style={{ width: `${Math.min(100, annualStats.progressToGoal)}%` }}
                                     />
                                 </div>
-                                <p className="text-xs text-slate-500">Faltam {(840 - annualStats.totalHours).toFixed(1)}h para bater a meta.</p>
+                                <p className="text-xs text-slate-500">Faltam {(600 - annualStats.totalHours).toFixed(1)}h para bater a meta.</p>
                             </div>
                         </div>
 
@@ -1324,7 +1746,25 @@ const Pioneer: React.FC = () => {
 
                         {/* Monthly Chart */}
                         <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800">
-                            <h4 className="font-bold text-slate-800 dark:text-white mb-6">Comparativo Mensal (Ano de Serviço {selectedYear})</h4>
+                            <div className="flex items-center justify-between mb-6">
+                                <h4 className="font-bold text-slate-800 dark:text-white">
+                                    Comparativo Mensal ({annualStats.isServiceYear ? `Ano de Serviço ${selectedYear}` : `Ano ${selectedYear}`})
+                                </h4>
+                                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                                    <button 
+                                        onClick={() => setYearType('service')}
+                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${yearType === 'service' ? 'bg-white dark:bg-slate-700 text-primary shadow-sm' : 'text-slate-500'}`}
+                                    >
+                                        Serviço
+                                    </button>
+                                    <button 
+                                        onClick={() => setYearType('calendar')}
+                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${yearType === 'calendar' ? 'bg-white dark:bg-slate-700 text-primary shadow-sm' : 'text-slate-500'}`}
+                                    >
+                                        Civil
+                                    </button>
+                                </div>
+                            </div>
                             <div className="h-64 w-full">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={annualStats.monthlyData}>
@@ -1448,6 +1888,51 @@ const Pioneer: React.FC = () => {
                 )}
             </main>
 
+            {/* Pioneer Sub-Navigation Bar */}
+            <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 pb-6 pt-3 px-6 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+                <nav className="max-w-md mx-auto flex justify-between items-center">
+                    <button 
+                        onClick={() => navigateTo('hub')}
+                        className={`flex flex-col items-center gap-1 transition-all ${view === 'hub' ? 'text-blue-600' : 'text-slate-400'}`}
+                    >
+                        <div className={`p-2 rounded-2xl transition-all ${view === 'hub' ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+                            <HomeIcon className="h-6 w-6" />
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider">Início</span>
+                    </button>
+
+                    <button 
+                        onClick={() => navigateTo('daily')}
+                        className={`flex flex-col items-center gap-1 transition-all ${view === 'daily' ? 'text-blue-600' : 'text-slate-400'}`}
+                    >
+                        <div className={`p-2 rounded-2xl transition-all ${view === 'daily' ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+                            <PencilIcon className="h-6 w-6" />
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider">Registro</span>
+                    </button>
+
+                    <button 
+                        onClick={() => navigateTo('analysis')}
+                        className={`flex flex-col items-center gap-1 transition-all ${view === 'analysis' ? 'text-blue-600' : 'text-slate-400'}`}
+                    >
+                        <div className={`p-2 rounded-2xl transition-all ${view === 'analysis' ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+                            <ChartBarIcon className="h-6 w-6" />
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider">Análise</span>
+                    </button>
+
+                    <button 
+                        onClick={() => navigateTo('profile')}
+                        className={`flex flex-col items-center gap-1 transition-all ${view === 'profile' ? 'text-blue-600' : 'text-slate-400'}`}
+                    >
+                        <div className={`p-2 rounded-2xl transition-all ${view === 'profile' ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+                            <UserIcon className="h-6 w-6" />
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider">Perfil</span>
+                    </button>
+                </nav>
+            </div>
+
             {/* Modals */}
             <GoalModal 
                 isOpen={isGoalModalOpen} 
@@ -1462,13 +1947,24 @@ const Pioneer: React.FC = () => {
                 initialData={editingActivity}
                 defaultMonth={selectedMonth}
             />
-            <ManualReportModal
-                isOpen={isManualReportModalOpen}
-                onClose={() => setIsManualReportModalOpen(false)}
-                onSave={handleSaveManualReport}
-            />
             
             <Toast message={toastMessage} onClear={() => setToastMessage('')} />
+
+            <ConfirmationModal 
+                isOpen={isDeleteConfirmOpen}
+                onClose={() => setIsDeleteConfirmOpen(false)}
+                onConfirm={confirmDeleteActivity}
+                title="Excluir Registro"
+                message="Tem certeza que deseja excluir este registro de horas? Esta ação não pode ser desfeita."
+            />
+
+            <ConfirmationModal 
+                isOpen={isReportOverwriteConfirmOpen}
+                onClose={() => setIsReportOverwriteConfirmOpen(false)}
+                onConfirm={processReportSubmission}
+                title="Substituir Relatório"
+                message={`Já existe um relatório enviado para este mês. Deseja substituí-lo?`}
+            />
         </div>
     );
 };
@@ -1477,19 +1973,13 @@ const Pioneer: React.FC = () => {
 
 const GoalModal: React.FC<{isOpen: boolean, onClose: () => void, onSave: (data: Partial<PioneerRecord>) => void, initialData: PioneerRecord | null}> = ({ isOpen, onClose, onSave, initialData }) => {
     const [goalHours, setGoalHours] = useState('');
-    const [role, setRole] = useState<'Publicador' | 'Pioneiro Auxiliar' | 'Pioneiro Regular'>('Publicador');
-    const [studentCount, setStudentCount] = useState('0');
 
     useEffect(() => {
         if (isOpen) {
             if (initialData) {
                 setGoalHours(String(initialData.goalHours));
-                setRole(initialData.role);
-                setStudentCount(String(initialData.studentCount || 0));
             } else {
                 setGoalHours('');
-                setRole('Publicador');
-                setStudentCount('0');
             }
         }
     }, [isOpen, initialData]);
@@ -1499,123 +1989,23 @@ const GoalModal: React.FC<{isOpen: boolean, onClose: () => void, onSave: (data: 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[60] p-4">
             <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-6 w-full max-w-sm animate-scale-in">
-                <h4 className="text-xl font-black mb-6 text-center text-slate-800 dark:text-white">Configurar Mês</h4>
+                <h4 className="text-xl font-black mb-6 text-center text-slate-800 dark:text-white">Definir Alvo de Horas</h4>
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Alvo de Horas</label>
+                        <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Alvo para este Mês</label>
                         <input 
                             type="number" 
                             value={goalHours} 
                             onChange={(e) => setGoalHours(e.target.value)} 
                             placeholder="Ex: 50" 
-                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-slate-800 dark:text-white font-bold" 
+                            className="w-full p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-primary outline-none transition-all text-slate-800 dark:text-white font-black text-2xl text-center" 
                         />
                     </div>
-                    <div>
-                        <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Modalidade</label>
-                        <select 
-                            value={role} 
-                            onChange={(e) => setRole(e.target.value as any)} 
-                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-slate-800 dark:text-white font-bold"
-                        >
-                            <option>Publicador</option>
-                            <option>Pioneiro Auxiliar</option>
-                            <option>Pioneiro Regular</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Estudos Bíblicos</label>
-                        <input 
-                            type="number" 
-                            value={studentCount} 
-                            onChange={(e) => setStudentCount(e.target.value)} 
-                            placeholder="Ex: 2" 
-                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-slate-800 dark:text-white font-bold" 
-                        />
-                    </div>
+                    <p className="text-[10px] text-slate-400 text-center italic">O perfil (Publicador/Pioneiro) deve ser configurado na aba Perfil.</p>
                 </div>
                 <div className="flex gap-3 mt-8">
                     <button onClick={onClose} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl font-bold hover:bg-slate-200 transition-colors">Cancelar</button>
-                    <button onClick={() => onSave({ goalHours: parseInt(goalHours, 10), role, studentCount: parseInt(studentCount, 10) })} className="flex-1 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-dark shadow-lg shadow-primary/20 transition-all">Salvar</button>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-const ManualReportModal: React.FC<{isOpen: boolean, onClose: () => void, onSave: (data: any) => void}> = ({ isOpen, onClose, onSave }) => {
-    const [month, setMonth] = useState(new Date().toISOString().substring(0, 7));
-    const [hours, setHours] = useState('');
-    const [studies, setStudies] = useState('');
-    const [revisits, setRevisits] = useState('');
-    const [notes, setNotes] = useState('');
-
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[60] p-4">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-6 w-full max-w-sm animate-scale-in max-h-[90vh] overflow-y-auto">
-                <h4 className="text-xl font-black mb-6 text-center text-slate-800 dark:text-white">Relatório Retroativo</h4>
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Mês e Ano</label>
-                        <input 
-                            type="month" 
-                            value={month} 
-                            onChange={(e) => setMonth(e.target.value)} 
-                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-slate-800 dark:text-white font-bold" 
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Total de Horas</label>
-                        <input 
-                            type="number" 
-                            value={hours} 
-                            onChange={(e) => setHours(e.target.value)} 
-                            placeholder="Ex: 50" 
-                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-slate-800 dark:text-white font-bold" 
-                        />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Estudos</label>
-                            <input 
-                                type="number" 
-                                value={studies} 
-                                onChange={(e) => setStudies(e.target.value)} 
-                                placeholder="0" 
-                                className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-slate-800 dark:text-white font-bold" 
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Revisitas</label>
-                            <input 
-                                type="number" 
-                                value={revisits} 
-                                onChange={(e) => setRevisits(e.target.value)} 
-                                placeholder="0" 
-                                className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-slate-800 dark:text-white font-bold" 
-                            />
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Observações</label>
-                        <textarea 
-                            value={notes} 
-                            onChange={(e) => setNotes(e.target.value)} 
-                            placeholder="Notas adicionais..." 
-                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-slate-800 dark:text-white font-bold h-20 resize-none" 
-                        />
-                    </div>
-                </div>
-                <div className="flex gap-3 mt-8">
-                    <button onClick={onClose} className="flex-1 p-4 rounded-2xl font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">Cancelar</button>
-                    <button 
-                        onClick={() => onSave({ month, hours: Number(hours), studies: Number(studies), revisits: Number(revisits), notes })} 
-                        className="flex-1 p-4 bg-primary text-white rounded-2xl font-bold shadow-lg shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                    >
-                        Salvar
-                    </button>
+                    <button onClick={() => onSave({ goalHours: parseInt(goalHours, 10) })} className="flex-1 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-dark shadow-lg shadow-primary/20 transition-all">Salvar</button>
                 </div>
             </div>
         </div>
@@ -1639,8 +2029,6 @@ const ActivityModal: React.FC<{isOpen: boolean, onClose: () => void, onSave: (ac
     const [hours, setHours] = useState(0);
     const [minutes, setMinutes] = useState(0);
     const [category, setCategory] = useState<'Pregação' | 'Estudos' | 'Outra'>('Pregação');
-    const [revisits, setRevisits] = useState(0);
-    const [studies, setStudies] = useState(0);
 
     useEffect(() => {
         if (isOpen) {
@@ -1649,15 +2037,11 @@ const ActivityModal: React.FC<{isOpen: boolean, onClose: () => void, onSave: (ac
                 setHours(initialData.hours);
                 setMinutes(initialData.minutes);
                 setCategory(initialData.category || 'Pregação');
-                setRevisits(initialData.revisits || 0);
-                setStudies(initialData.studies || 0);
             } else {
                 setDate(getTodayStr());
                 setHours(0);
                 setMinutes(0);
                 setCategory('Pregação');
-                setRevisits(0);
-                setStudies(0);
             }
         }
     }, [isOpen, initialData]);
@@ -1689,7 +2073,7 @@ const ActivityModal: React.FC<{isOpen: boolean, onClose: () => void, onSave: (ac
                                     className={`py-2 px-1 rounded-xl text-[10px] font-bold transition-all border-2 ${
                                         category === cat 
                                         ? 'bg-primary border-primary text-white shadow-md shadow-primary/20' 
-                                        : 'bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500'
+                                        : 'bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-800 text-slate-500'
                                     }`}
                                 >
                                     {cat}
@@ -1718,27 +2102,6 @@ const ActivityModal: React.FC<{isOpen: boolean, onClose: () => void, onSave: (ac
                             />
                         </div>
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Estudos</label>
-                            <input 
-                                type="number" 
-                                value={studies} 
-                                onChange={e => setStudies(parseInt(e.target.value) || 0)} 
-                                className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-slate-800 dark:text-white font-bold" 
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Revisitas</label>
-                            <input 
-                                type="number" 
-                                value={revisits} 
-                                onChange={e => setRevisits(parseInt(e.target.value) || 0)} 
-                                className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-slate-800 dark:text-white font-bold" 
-                            />
-                        </div>
-                    </div>
                 </div>
                 
                 <div className="flex gap-3 mt-8">
@@ -1750,8 +2113,8 @@ const ActivityModal: React.FC<{isOpen: boolean, onClose: () => void, onSave: (ac
                             hours, 
                             minutes, 
                             category, 
-                            revisits, 
-                            studies, 
+                            revisits: 0, 
+                            studies: 0, 
                             studyDetails: initialData?.studyDetails || [] 
                         })} 
                         className="flex-1 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-dark shadow-lg shadow-primary/20 transition-all"

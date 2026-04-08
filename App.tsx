@@ -72,7 +72,7 @@ const AppContent: React.FC = () => {
                         
                         <Route element={<RoleProtectedRoute roles={[UserRole.PUBLISHER, UserRole.SERVANT]} />}>
                             <Route path="dashboard" element={<Dashboard />} />
-                            <Route path="pioneiro" element={<Pioneer />} />
+                            <Route path="pioneiro/*" element={<Pioneer />} />
                             <Route path="calendario" element={<Calendar />} />
                             <Route path="relatorio" element={<Report />} />
                             <Route path="assistencia" element={<Attendance />} />
