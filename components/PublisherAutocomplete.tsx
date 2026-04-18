@@ -6,13 +6,23 @@ interface PublisherAutocompleteProps {
     publishers: PublisherProfile[];
     selectedPublisher: PublisherProfile | null;
     onSelect: (publisher: PublisherProfile | null) => void;
+    onTextChange?: (text: string) => void;
     placeholder?: string;
+    initialValue?: string;
 }
 
-const PublisherAutocomplete: React.FC<PublisherAutocompleteProps> = ({ publishers, selectedPublisher, onSelect, placeholder }) => {
-    const [searchTerm, setSearchTerm] = useState('');
+const PublisherAutocomplete: React.FC<PublisherAutocompleteProps> = ({ publishers, selectedPublisher, onSelect, onTextChange, placeholder, initialValue }) => {
+    const [searchTerm, setSearchTerm] = useState(initialValue || selectedPublisher?.name || '');
     const [isOpen, setIsOpen] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (selectedPublisher) {
+            setSearchTerm(selectedPublisher.name);
+        } else if (initialValue !== undefined) {
+            setSearchTerm(initialValue);
+        }
+    }, [selectedPublisher, initialValue]);
 
     useEffect(() => {
         // Close dropdown if clicked outside
@@ -38,14 +48,17 @@ const PublisherAutocomplete: React.FC<PublisherAutocompleteProps> = ({ publisher
     
     const handleClear = () => {
         onSelect(null);
+        if (onTextChange) onTextChange('');
         setSearchTerm('');
         setIsOpen(false);
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchTerm(e.target.value);
+        const value = e.target.value;
+        setSearchTerm(value);
+        if (onTextChange) onTextChange(value);
         if (!isOpen) setIsOpen(true);
-        if (selectedPublisher && e.target.value !== selectedPublisher.name) {
+        if (selectedPublisher && value !== selectedPublisher.name) {
             onSelect(null); // Deselect if user starts typing something different
         }
     };
@@ -54,10 +67,10 @@ const PublisherAutocomplete: React.FC<PublisherAutocompleteProps> = ({ publisher
         <div className="relative" ref={wrapperRef}>
             <input
                 type="text"
-                value={searchTerm || (selectedPublisher?.name || '')}
+                value={searchTerm}
                 onChange={handleInputChange}
-                onFocus={() => { setSearchTerm(''); setIsOpen(true); }}
-                onBlur={() => setTimeout(() => { if (!selectedPublisher) setSearchTerm(''); }, 200)}
+                onFocus={() => { setIsOpen(true); }}
+                onBlur={() => setTimeout(() => { setIsOpen(false); }, 200)}
                 placeholder={placeholder || 'Buscar publicador...'}
                 className="input-style pr-10"
                 autoComplete="off"

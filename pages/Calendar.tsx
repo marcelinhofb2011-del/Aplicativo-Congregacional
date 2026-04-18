@@ -7,7 +7,7 @@ import {
     getCalendarNotes, 
     addCalendarNote, 
     updateCalendarNote, 
-    archiveCalendarNote,
+    deleteCalendarNote,
     getCalendarEvents
 } from '../services/firestoreService';
 import { CalendarNote, CalendarEvent } from '../types';
@@ -185,7 +185,7 @@ const Calendar: React.FC = () => {
     const handleDeleteNote = async (id: string) => {
         if (!user) return;
         try {
-            await archiveCalendarNote(id, user.uid);
+            await deleteCalendarNote(id);
             setDeleteConfirmId(null);
             fetchData();
         } catch (error) {

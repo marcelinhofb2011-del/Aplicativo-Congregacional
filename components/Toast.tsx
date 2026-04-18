@@ -24,7 +24,7 @@ const Toast: React.FC<ToastProps> = ({ message, onClear, duration = 3000 }) => {
 
     return (
         <div
-            className={`fixed bottom-20 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg text-white bg-emerald-500 transition-all duration-300 ${
+            className={`fixed bottom-24 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg text-white bg-emerald-500 z-[150] transition-all duration-300 ${
                 visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
         >

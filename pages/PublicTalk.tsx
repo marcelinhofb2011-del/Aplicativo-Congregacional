@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 import html2canvas from 'html2canvas';
 import { useAuth } from '../hooks/useAuth';
 import { PublicTalkSchedule, UserRole } from '../types';
-import { getPublicTalks, addPublicTalk, updatePublicTalk, archivePublicTalk } from '../services/firestoreService';
+import { getPublicTalks, addPublicTalk, updatePublicTalk, deletePublicTalk } from '../services/firestoreService';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
 import PublicTalkFormModal from '../components/PublicTalkFormModal';
@@ -40,7 +40,7 @@ const PublicTalk: React.FC = () => {
         const today = new Date();
         today.setUTCHours(0, 0, 0, 0);
         return talks
-            .filter(talk => talk.type === activeTab && new Date(talk.date) >= today)
+            .filter(talk => talk.isActive !== false && talk.type === activeTab && new Date(talk.date) >= today)
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     }, [talks, activeTab]);
 
@@ -102,6 +102,7 @@ const PublicTalk: React.FC = () => {
                 await addPublicTalk(formData, user.uid);
                 setToastMessage('Novo discurso adicionado à programação.');
             }
+            setExpandedItems(new Set()); // Collapse all items after save
             fetchData();
         } catch (error) {
             setToastMessage('Erro ao salvar o discurso.');
@@ -118,13 +119,13 @@ const PublicTalk: React.FC = () => {
     const confirmDelete = async () => {
         if (talkToDelete && user) {
             try {
-                await archivePublicTalk(talkToDelete.id, user.uid);
-                setToastMessage('Discurso arquivado com sucesso.');
+                await deletePublicTalk(talkToDelete.id);
+                setToastMessage('Discurso excluído com sucesso.');
                 setTalkToDelete(null);
                 fetchData();
             } catch (error) {
-                setToastMessage('Erro ao arquivar o discurso.');
-                console.error("Archive public talk error:", error);
+                setToastMessage('Erro ao excluir o discurso.');
+                console.error("Delete public talk error:", error);
             }
         }
     };
@@ -259,9 +260,9 @@ const PublicTalk: React.FC = () => {
                                 }
                                 footer={
                                     isServant && (
-                                        <div className="p-3 flex justify-end items-center space-x-2">
-                                            <button onClick={() => handleOpenFormModal(talk)} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
-                                            <button onClick={() => handleDelete(talk)} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
+                                        <div className="p-3 flex justify-end items-center space-x-4">
+                                            <button onClick={(e) => { e.stopPropagation(); handleOpenFormModal(talk); }} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); handleDelete(talk); }} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
                                         </div>
                                     )
                                 }
@@ -292,8 +293,8 @@ const PublicTalk: React.FC = () => {
                 isOpen={!!talkToDelete}
                 onClose={() => setTalkToDelete(null)}
                 onConfirm={confirmDelete}
-                title="Confirmar Arquivamento"
-                message={`Você tem certeza que deseja arquivar o discurso "${talkToDelete?.theme}"?`}
+                title="Confirmar Exclusão"
+                message={`Você tem certeza que deseja excluir permanentemente o discurso "${talkToDelete?.theme}"?`}
             />
         </>
     );

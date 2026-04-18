@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { PublisherProfile, PublisherStatus } from '../types';
-import { getPublisherProfiles, addPublisherProfile, updatePublisherProfile, archivePublisherProfile } from '../services/firestoreService';
+import { getPublisherProfiles, addPublisherProfile, updatePublisherProfile, deletePublisherProfile } from '../services/firestoreService';
 import { PlusIcon, PencilIcon, TrashIcon, DocumentTextIcon, MagnifyingGlassIcon } from '../components/icons/Icons';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
@@ -121,11 +121,11 @@ const Publishers: React.FC = () => {
     const handleConfirmDelete = async () => {
         if (publisherToDelete && user) {
             try {
-                await archivePublisherProfile(publisherToDelete.id, user.uid);
-                setToastMessage('Publicador arquivado com sucesso.');
+                await deletePublisherProfile(publisherToDelete.id);
+                setToastMessage('Publicador excluído com sucesso.');
                 fetchData();
             } catch (error) {
-                setToastMessage('Erro ao arquivar publicador.');
+                setToastMessage('Erro ao excluir publicador.');
             } finally {
                 setPublisherToDelete(null);
             }
@@ -204,9 +204,9 @@ const Publishers: React.FC = () => {
                                             )}
                                         </div>
                                     </div>
-                                    <div className="flex items-center space-x-2">
-                                        <button onClick={() => handleEditClick(pub)} className="p-2 text-slate-500 hover:text-amber-500"><PencilIcon className="h-5 w-5" /></button>
-                                        <button onClick={() => handleDeleteClick(pub)} className="p-2 text-slate-500 hover:text-red-500"><TrashIcon className="h-5 w-5" /></button>
+                                    <div className="flex items-center space-x-4">
+                                        <button onClick={(e) => { e.stopPropagation(); handleEditClick(pub); }} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
+                                        <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(pub); }} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
                                     </div>
                                 </li>
                             )}) : (
@@ -247,8 +247,8 @@ const Publishers: React.FC = () => {
                 isOpen={!!publisherToDelete}
                 onClose={() => setPublisherToDelete(null)}
                 onConfirm={handleConfirmDelete}
-                title="Confirmar Arquivamento"
-                message={`Tem certeza que deseja arquivar o registro de ${publisherToDelete?.name}?`}
+                title="Confirmar Exclusão"
+                message={`Tem certeza que deseja excluir permanentemente o registro de ${publisherToDelete?.name}?`}
             />
 
             <Toast message={toastMessage} onClear={() => setToastMessage('')} />

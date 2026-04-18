@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { ShepherdingVisit, DashboardSchedule, UserRole } from '../types';
-import { getShepherdingVisits, addShepherdingVisit, updateShepherdingVisit, archiveShepherdingVisit } from '../services/firestoreService';
+import { getShepherdingVisits, addShepherdingVisit, updateShepherdingVisit, deleteShepherdingVisit } from '../services/firestoreService';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
 import ShepherdingFormModal from '../components/ShepherdingFormModal';
@@ -89,13 +89,13 @@ const Shepherding: React.FC = () => {
     const confirmDelete = async () => {
         if (visitToDelete && user) {
             try {
-                await archiveShepherdingVisit(visitToDelete.id, user.uid);
-                setToastMessage('Registro de pastoreio arquivado.');
+                await deleteShepherdingVisit(visitToDelete.id);
+                setToastMessage('Registro de pastoreio excluído.');
                 setVisitToDelete(null);
                 fetchData();
             } catch (error) {
-                setToastMessage('Erro ao arquivar o registro.');
-                console.error("Archive shepherding visit error:", error);
+                setToastMessage('Erro ao excluir o registro.');
+                console.error("Delete shepherding visit error:", error);
             }
         }
     };
@@ -121,7 +121,7 @@ const Shepherding: React.FC = () => {
                     <p className="text-center p-6">Carregando registros...</p>
                 ) : (
                     <div className="space-y-4">
-                        {visits.length > 0 ? visits.map(visit => {
+                        {visits.filter(v => v.isActive !== false).length > 0 ? visits.filter(v => v.isActive !== false).map(visit => {
                             const visitDate = new Date(visit.date);
                             const today = new Date();
                             visitDate.setUTCHours(0,0,0,0);
@@ -175,8 +175,8 @@ const Shepherding: React.FC = () => {
                 isOpen={!!visitToDelete}
                 onClose={() => setVisitToDelete(null)}
                 onConfirm={confirmDelete}
-                title="Confirmar Arquivamento"
-                message={`Você tem certeza que deseja arquivar o registro de pastoreio para ${visitToDelete?.brotherName} de ${visitToDelete ? new Date(visitToDelete.date).toLocaleDateString('pt-BR', {timeZone:'UTC'}) : ''}?`}
+                title="Confirmar Exclusão"
+                message={`Você tem certeza que deseja excluir permanentemente o registro de pastoreio para ${visitToDelete?.brotherName} de ${visitToDelete ? new Date(visitToDelete.date).toLocaleDateString('pt-BR', {timeZone:'UTC'}) : ''}?`}
             />
         </>
     );

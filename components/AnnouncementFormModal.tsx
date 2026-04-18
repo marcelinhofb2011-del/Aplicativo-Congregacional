@@ -87,8 +87,8 @@ const AnnouncementFormModal: React.FC<AnnouncementFormModalProps> = ({ isOpen, o
     };
 
     return (
-        <div className="fixed inset-0 bg-light dark:bg-dark z-50 overflow-y-auto">
-            <div className="container mx-auto px-4 py-8 max-w-2xl">
+        <div className="fixed inset-0 bg-light dark:bg-dark z-[100] overflow-y-auto">
+            <div className="container mx-auto px-4 py-8 pb-32 max-w-2xl">
                 <form onSubmit={handleSubmit}>
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-3xl font-bold text-slate-900 dark:text-white">

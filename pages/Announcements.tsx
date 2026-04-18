@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Announcement, UserRole } from '../types';
-import { getAnnouncements, addAnnouncement, updateAnnouncement, archiveAnnouncement } from '../services/firestoreService';
+import { getAnnouncements, addAnnouncement, updateAnnouncement, deleteAnnouncement, archiveAnnouncement } from '../services/firestoreService';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
 import ScheduleAccordion from '../components/ScheduleAccordion';
@@ -102,11 +102,11 @@ const Announcements: React.FC = () => {
     const handleConfirmDelete = async () => {
         if (announcementToDelete && user) {
             try {
-                await archiveAnnouncement(announcementToDelete.id, user.uid);
-                setToastMessage('Anúncio arquivado com sucesso!');
+                await deleteAnnouncement(announcementToDelete.id);
+                setToastMessage('Anúncio excluído com sucesso!');
                 fetchAnnouncements();
             } catch (error) {
-                setToastMessage('Erro ao arquivar o anúncio.');
+                setToastMessage('Erro ao excluir o anúncio.');
             } finally {
                 setAnnouncementToDelete(null);
             }
@@ -215,8 +215,8 @@ const Announcements: React.FC = () => {
                 isOpen={!!announcementToDelete}
                 onClose={() => setAnnouncementToDelete(null)}
                 onConfirm={handleConfirmDelete}
-                title="Confirmar Arquivamento"
-                message="Você tem certeza que deseja arquivar este anúncio? Ele não será mais exibido."
+                title="Confirmar Exclusão"
+                message="Você tem certeza que deseja excluir este anúncio permanentemente?"
             />
             <Toast message={toastMessage} onClear={() => setToastMessage('')} />
         </>

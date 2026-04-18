@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { FieldServiceReport, UserRole } from '../types';
-import { getReports, updateReport, archiveReport } from '../services/firestoreService';
+import { getReports, updateReport, deleteReport } from '../services/firestoreService';
 import { useAuth } from '../hooks/useAuth';
 import ReportDetailModal from '../components/ReportDetailModal';
 import ReportFormModal from '../components/ReportFormModal';
@@ -133,7 +133,7 @@ const ReportList: React.FC = () => {
     const confirmDelete = async () => {
         if (reportToDelete && user) {
             try {
-                await archiveReport(reportToDelete.id, user.uid);
+                await deleteReport(reportToDelete.id);
                 setToastMessage('Relatório excluído com sucesso.');
                 fetchReports();
             } catch (error) {
@@ -202,11 +202,11 @@ const ReportList: React.FC = () => {
                                         Grupo: {report.group} | Data: {new Date(report.date).toLocaleDateString('pt-BR', {timeZone:'UTC'})}
                                     </p>
                                 </div>
-                                <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex items-center space-x-4 opacity-0 group-hover:opacity-100 transition-opacity">
                                     {isServant && (
                                         <>
-                                            <button onClick={() => handleEdit(report)} className="p-2 text-slate-500 hover:text-amber-500"><PencilIcon className="h-5 w-5" /></button>
-                                            <button onClick={() => handleDelete(report)} className="p-2 text-slate-500 hover:text-red-500"><TrashIcon className="h-5 w-5" /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); handleEdit(report); }} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); handleDelete(report); }} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
                                         </>
                                     )}
                                 </div>

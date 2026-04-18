@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { LifeMinistrySchedule, UserRole } from '../types';
-import { getSchedules, addSchedule, updateSchedule, archiveSchedule } from '../services/firestoreService';
+import { getSchedules, addSchedule, updateSchedule, deleteSchedule } from '../services/firestoreService';
 import LifeMinistryFormModal from '../components/LifeMinistryFormModal';
 import ConfirmationModal from '../components/ConfirmationModal';
 import Toast from '../components/Toast';
@@ -111,6 +111,7 @@ const LifeMinistry: React.FC = () => {
                 await addSchedule(scheduleData, user.uid);
                 setToastMessage('Programação criada com sucesso!');
             }
+            setExpandedItems(new Set()); // Collapse all items after save
             fetchSchedules(); // Refetch to get the latest data
         } catch (error) {
             console.error("Failed to save schedule:", error);
@@ -121,18 +122,19 @@ const LifeMinistry: React.FC = () => {
     };
 
     const handleDeleteClick = (schedule: LifeMinistrySchedule) => {
+        console.log("Delete clicked for:", schedule.id);
         setScheduleToDelete(schedule);
     };
 
     const handleConfirmDelete = async () => {
         if (scheduleToDelete && user) {
             try {
-                await archiveSchedule(scheduleToDelete.id, user.uid);
-                setToastMessage('Programação arquivada com sucesso!');
+                await deleteSchedule(scheduleToDelete.id);
+                setToastMessage('Programação excluída com sucesso!');
                 fetchSchedules(); // Refetch
             } catch (error) {
                 console.error("Failed to delete schedule:", error);
-                setToastMessage('Erro ao arquivar a programação.');
+                setToastMessage('Erro ao excluir a programação.');
             } finally {
                 setScheduleToDelete(null);
             }
@@ -235,12 +237,12 @@ const LifeMinistry: React.FC = () => {
                                     </div>
                                 }
                                 footer={
-                                    <div className="p-4 flex justify-end items-center space-x-2">
-                                        <button onClick={() => handleShare(schedule)} className="p-2 text-slate-500 hover:text-sky-500" aria-label="Compartilhar"><ShareIcon className="h-5 w-5" /></button>
+                                    <div className="p-4 flex justify-end items-center space-x-4">
+                                        <button onClick={(e) => { e.stopPropagation(); handleShare(schedule); }} className="p-2 text-slate-500 hover:text-sky-500" aria-label="Compartilhar"><ShareIcon className="h-5 w-5" /></button>
                                         {isServant && (
                                             <>
-                                                <button onClick={() => handleOpenModal(schedule)} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
-                                                <button onClick={() => handleDeleteClick(schedule)} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleOpenModal(schedule); }} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(schedule); }} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
                                             </>
                                         )}
                                     </div>
@@ -270,8 +272,8 @@ const LifeMinistry: React.FC = () => {
                 isOpen={!!scheduleToDelete}
                 onClose={() => setScheduleToDelete(null)}
                 onConfirm={handleConfirmDelete}
-                title="Confirmar Arquivamento"
-                message="Você tem certeza que deseja arquivar esta programação? Ela não será mais exibida na lista principal."
+                title="Confirmar Exclusão"
+                message="Você tem certeza que deseja excluir esta programação permanentemente?"
             />
             <Toast message={toastMessage} onClear={() => setToastMessage('')} />
         </>

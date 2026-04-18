@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { getMeetingSchedules, addMeetingSchedule, updateMeetingSchedule, archiveMeetingSchedule } from '../services/firestoreService';
+import { getMeetingSchedules, addMeetingSchedule, updateMeetingSchedule, deleteMeetingSchedule } from '../services/firestoreService';
 import { MeetingSchedule } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { PlusIcon, PencilIcon, TrashIcon, CalendarDaysIcon, ConductorIcon, WifiIcon, MapPinIcon } from '../components/icons/Icons';
 import Layout from '../components/Layout';
+import ConfirmationModal from '../components/ConfirmationModal';
+import Toast from '../components/Toast';
 
 const Programations: React.FC = () => {
     const { user } = useAuth();
@@ -11,6 +13,8 @@ const Programations: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSchedule, setEditingSchedule] = useState<MeetingSchedule | null>(null);
+    const [scheduleToDelete, setScheduleToDelete] = useState<MeetingSchedule | null>(null);
+    const [toastMessage, setToastMessage] = useState('');
 
     useEffect(() => {
         loadSchedules();
@@ -44,14 +48,17 @@ const Programations: React.FC = () => {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!user) return;
-        if (!confirm('Deseja arquivar esta programação?')) return;
+    const handleDelete = async () => {
+        if (!user || !scheduleToDelete) return;
         try {
-            await archiveMeetingSchedule(id, user.uid);
+            await deleteMeetingSchedule(scheduleToDelete.id);
             await loadSchedules();
+            setToastMessage('Programação excluída com sucesso.');
         } catch (error) {
-            console.error('Erro ao arquivar:', error);
+            console.error('Erro ao excluir:', error);
+            setToastMessage('Erro ao excluir programação.');
+        } finally {
+            setScheduleToDelete(null);
         }
     };
 
@@ -96,11 +103,11 @@ const Programations: React.FC = () => {
                                                 </p>
                                             </div>
                                         </div>
-                                        <div className="flex gap-2">
-                                            <button onClick={() => { setEditingSchedule(schedule); setIsModalOpen(true); }} className="p-2 text-slate-400 hover:text-primary transition-colors">
+                                        <div className="flex gap-4">
+                                            <button onClick={(e) => { e.stopPropagation(); setEditingSchedule(schedule); setIsModalOpen(true); }} className="p-2 text-slate-400 hover:text-primary transition-colors" aria-label="Editar">
                                                 <PencilIcon className="h-5 w-5" />
                                             </button>
-                                            <button onClick={() => handleDelete(schedule.id)} className="p-2 text-slate-400 hover:text-red-500 transition-colors">
+                                            <button onClick={(e) => { e.stopPropagation(); setScheduleToDelete(schedule); }} className="p-2 text-slate-400 hover:text-red-500 transition-colors" aria-label="Excluir">
                                                 <TrashIcon className="h-5 w-5" />
                                             </button>
                                         </div>
@@ -145,6 +152,15 @@ const Programations: React.FC = () => {
                     initialData={editingSchedule} 
                 />
             )}
+
+            <ConfirmationModal
+                isOpen={!!scheduleToDelete}
+                onClose={() => setScheduleToDelete(null)}
+                onConfirm={handleDelete}
+                title="Confirmar Exclusão"
+                message="Você tem certeza que deseja excluir esta programação permanentemente?"
+            />
+            <Toast message={toastMessage} onClear={() => setToastMessage('')} />
         </Layout>
     );
 };

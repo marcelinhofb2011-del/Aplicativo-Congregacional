@@ -51,8 +51,8 @@ const FirstSundayConductorsFormModal: React.FC<FirstSundayConductorsFormModalPro
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden pb-10 animate-in fade-in zoom-in duration-200">
                 <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-700">
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white">
                         {initialData ? 'Editar Dirigente' : 'Novo Dirigente do 1º Domingo'}

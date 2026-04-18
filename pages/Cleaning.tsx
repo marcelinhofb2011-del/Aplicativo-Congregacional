@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { CleaningSchedule, UserRole } from '../types';
-import { getCleaningSchedules, addCleaningSchedule, updateCleaningSchedule, archiveCleaningSchedule } from '../services/firestoreService';
+import { getCleaningSchedules, addCleaningSchedule, updateCleaningSchedule, deleteCleaningSchedule } from '../services/firestoreService';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
 import CleaningFormModal from '../components/CleaningFormModal';
@@ -35,7 +35,7 @@ const Cleaning: React.FC = () => {
         const today = new Date();
         today.setUTCHours(0, 0, 0, 0);
         return schedules
-            .filter(s => new Date(s.endDate) >= today)
+            .filter(s => s.isActive !== false && new Date(s.endDate) >= today)
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     }, [schedules]);
 
@@ -97,6 +97,7 @@ const Cleaning: React.FC = () => {
                 await addCleaningSchedule(formData, user.uid);
                 setToastMessage('Nova escala de limpeza adicionada.');
             }
+            setExpandedItems(new Set()); // Collapse all items after save
             fetchData();
         } catch (error) {
             setToastMessage('Erro ao salvar a escala.');
@@ -113,13 +114,13 @@ const Cleaning: React.FC = () => {
     const confirmDelete = async () => {
         if (scheduleToDelete && user) {
             try {
-                await archiveCleaningSchedule(scheduleToDelete.id, user.uid);
-                setToastMessage('Escala de limpeza arquivada.');
+                await deleteCleaningSchedule(scheduleToDelete.id);
+                setToastMessage('Escala de limpeza excluída.');
                 setScheduleToDelete(null);
                 fetchData();
             } catch (error) {
-                setToastMessage('Erro ao arquivar a escala.');
-                console.error("Archive cleaning schedule error:", error);
+                setToastMessage('Erro ao excluir a escala.');
+                console.error("Delete cleaning schedule error:", error);
             }
         }
     };
@@ -169,9 +170,9 @@ const Cleaning: React.FC = () => {
                                 }
                                 footer={
                                     isServant && (
-                                        <div className="p-3 flex justify-end items-center space-x-2">
-                                            <button onClick={() => handleOpenModal(schedule)} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
-                                            <button onClick={() => handleDelete(schedule)} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
+                                        <div className="p-3 flex justify-end items-center space-x-4">
+                                            <button onClick={(e) => { e.stopPropagation(); handleOpenModal(schedule); }} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); handleDelete(schedule); }} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
                                         </div>
                                     )
                                 }
@@ -201,8 +202,8 @@ const Cleaning: React.FC = () => {
                 isOpen={!!scheduleToDelete}
                 onClose={() => setScheduleToDelete(null)}
                 onConfirm={confirmDelete}
-                title="Confirmar Arquivamento"
-                message={`Você tem certeza que deseja arquivar a escala de limpeza do período de ${scheduleToDelete ? formatDate(scheduleToDelete.date) : ''} a ${scheduleToDelete ? formatDate(scheduleToDelete.endDate) : ''}?`}
+                title="Confirmar Exclusão"
+                message={`Você tem certeza que deseja excluir permanentemente a escala de limpeza do período de ${scheduleToDelete ? formatDate(scheduleToDelete.date) : ''} a ${scheduleToDelete ? formatDate(scheduleToDelete.endDate) : ''}?`}
             />
         </>
     );

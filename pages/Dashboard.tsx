@@ -135,7 +135,21 @@ const Dashboard: React.FC = () => {
         setNextAppointment(userAssignmentsList.length > 0 ? userAssignmentsList[0] : null);
 
         const lifeMinistrySchedules = schedules.filter(s => 'week' in s && 'president' in s) as LifeMinistrySchedule[];
-        const currentLifeMinistry = findNextUpcomingRange(lifeMinistrySchedules);
+        
+        // Finding Current Life Ministry:
+        // Priority 1: A week that CONTAINS today
+        // Priority 2: The next upcoming week
+        let currentLifeMinistry = lifeMinistrySchedules.find(item => {
+            const start = new Date(item.date);
+            const end = new Date(start.getTime());
+            end.setUTCDate(start.getUTCDate() + 6);
+            return today >= start && today <= end;
+        });
+
+        if (!currentLifeMinistry) {
+            currentLifeMinistry = findNextUpcomingRange(lifeMinistrySchedules);
+        }
+
         setNextLifeMinistry(currentLifeMinistry);
 
         const assignmentSchedules = schedules.filter(s => 'president' in s && !('week' in s)) as Assignment[];
@@ -154,31 +168,53 @@ const Dashboard: React.FC = () => {
             return day === 0 || day === 6;
         });
 
+        let finalMidweek: Assignment | undefined;
+        let finalWeekend: Assignment | undefined;
+
         if (currentLifeMinistry) {
             const weekStart = new Date(currentLifeMinistry.date);
             const weekEnd = new Date(weekStart.getTime());
             weekEnd.setUTCDate(weekStart.getUTCDate() + 6);
 
-            const midweekInWeek = midweekAssignments.filter(a => {
-                const d = new Date(a.date);
-                return d >= weekStart && d <= weekEnd;
-            });
-            const weekendInWeek = weekendAssignments.filter(a => {
+            const findInWeek = <T extends { date: string }>(items: T[]) => items.find(a => {
                 const d = new Date(a.date);
                 return d >= weekStart && d <= weekEnd;
             });
 
-            if (midweekInWeek.length > 0) midweekAssignments = midweekInWeek;
-            if (weekendInWeek.length > 0) weekendAssignments = weekendInWeek;
+            const midweekInWeek = midweekAssignments
+                .filter(a => {
+                    const d = new Date(a.date);
+                    return d >= weekStart && d <= weekEnd;
+                })
+                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+            const weekendInWeek = weekendAssignments
+                .filter(a => {
+                    const d = new Date(a.date);
+                    return d >= weekStart && d <= weekEnd;
+                })
+                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+            // Use the assignment for the CURRENT week if it exists, otherwise fall back to next upcoming
+            finalMidweek = midweekInWeek.length > 0 ? midweekInWeek[0] : findNextUpcoming(midweekAssignments);
+            finalWeekend = weekendInWeek.length > 0 ? weekendInWeek[0] : findNextUpcoming(weekendAssignments);
+            
+            setNextCleaning(findInWeek(cleaningSchedules) || findNextUpcomingRange(cleaningSchedules));
+            setNextFieldService(findInWeek(fieldServiceSchedules) || findNextUpcoming(fieldServiceSchedules));
+            setNextPublicTalk(findInWeek(publicTalkSchedules) || findNextUpcoming(publicTalkSchedules));
+            setNextFirstSundayConductor(findInWeek(firstSundaySchedules) || findNextUpcoming(firstSundaySchedules));
+        } else {
+            finalMidweek = findNextUpcoming(midweekAssignments);
+            finalWeekend = findNextUpcoming(weekendAssignments);
+            
+            setNextCleaning(findNextUpcomingRange(cleaningSchedules));
+            setNextFieldService(findNextUpcoming(fieldServiceSchedules));
+            setNextPublicTalk(findNextUpcoming(publicTalkSchedules));
+            setNextFirstSundayConductor(findNextUpcoming(firstSundaySchedules));
         }
 
-        setNextMidweekAssignment(findNextUpcoming(midweekAssignments));
-        setNextWeekendAssignment(findNextUpcoming(weekendAssignments));
-        
-        setNextCleaning(findNextUpcomingRange(cleaningSchedules));
-        setNextFieldService(findNextUpcoming(fieldServiceSchedules));
-        setNextPublicTalk(findNextUpcoming(publicTalkSchedules));
-        setNextFirstSundayConductor(findNextUpcoming(firstSundaySchedules));
+        setNextMidweekAssignment(finalMidweek);
+        setNextWeekendAssignment(finalWeekend);
 
     }, [user, schedules, isLoadingSchedules]);
     

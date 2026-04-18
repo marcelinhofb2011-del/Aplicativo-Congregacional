@@ -4,8 +4,8 @@ import { useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { ConductorMeeting, UserRole } from '../types';
 import { 
-    getConductorMeetings, addConductorMeeting, updateConductorMeeting, archiveConductorMeeting,
-    getFirstSundayConductors, addFirstSundayConductor, updateFirstSundayConductor, archiveFirstSundayConductor
+    getConductorMeetings, addConductorMeeting, updateConductorMeeting, deleteConductorMeeting,
+    getFirstSundayConductors, addFirstSundayConductor, updateFirstSundayConductor, deleteFirstSundayConductor
 } from '../services/firestoreService';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
@@ -48,9 +48,19 @@ const Conductors: React.FC = () => {
         const today = new Date();
         today.setUTCHours(0, 0, 0, 0);
         return meetings
-            .filter(m => new Date(m.date) >= today)
+            .filter(m => m.isActive !== false && new Date(m.date) >= today)
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     }, [meetings]);
+
+    const activeFirstSundays = useMemo(() => {
+        return firstSundayConductors
+            .filter(c => c.isActive !== false)
+            .sort((a, b) => {
+                // If we have full dates, sort by date, otherwise by month field
+                if (a.date && b.date) return new Date(a.date).getTime() - new Date(b.date).getTime();
+                return a.month.localeCompare(b.month);
+            });
+    }, [firstSundayConductors]);
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -125,6 +135,7 @@ const Conductors: React.FC = () => {
                 await addConductorMeeting(formData, user.uid);
                 setToastMessage('Novo dirigente adicionado à escala.');
             }
+            setExpandedItems(new Set()); // Collapse all items after save
             fetchData();
         } catch (error) {
             setToastMessage('Erro ao salvar o registro.');
@@ -145,6 +156,7 @@ const Conductors: React.FC = () => {
                 await addFirstSundayConductor(formData, user.uid);
                 setToastMessage('Novo dirigente do 1º domingo adicionado.');
             }
+            setExpandedItems(new Set()); // Collapse all items after save
             fetchData();
         } catch (error) {
             setToastMessage('Erro ao salvar o registro.');
@@ -165,13 +177,13 @@ const Conductors: React.FC = () => {
     const confirmDelete = async () => {
         if (meetingToDelete && user) {
             try {
-                await archiveConductorMeeting(meetingToDelete.id, user.uid);
-                setToastMessage('Registro de dirigente arquivado.');
+                await deleteConductorMeeting(meetingToDelete.id);
+                setToastMessage('Registro de dirigente excluído.');
                 setMeetingToDelete(null);
                 fetchData();
             } catch (error) {
-                setToastMessage('Erro ao arquivar o registro.');
-                console.error("Archive conductor meeting error:", error);
+                setToastMessage('Erro ao excluir o registro.');
+                console.error("Delete conductor meeting error:", error);
             }
         }
     };
@@ -179,13 +191,13 @@ const Conductors: React.FC = () => {
     const confirmDeleteFirstSunday = async () => {
         if (firstSundayToDelete && user) {
             try {
-                await archiveFirstSundayConductor(firstSundayToDelete.id, user.uid);
-                setToastMessage('Registro arquivado.');
+                await deleteFirstSundayConductor(firstSundayToDelete.id);
+                setToastMessage('Registro excluído.');
                 setFirstSundayToDelete(null);
                 fetchData();
             } catch (error) {
-                setToastMessage('Erro ao arquivar o registro.');
-                console.error("Archive first sunday conductor error:", error);
+                setToastMessage('Erro ao excluir o registro.');
+                console.error("Delete first sunday conductor error:", error);
             }
         }
     };
@@ -264,9 +276,9 @@ const Conductors: React.FC = () => {
                                         }
                                         footer={
                                             isServant && (
-                                                <div className="p-3 flex justify-end items-center space-x-2">
-                                                    <button onClick={() => handleOpenModal(meeting)} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
-                                                    <button onClick={() => handleDelete(meeting)} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
+                                                <div className="p-3 flex justify-end items-center space-x-4">
+                                                    <button onClick={(e) => { e.stopPropagation(); handleOpenModal(meeting); }} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
+                                                    <button onClick={(e) => { e.stopPropagation(); handleDelete(meeting); }} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
                                                 </div>
                                             )
                                         }
@@ -285,8 +297,8 @@ const Conductors: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {isLoading ? (
                             <p className="col-span-full text-center p-6">Carregando...</p>
-                        ) : firstSundayConductors.length > 0 ? (
-                            firstSundayConductors.map(conductor => (
+                        ) : activeFirstSundays.length > 0 ? (
+                            activeFirstSundays.map(conductor => (
                                 <div key={conductor.id} className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 relative group">
                                     <div className="flex justify-between items-start mb-4">
                                         <div>
@@ -342,16 +354,16 @@ const Conductors: React.FC = () => {
                 isOpen={!!meetingToDelete}
                 onClose={() => setMeetingToDelete(null)}
                 onConfirm={confirmDelete}
-                title="Confirmar Arquivamento"
-                message={`Você tem certeza que deseja arquivar o registro do dirigente ${meetingToDelete?.conductorName}?`}
+                title="Confirmar Exclusão"
+                message={`Você tem certeza que deseja excluir permanentemente o registro do dirigente ${meetingToDelete?.conductorName}?`}
             />
 
             <ConfirmationModal
                 isOpen={!!firstSundayToDelete}
                 onClose={() => setFirstSundayToDelete(null)}
                 onConfirm={confirmDeleteFirstSunday}
-                title="Confirmar Arquivamento"
-                message={`Você tem certeza que deseja arquivar o dirigente ${firstSundayToDelete?.conductorName} de ${firstSundayToDelete?.month}?`}
+                title="Confirmar Exclusão"
+                message={`Você tem certeza que deseja excluir permanentemente o dirigente ${firstSundayToDelete?.conductorName} de ${firstSundayToDelete?.month}?`}
             />
         </>
     );

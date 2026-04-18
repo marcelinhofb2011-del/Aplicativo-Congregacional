@@ -111,8 +111,8 @@ const BusTicketFormModal: React.FC<BusTicketFormModalProps> = ({ isOpen, onClose
     };
 
     return (
-        <div className="fixed inset-0 bg-light dark:bg-dark z-50 overflow-y-auto p-4" onClick={onClose}>
-            <div className="container mx-auto max-w-2xl bg-white dark:bg-slate-800 rounded-lg shadow-xl" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-light dark:bg-dark z-[100] overflow-y-auto p-4" onClick={onClose}>
+            <div className="container mx-auto max-w-2xl bg-white dark:bg-slate-800 rounded-lg shadow-xl pb-32" onClick={e => e.stopPropagation()}>
                 <form onSubmit={handleSubmit}>
                     <div className="p-6 border-b flex justify-between items-center">
                         <h2 className="text-xl font-bold">{initialData ? 'Editar' : 'Nova'} Passagem</h2>

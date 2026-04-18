@@ -81,6 +81,12 @@ const archiveBaseRecord = (collectionName: string, id: string, userUid: string):
     return updateBaseRecord(collectionName, id, { isActive: false } as any, userUid);
 };
 
+const deleteBaseRecord = async (collectionName: string, id: string): Promise<void> => {
+    const db = getDbInstance();
+    const docRef = doc(db, collectionName, id);
+    await deleteDoc(docRef);
+};
+
 
 // --- API IMPLEMENTATIONS ---
 
@@ -89,6 +95,7 @@ export const getSchedules = () => getCollection<LifeMinistrySchedule>('programac
 export const addSchedule = (data: any, userUid: string) => addBaseRecord('programacao', data, userUid);
 export const updateSchedule = (id: string, data: any, userUid: string) => updateBaseRecord('programacao', id, data, userUid);
 export const archiveSchedule = (id: string, userUid: string) => archiveBaseRecord('programacao', id, userUid);
+export const deleteSchedule = (id: string) => deleteBaseRecord('programacao', id);
 
 
 // Reports
@@ -110,12 +117,14 @@ export const updateReport = (id: string, data: Partial<FieldServiceReport>, user
     return updateDoc(doc(db, 'relatorios', id), { ...data, updatedBy: userUid, updatedAt: Timestamp.now() });
 };
 export const archiveReport = (id: string, userUid: string) => updateReport(id, { isActive: false }, userUid);
+export const deleteReport = (id: string) => deleteBaseRecord('relatorios', id);
 
 // Attendance
 export const getAttendanceRecords = () => getActiveCollection<AttendanceRecord>('assistencia', 'date', 'desc');
 export const addAttendanceRecord = (data: any, userUid: string) => addBaseRecord('assistencia', data, userUid);
 export const updateAttendanceRecord = (id: string, data: any, userUid: string) => updateBaseRecord('assistencia', id, data, userUid);
 export const archiveAttendanceRecord = (id: string, userUid: string) => archiveBaseRecord('assistencia', id, userUid);
+export const deleteAttendanceRecord = (id: string) => deleteBaseRecord('assistencia', id);
 
 // Territories
 export const getTerritories = () => getCollection<Territory>('territorios', 'number', 'asc');
@@ -141,52 +150,60 @@ export const deleteBusTicket = (id: string) => {
 };
 
 // Assignments
-export const getAssignments = () => getActiveCollection<Assignment>('designacoes', 'date', 'asc');
+export const getAssignments = () => getCollection<Assignment>('designacoes', 'date', 'asc');
 export const addAssignment = (data: any, userUid: string) => addBaseRecord('designacoes', data, userUid);
 export const updateAssignment = (id: string, data: any, userUid: string) => updateBaseRecord('designacoes', id, data, userUid);
 export const archiveAssignment = (id: string, userUid: string) => archiveBaseRecord('designacoes', id, userUid);
+export const deleteAssignment = (id: string) => deleteBaseRecord('designacoes', id);
 
 // Cleaning
-export const getCleaningSchedules = () => getActiveCollection<CleaningSchedule>('limpeza', 'date', 'asc');
+export const getCleaningSchedules = () => getCollection<CleaningSchedule>('limpeza', 'date', 'asc');
 export const addCleaningSchedule = (data: any, userUid: string) => addBaseRecord('limpeza', data, userUid);
 export const updateCleaningSchedule = (id: string, data: any, userUid: string) => updateBaseRecord('limpeza', id, data, userUid);
 export const archiveCleaningSchedule = (id: string, userUid: string) => archiveBaseRecord('limpeza', id, userUid);
+export const deleteCleaningSchedule = (id: string) => deleteBaseRecord('limpeza', id);
 
 // Field Service (Now points to 'dirigentes')
-export const getFieldServiceMeetings = () => getActiveCollection<FieldServiceMeeting>('dirigentes', 'date', 'desc');
+export const getFieldServiceMeetings = () => getCollection<FieldServiceMeeting>('dirigentes', 'date', 'desc');
 export const addFieldServiceMeeting = (data: any, userUid: string) => addBaseRecord('dirigentes', data, userUid);
 export const updateFieldServiceMeeting = (id: string, data: any, userUid: string) => updateBaseRecord('dirigentes', id, data, userUid);
 export const archiveFieldServiceMeeting = (id: string, userUid: string) => archiveBaseRecord('dirigentes', id, userUid);
+export const deleteFieldServiceMeeting = (id: string) => deleteBaseRecord('dirigentes', id);
 
 // Conductors
-export const getConductorMeetings = () => getActiveCollection<ConductorMeeting>('dirigentes', 'date', 'asc');
+export const getConductorMeetings = () => getCollection<ConductorMeeting>('dirigentes', 'date', 'asc');
 export const addConductorMeeting = (data: any, userUid: string) => addBaseRecord('dirigentes', data, userUid);
 export const updateConductorMeeting = (id: string, data: any, userUid: string) => updateBaseRecord('dirigentes', id, data, userUid);
 export const archiveConductorMeeting = (id: string, userUid: string) => archiveBaseRecord('dirigentes', id, userUid);
+export const deleteConductorMeeting = (id: string) => deleteBaseRecord('dirigentes', id);
 
 // First Sunday Conductors
-export const getFirstSundayConductors = () => getActiveCollection<FirstSundayConductor>('dirigentes_primeiro_domingo', 'date', 'asc');
+export const getFirstSundayConductors = () => getCollection<FirstSundayConductor>('dirigentes_primeiro_domingo', 'date', 'asc');
 export const addFirstSundayConductor = (data: any, userUid: string) => addBaseRecord('dirigentes_primeiro_domingo', data, userUid);
 export const updateFirstSundayConductor = (id: string, data: any, userUid: string) => updateBaseRecord('dirigentes_primeiro_domingo', id, data, userUid);
 export const archiveFirstSundayConductor = (id: string, userUid: string) => archiveBaseRecord('dirigentes_primeiro_domingo', id, userUid);
+export const deleteFirstSundayConductor = (id: string) => deleteBaseRecord('dirigentes_primeiro_domingo', id);
 
 // Shepherding
-export const getShepherdingVisits = () => getActiveCollection<ShepherdingVisit>('pastoreio', 'date', 'desc');
+export const getShepherdingVisits = () => getCollection<ShepherdingVisit>('pastoreio', 'date', 'desc');
 export const addShepherdingVisit = (data: any, userUid: string) => addBaseRecord('pastoreio', data, userUid);
 export const updateShepherdingVisit = (id: string, data: any, userUid: string) => updateBaseRecord('pastoreio', id, data, userUid);
 export const archiveShepherdingVisit = (id: string, userUid: string) => archiveBaseRecord('pastoreio', id, userUid);
+export const deleteShepherdingVisit = (id: string) => deleteBaseRecord('pastoreio', id);
 
 // Public Talks
-export const getPublicTalks = () => getActiveCollection<PublicTalkSchedule>('discursos_publicos', 'date', 'asc');
+export const getPublicTalks = () => getCollection<PublicTalkSchedule>('discursos_publicos', 'date', 'asc');
 export const addPublicTalk = (data: any, userUid: string) => addBaseRecord('discursos_publicos', data, userUid);
 export const updatePublicTalk = (id: string, data: any, userUid: string) => updateBaseRecord('discursos_publicos', id, data, userUid);
 export const archivePublicTalk = (id: string, userUid: string) => archiveBaseRecord('discursos_publicos', id, userUid);
+export const deletePublicTalk = (id: string) => deleteBaseRecord('discursos_publicos', id);
 
 // Publisher Profiles
 export const getPublisherProfiles = () => getActiveCollection<PublisherProfile>('publicadores', 'name', 'asc');
 export const addPublisherProfile = (data: any, userUid: string) => addBaseRecord<PublisherProfile>('publicadores', data, userUid);
 export const updatePublisherProfile = (id: string, data: any, userUid: string) => updateBaseRecord<PublisherProfile>('publicadores', id, data, userUid);
 export const archivePublisherProfile = (id: string, userUid: string) => archiveBaseRecord('publicadores', id, userUid);
+export const deletePublisherProfile = (id: string) => deleteBaseRecord('publicadores', id);
 
 export const getPublisherProfileByUid = async (uid: string) => {
     const db = getDbInstance();
@@ -206,12 +223,14 @@ export const getAnnouncements = () => getActiveCollection<Announcement>('anuncio
 export const addAnnouncement = (data: any, userUid: string) => addBaseRecord<Announcement>('anuncios', data, userUid);
 export const updateAnnouncement = (id: string, data: any, userUid: string) => updateBaseRecord<Announcement>('anuncios', id, data, userUid);
 export const archiveAnnouncement = (id: string, userUid: string) => archiveBaseRecord('anuncios', id, userUid);
+export const deleteAnnouncement = (id: string) => deleteBaseRecord('anuncios', id);
 
 // Meeting Schedules (Programações)
 export const getMeetingSchedules = () => getActiveCollection<MeetingSchedule>('programacoes_reuniao', 'date', 'asc');
 export const addMeetingSchedule = (data: any, userUid: string) => addBaseRecord<MeetingSchedule>('programacoes_reuniao', data, userUid);
 export const updateMeetingSchedule = (id: string, data: any, userUid: string) => updateBaseRecord<MeetingSchedule>('programacoes_reuniao', id, data, userUid);
 export const archiveMeetingSchedule = (id: string, userUid: string) => archiveBaseRecord('programacoes_reuniao', id, userUid);
+export const deleteMeetingSchedule = (id: string) => deleteBaseRecord('programacoes_reuniao', id);
 
 // Monthly Field Service Reports (Relatorios_Pregacao)
 export const getMonthlyReports = (userUid: string) => {
@@ -292,12 +311,14 @@ export const getCalendarNotes = (userUid: string) => {
 export const addCalendarNote = (data: any, userUid: string) => addBaseRecord<CalendarNote>('calendario_notas', data, userUid);
 export const updateCalendarNote = (id: string, data: any, userUid: string) => updateBaseRecord<CalendarNote>('calendario_notas', id, data, userUid);
 export const archiveCalendarNote = (id: string, userUid: string) => archiveBaseRecord('calendario_notas', id, userUid);
+export const deleteCalendarNote = (id: string) => deleteBaseRecord('calendario_notas', id);
 
 // Calendar Events
 export const getCalendarEvents = () => getActiveCollection<CalendarEvent>('calendario_eventos', 'date', 'asc');
 export const addCalendarEvent = (data: any, userUid: string) => addBaseRecord<CalendarEvent>('calendario_eventos', data, userUid);
 export const updateCalendarEvent = (id: string, data: any, userUid: string) => updateBaseRecord<CalendarEvent>('calendario_eventos', id, data, userUid);
 export const archiveCalendarEvent = (id: string, userUid: string) => archiveBaseRecord('calendario_eventos', id, userUid);
+export const deleteCalendarEvent = (id: string) => deleteBaseRecord('calendario_eventos', id);
 
 // Notifications
 export const getUnreadNotifications = async (userUid: string) => {
@@ -353,8 +374,16 @@ export const cleanupExpiredRecords = async (userUid: string) => {
                     // Only expire if the LAST day of the range has passed
                     if (endDate < today) isExpired = true;
                 } else if (coll.type === 'single') {
-                    // Expire if the date has passed
-                    if (record.date && new Date(record.date) < today) isExpired = true;
+                    // Expire ONLY after the Sunday of that week has passed
+                    if (record.date) {
+                        const itemDate = new Date(record.date);
+                        const dayOfWeek = itemDate.getUTCDay(); // 0 is Sunday, 1 is Monday...
+                        const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
+                        const sundayOfThatWeek = new Date(itemDate.getTime());
+                        sundayOfThatWeek.setUTCDate(itemDate.getUTCDate() + daysUntilSunday);
+                        
+                        if (sundayOfThatWeek < today) isExpired = true;
+                    }
                 }
                 
                 if (isExpired) {

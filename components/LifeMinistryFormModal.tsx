@@ -33,28 +33,29 @@ const calculateWeekRange = (dateString: string) => {
     return { weekString, startDateISO: monday.toISOString() };
 };
 
-const initialDateStr = getLocalDateString();
-const initialWeekData = calculateWeekRange(initialDateStr);
-
-const BLANK_SCHEDULE: Omit<LifeMinistrySchedule, 'id' | keyof BaseRecord> = {
-    week: initialWeekData.weekString,
-    date: initialWeekData.startDateISO,
-    initialSong: '',
-    president: '',
-    presidentUid: '',
-    initialPrayer: '',
-    initialPrayerUid: '',
-    treasuresTheme: { theme: '', speaker: '', speakerUid: '' },
-    spiritualGems: { speaker: '', speakerUid: '' },
-    bibleReading: { student: '', studentUid: '' },
-    studentParts: Array.from({ length: 4 }, () => ({ id: crypto.randomUUID(), theme: '', time: 0, student: '', studentUid: '', helper: '', helperUid: '' })),
-    intermediateSong: '',
-    christianLifeParts: Array.from({ length: 3 }, () => ({ id: crypto.randomUUID(), theme: '', time: 0, speaker: '', speakerUid: '' })),
-    congregationBibleStudy: { conductor: '', conductorUid: '', reader: '', readerUid: '' },
-    finalSong: '',
-    finalPrayer: '',
-    finalPrayerUid: '',
-    assignedUids: []
+const getBlankSchedule = () => {
+    const todayStr = getLocalDateString();
+    const weekData = calculateWeekRange(todayStr);
+    return {
+        week: weekData.weekString,
+        date: weekData.startDateISO,
+        initialSong: '',
+        president: '',
+        presidentUid: '',
+        initialPrayer: '',
+        initialPrayerUid: '',
+        treasuresTheme: { theme: '', speaker: '', speakerUid: '' },
+        spiritualGems: { speaker: '', speakerUid: '' },
+        bibleReading: { student: '', studentUid: '' },
+        studentParts: Array.from({ length: 4 }, () => ({ id: crypto.randomUUID(), theme: '', time: 0, student: '', studentUid: '', helper: '', helperUid: '' })),
+        intermediateSong: '',
+        christianLifeParts: Array.from({ length: 3 }, () => ({ id: crypto.randomUUID(), theme: '', time: 0, speaker: '', speakerUid: '' })),
+        congregationBibleStudy: { conductor: '', conductorUid: '', reader: '', readerUid: '' },
+        finalSong: '',
+        finalPrayer: '',
+        finalPrayerUid: '',
+        assignedUids: []
+    };
 };
 
 const Section: React.FC<{ title: string, children: React.ReactNode }> = ({ title, children }) => (
@@ -77,9 +78,10 @@ const FormField: React.FC<{ name: string, label: string, value: string, onChange
 );
 
 const LifeMinistryFormModal: React.FC<LifeMinistryFormModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
-    const [formData, setFormData] = useState<Omit<LifeMinistrySchedule, 'id' | keyof BaseRecord>>(BLANK_SCHEDULE);
+    const [formData, setFormData] = useState<Omit<LifeMinistrySchedule, 'id' | keyof BaseRecord>>(getBlankSchedule());
     const [datePickerValue, setDatePickerValue] = useState(getLocalDateString());
     const [publishers, setPublishers] = useState<PublisherProfile[]>([]);
+    const initialized = React.useRef(false);
 
     useEffect(() => {
         const fetchPublishers = async () => {
@@ -90,6 +92,13 @@ const LifeMinistryFormModal: React.FC<LifeMinistryFormModalProps> = ({ isOpen, o
     }, []);
 
     useEffect(() => {
+        if (!isOpen) {
+            initialized.current = false;
+            return;
+        }
+
+        if (initialized.current) return;
+
         if (initialData) {
             const studentParts = [...initialData.studentParts];
             while (studentParts.length < 4) studentParts.push({ id: crypto.randomUUID(), theme: '', time: 0, student: '', studentUid: '', helper: '', helperUid: '' });
@@ -118,11 +127,11 @@ const LifeMinistryFormModal: React.FC<LifeMinistryFormModalProps> = ({ isOpen, o
             });
             setDatePickerValue(getLocalDateString(new Date(initialData.date)));
         } else {
-            const todayStr = getLocalDateString();
-            const currentWeekData = calculateWeekRange(todayStr);
-            setFormData({ ...BLANK_SCHEDULE, date: currentWeekData.startDateISO, week: currentWeekData.weekString });
-            setDatePickerValue(todayStr);
+            const blank = getBlankSchedule();
+            setFormData(blank);
+            setDatePickerValue(getLocalDateString());
         }
+        initialized.current = true;
     }, [initialData, isOpen]);
 
     if (!isOpen) return null;
@@ -133,29 +142,56 @@ const LifeMinistryFormModal: React.FC<LifeMinistryFormModalProps> = ({ isOpen, o
     };
 
     const handlePublisherSelect = (publisher: PublisherProfile | null, section?: string, index?: number, subField?: string) => {
-        const name = publisher?.name || '';
         const uid = publisher?.uid || '';
 
         setFormData(prev => {
             const next = { ...prev };
             if (section === 'studentParts' && index !== undefined && subField) {
                 const parts = [...next.studentParts];
-                parts[index] = { ...parts[index], [subField]: name, [`${subField}Uid`]: uid };
+                const updatedPart = { ...parts[index], [`${subField}Uid`]: uid };
+                if (publisher) (updatedPart as any)[subField] = publisher.name;
+                parts[index] = updatedPart;
                 return { ...next, studentParts: parts };
             } else if (section === 'christianLifeParts' && index !== undefined) {
                 const parts = [...next.christianLifeParts];
-                parts[index] = { ...parts[index], speaker: name, speakerUid: uid };
+                const updatedPart = { ...parts[index], speakerUid: uid };
+                if (publisher) updatedPart.speaker = publisher.name;
+                parts[index] = updatedPart;
                 return { ...next, christianLifeParts: parts };
             } else if (section && subField) {
-                const sec = next[section as keyof typeof next] as any;
-                return { ...next, [section]: { ...sec, [subField]: name, [`${subField}Uid`]: uid } };
+                const sec = { ...(next[section as keyof typeof next] as any), [`${subField}Uid`]: uid };
+                if (publisher) sec[subField] = publisher.name;
+                return { ...next, [section]: sec };
             } else if (subField) {
-                return { ...next, [subField]: name, [`${subField}Uid`]: uid };
+                const update: any = { [`${subField}Uid`]: uid };
+                if (publisher) update[subField] = publisher.name;
+                return { ...next, ...update };
             }
             return next;
         });
     };
     
+    const handleManualTextChange = (text: string, section?: string, index?: number, subField?: string) => {
+        setFormData(prev => {
+            const next = { ...prev };
+            if (section === 'studentParts' && index !== undefined && subField) {
+                const parts = [...next.studentParts];
+                parts[index] = { ...parts[index], [subField]: text, [`${subField}Uid`]: '' };
+                return { ...next, studentParts: parts };
+            } else if (section === 'christianLifeParts' && index !== undefined) {
+                const parts = [...next.christianLifeParts];
+                parts[index] = { ...parts[index], speaker: text, speakerUid: '' };
+                return { ...next, christianLifeParts: parts };
+            } else if (section && subField) {
+                const sec = next[section as keyof typeof next] as any;
+                return { ...next, [section]: { ...sec, [subField]: text, [`${subField}Uid`]: '' } };
+            } else if (subField) {
+                return { ...next, [subField]: text, [`${subField}Uid`]: '' };
+            }
+            return next;
+        });
+    };
+
     const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedDateStr = e.target.value;
         if (!selectedDateStr) return;
@@ -171,10 +207,12 @@ const LifeMinistryFormModal: React.FC<LifeMinistryFormModalProps> = ({ isOpen, o
 
     const handlePartChange = (type: 'studentParts' | 'christianLifeParts', index: number, e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        const parts = [...formData[type]];
-        const partToUpdate = { ...parts[index], [name]: name === 'time' ? parseInt(value) || 0 : value };
-        parts[index] = partToUpdate as any;
-        setFormData(prev => ({ ...prev, [type]: parts }));
+        setFormData(prev => {
+            const parts = [...prev[type]];
+            const partToUpdate = { ...parts[index], [name]: name === 'time' ? parseInt(value) || 0 : value };
+            parts[index] = partToUpdate as any;
+            return { ...prev, [type]: parts };
+        });
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -201,8 +239,8 @@ const LifeMinistryFormModal: React.FC<LifeMinistryFormModalProps> = ({ isOpen, o
     };
 
     return (
-        <div className="fixed inset-0 bg-light dark:bg-dark z-50 overflow-y-auto">
-            <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="fixed inset-0 bg-light dark:bg-dark z-[100] overflow-y-auto">
+            <div className="container mx-auto px-4 py-8 pb-32 max-w-4xl">
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="flex justify-between items-center">
                         <h2 className="text-3xl font-bold text-slate-900 dark:text-white">
@@ -227,6 +265,8 @@ const LifeMinistryFormModal: React.FC<LifeMinistryFormModalProps> = ({ isOpen, o
                                     publishers={publishers}
                                     selectedPublisher={publishers.find(p => p.uid === formData.presidentUid) || null}
                                     onSelect={(pub) => handlePublisherSelect(pub, undefined, undefined, 'president')}
+                                    onTextChange={(text) => handleManualTextChange(text, undefined, undefined, 'president')}
+                                    initialValue={formData.president}
                                     placeholder="Presidente"
                                 />
                              </div>
@@ -237,6 +277,8 @@ const LifeMinistryFormModal: React.FC<LifeMinistryFormModalProps> = ({ isOpen, o
                                 publishers={publishers}
                                 selectedPublisher={publishers.find(p => p.uid === formData.initialPrayerUid) || null}
                                 onSelect={(pub) => handlePublisherSelect(pub, undefined, undefined, 'initialPrayer')}
+                                onTextChange={(text) => handleManualTextChange(text, undefined, undefined, 'initialPrayer')}
+                                initialValue={formData.initialPrayer}
                                 placeholder="Oração Inicial"
                             />
                         </div>
@@ -247,10 +289,12 @@ const LifeMinistryFormModal: React.FC<LifeMinistryFormModalProps> = ({ isOpen, o
                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tema Principal (10 min)</label>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <input name="theme" value={formData.treasuresTheme.theme} onChange={e => handleNestedChange('treasuresTheme', e)} placeholder="Tema" required className="input-style"/>
-                                <PublisherAutocomplete 
+                                 <PublisherAutocomplete 
                                     publishers={publishers}
                                     selectedPublisher={publishers.find(p => p.uid === formData.treasuresTheme.speakerUid) || null}
                                     onSelect={(pub) => handlePublisherSelect(pub, 'treasuresTheme', undefined, 'speaker')}
+                                    onTextChange={(text) => handleManualTextChange(text, 'treasuresTheme', undefined, 'speaker')}
+                                    initialValue={formData.treasuresTheme.speaker}
                                     placeholder="Orador"
                                 />
                             </div>
@@ -261,6 +305,8 @@ const LifeMinistryFormModal: React.FC<LifeMinistryFormModalProps> = ({ isOpen, o
                                 publishers={publishers}
                                 selectedPublisher={publishers.find(p => p.uid === formData.spiritualGems.speakerUid) || null}
                                 onSelect={(pub) => handlePublisherSelect(pub, 'spiritualGems', undefined, 'speaker')}
+                                onTextChange={(text) => handleManualTextChange(text, 'spiritualGems', undefined, 'speaker')}
+                                initialValue={formData.spiritualGems.speaker}
                                 placeholder="Orador"
                             />
                          </div>
@@ -270,6 +316,8 @@ const LifeMinistryFormModal: React.FC<LifeMinistryFormModalProps> = ({ isOpen, o
                                 publishers={publishers}
                                 selectedPublisher={publishers.find(p => p.uid === formData.bibleReading.studentUid) || null}
                                 onSelect={(pub) => handlePublisherSelect(pub, 'bibleReading', undefined, 'student')}
+                                onTextChange={(text) => handleManualTextChange(text, 'bibleReading', undefined, 'student')}
+                                initialValue={formData.bibleReading.student}
                                 placeholder="Leitor"
                             />
                          </div>
@@ -294,6 +342,8 @@ const LifeMinistryFormModal: React.FC<LifeMinistryFormModalProps> = ({ isOpen, o
                                                     publishers={publishers}
                                                     selectedPublisher={publishers.find(p => p.uid === part.studentUid) || null}
                                                     onSelect={(pub) => handlePublisherSelect(pub, 'studentParts', index, 'student')}
+                                                    onTextChange={(text) => handleManualTextChange(text, 'studentParts', index, 'student')}
+                                                    initialValue={part.student}
                                                     placeholder="Estudante"
                                                 />
                                             </div>
@@ -302,6 +352,8 @@ const LifeMinistryFormModal: React.FC<LifeMinistryFormModalProps> = ({ isOpen, o
                                                     publishers={publishers}
                                                     selectedPublisher={publishers.find(p => p.uid === part.helperUid) || null}
                                                     onSelect={(pub) => handlePublisherSelect(pub, 'studentParts', index, 'helper')}
+                                                    onTextChange={(text) => handleManualTextChange(text, 'studentParts', index, 'helper')}
+                                                    initialValue={part.helper}
                                                     placeholder="Ajudante"
                                                 />
                                             </div>
@@ -325,6 +377,8 @@ const LifeMinistryFormModal: React.FC<LifeMinistryFormModalProps> = ({ isOpen, o
                                             publishers={publishers}
                                             selectedPublisher={publishers.find(p => p.uid === part.speakerUid) || null}
                                             onSelect={(pub) => handlePublisherSelect(pub, 'christianLifeParts', index)}
+                                            onTextChange={(text) => handleManualTextChange(text, 'christianLifeParts', index)}
+                                            initialValue={part.speaker}
                                             placeholder="Orador"
                                         />
                                     </div>
@@ -341,6 +395,8 @@ const LifeMinistryFormModal: React.FC<LifeMinistryFormModalProps> = ({ isOpen, o
                                     publishers={publishers}
                                     selectedPublisher={publishers.find(p => p.uid === formData.congregationBibleStudy.conductorUid) || null}
                                     onSelect={(pub) => handlePublisherSelect(pub, 'congregationBibleStudy', undefined, 'conductor')}
+                                    onTextChange={(text) => handleManualTextChange(text, 'congregationBibleStudy', undefined, 'conductor')}
+                                    initialValue={formData.congregationBibleStudy.conductor}
                                     placeholder="Dirigente"
                                 />
                              </div>
@@ -350,6 +406,8 @@ const LifeMinistryFormModal: React.FC<LifeMinistryFormModalProps> = ({ isOpen, o
                                     publishers={publishers}
                                     selectedPublisher={publishers.find(p => p.uid === formData.congregationBibleStudy.readerUid) || null}
                                     onSelect={(pub) => handlePublisherSelect(pub, 'congregationBibleStudy', undefined, 'reader')}
+                                    onTextChange={(text) => handleManualTextChange(text, 'congregationBibleStudy', undefined, 'reader')}
+                                    initialValue={formData.congregationBibleStudy.reader}
                                     placeholder="Leitor"
                                 />
                              </div>
@@ -362,6 +420,8 @@ const LifeMinistryFormModal: React.FC<LifeMinistryFormModalProps> = ({ isOpen, o
                                     publishers={publishers}
                                     selectedPublisher={publishers.find(p => p.uid === formData.finalPrayerUid) || null}
                                     onSelect={(pub) => handlePublisherSelect(pub, undefined, undefined, 'finalPrayer')}
+                                    onTextChange={(text) => handleManualTextChange(text, undefined, undefined, 'finalPrayer')}
+                                    initialValue={formData.finalPrayer}
                                     placeholder="Oração Final"
                                 />
                             </div>

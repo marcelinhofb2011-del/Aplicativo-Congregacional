@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { FieldServiceMeeting } from '../types';
-import { getFieldServiceMeetings, addFieldServiceMeeting, updateFieldServiceMeeting, archiveFieldServiceMeeting } from '../services/firestoreService';
+import { getFieldServiceMeetings, addFieldServiceMeeting, updateFieldServiceMeeting, deleteFieldServiceMeeting } from '../services/firestoreService';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
 import { PencilIcon, TrashIcon } from '../components/icons/Icons';
@@ -98,13 +98,13 @@ const FieldService: React.FC = () => {
     const confirmDelete = async () => {
         if (meetingToDelete && user) {
             try {
-                await archiveFieldServiceMeeting(meetingToDelete.id, user.uid);
-                setToastMessage('Reunião de serviço arquivada.');
+                await deleteFieldServiceMeeting(meetingToDelete.id);
+                setToastMessage('Reunião de serviço excluída.');
                 setMeetingToDelete(null);
                 fetchData();
             } catch (error) {
-                setToastMessage('Erro ao arquivar a reunião.');
-                console.error("Archive field service meeting error:", error);
+                setToastMessage('Erro ao excluir a reunião.');
+                console.error("Delete field service meeting error:", error);
             }
         }
     };
@@ -153,7 +153,7 @@ const FieldService: React.FC = () => {
                         <p className="text-center p-6">Carregando reuniões...</p>
                     ) : (
                         <div className="space-y-4">
-                            {meetings.length > 0 ? meetings.map(meeting => {
+                            {meetings.filter(m => m.isActive !== false).length > 0 ? meetings.filter(m => m.isActive !== false).map(meeting => {
                                 const meetingDate = new Date(meeting.date);
                                 const today = new Date();
                                 meetingDate.setUTCHours(0,0,0,0);
@@ -190,8 +190,8 @@ const FieldService: React.FC = () => {
                 isOpen={!!meetingToDelete}
                 onClose={() => setMeetingToDelete(null)}
                 onConfirm={confirmDelete}
-                title="Confirmar Arquivamento"
-                message={`Você tem certeza que deseja arquivar a reunião de serviço de ${meetingToDelete ? new Date(meetingToDelete.date).toLocaleDateString('pt-BR', {timeZone:'UTC'}) : ''}?`}
+                title="Confirmar Exclusão"
+                message={`Você tem certeza que deseja excluir permanentemente a reunião de serviço de ${meetingToDelete ? new Date(meetingToDelete.date).toLocaleDateString('pt-BR', {timeZone:'UTC'}) : ''}?`}
             />
         </div>
     );

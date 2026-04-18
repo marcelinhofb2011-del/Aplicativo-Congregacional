@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Assignment, UserRole } from '../types';
-import { getAssignments, addAssignment, updateAssignment, archiveAssignment } from '../services/firestoreService';
+import { getAssignments, addAssignment, updateAssignment, deleteAssignment } from '../services/firestoreService';
 import { showNewAssignmentNotification } from '../utils/notifications';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
@@ -39,7 +39,7 @@ const Assignments: React.FC = () => {
         lastWeek.setDate(today.getDate() - 7);
         
         return assignments
-            .filter(a => new Date(a.date) >= lastWeek)
+            .filter(a => a.isActive !== false && new Date(a.date) >= lastWeek)
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     }, [assignments]);
 
@@ -105,6 +105,7 @@ const Assignments: React.FC = () => {
                 setToastMessage(`Designações para ${new Date(formData.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})} criadas!`);
                 showNewAssignmentNotification(`para ${new Date(formData.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}`, "Novas designações de plataforma");
             }
+            setExpandedItems(new Set()); // Collapse all items after save
             fetchData();
         } catch (error) {
             setToastMessage('Erro ao salvar designações.');
@@ -121,13 +122,13 @@ const Assignments: React.FC = () => {
     const confirmDelete = async () => {
         if (assignmentToDelete && user) {
             try {
-                await archiveAssignment(assignmentToDelete.id, user.uid);
-                setToastMessage('Designações arquivadas com sucesso.');
+                await deleteAssignment(assignmentToDelete.id);
+                setToastMessage('Designações excluídas com sucesso.');
                 setAssignmentToDelete(null);
                 fetchData();
             } catch (error) {
-                setToastMessage('Erro ao arquivar designações.');
-                console.error("Archive error:", error);
+                setToastMessage('Erro ao excluir designações.');
+                console.error("Delete error:", error);
             }
         }
     };
@@ -174,9 +175,9 @@ const Assignments: React.FC = () => {
                                 }
                                 footer={
                                     isServant && (
-                                        <div className="p-3 flex justify-end items-center space-x-2">
-                                            <button onClick={() => handleOpenModal(assignment)} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
-                                            <button onClick={() => handleDelete(assignment)} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
+                                        <div className="p-3 flex justify-end items-center space-x-4">
+                                            <button onClick={(e) => { e.stopPropagation(); handleOpenModal(assignment); }} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); handleDelete(assignment); }} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
                                         </div>
                                     )
                                 }
@@ -207,8 +208,8 @@ const Assignments: React.FC = () => {
                 isOpen={!!assignmentToDelete}
                 onClose={() => setAssignmentToDelete(null)}
                 onConfirm={confirmDelete}
-                title="Confirmar Arquivamento"
-                message={`Você tem certeza que deseja arquivar as designações de ${assignmentToDelete ? new Date(assignmentToDelete.date).toLocaleDateString('pt-BR', {timeZone:'UTC'}) : ''}?`}
+                title="Confirmar Exclusão"
+                message={`Você tem certeza que deseja excluir permanentemente as designações de ${assignmentToDelete ? new Date(assignmentToDelete.date).toLocaleDateString('pt-BR', {timeZone:'UTC'}) : ''}?`}
             />
         </>
     );

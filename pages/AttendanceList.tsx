@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import html2canvas from 'html2canvas';
 import { AttendanceRecord, UserRole } from '../types';
-import { getAttendanceRecords, updateAttendanceRecord, archiveAttendanceRecord } from '../services/firestoreService';
+import { getAttendanceRecords, updateAttendanceRecord, deleteAttendanceRecord } from '../services/firestoreService';
 import { useAuth } from '../hooks/useAuth';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
@@ -133,11 +133,11 @@ const AttendanceList: React.FC = () => {
     const confirmDelete = async () => {
         if (recordToDelete && user) {
             try {
-                await archiveAttendanceRecord(recordToDelete.id, user.uid);
-                setToastMessage('Registro arquivado com sucesso.');
+                await deleteAttendanceRecord(recordToDelete.id);
+                setToastMessage('Registro excluído com sucesso.');
                 fetchRecords();
             } catch (error) {
-                setToastMessage('Erro ao arquivar o registro.');
+                setToastMessage('Erro ao excluir o registro.');
             } finally {
                 setRecordToDelete(null);
             }
@@ -274,7 +274,7 @@ const AttendanceList: React.FC = () => {
                 <AttendanceFormModal isOpen={isFormModalOpen} onClose={handleCloseModal} onSave={handleSave} initialData={editingRecord} />
             )}
 
-            <ConfirmationModal isOpen={!!recordToDelete} onClose={() => setRecordToDelete(null)} onConfirm={confirmDelete} title="Confirmar Arquivamento" message={`Tem certeza que deseja arquivar o registro de assistência de ${recordToDelete ? formatDate(recordToDelete.date) : ''}?`} />
+            <ConfirmationModal isOpen={!!recordToDelete} onClose={() => setRecordToDelete(null)} onConfirm={confirmDelete} title="Confirmar Exclusão" message={`Tem certeza que deseja excluir permanentemente o registro de assistência de ${recordToDelete ? formatDate(recordToDelete.date) : ''}?`} />
 
             <Toast message={toastMessage} onClear={() => setToastMessage('')} />
             

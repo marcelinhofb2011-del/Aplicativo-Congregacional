@@ -86,14 +86,22 @@ const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({ isOpen, onClo
     };
 
     const handlePublisherSelect = (field: RoleField, publisher: PublisherProfile | null) => {
-        const name = publisher?.name || '';
         const uid = publisher?.uid || '';
         const uidField = `${field}Uid` as UidField;
 
-        setFormData(prev => ({ 
-            ...prev, 
-            [field]: name,
-            [uidField]: uid
+        setFormData(prev => {
+            const update: any = { [uidField]: uid };
+            if (publisher) update[field] = publisher.name;
+            return { ...prev, ...update };
+        });
+    };
+
+    const handleManualTextChange = (field: RoleField, text: string) => {
+        const uidField = `${field}Uid` as UidField;
+        setFormData(prev => ({
+            ...prev,
+            [field]: text,
+            [uidField]: ''
         }));
     };
 
@@ -135,8 +143,8 @@ const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({ isOpen, onClo
     };
 
     return (
-        <div className="fixed inset-0 bg-light dark:bg-dark z-50 overflow-y-auto">
-            <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="fixed inset-0 bg-light dark:bg-dark z-[100] overflow-y-auto">
+            <div className="container mx-auto px-4 py-8 pb-32 max-w-4xl">
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-3xl font-bold text-slate-900 dark:text-white">
@@ -161,6 +169,8 @@ const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({ isOpen, onClo
                                     publishers={publishers}
                                     selectedPublisher={publishers.find(p => p.uid === formData.presidentUid) || null}
                                     onSelect={(pub) => handlePublisherSelect('president', pub)}
+                                    onTextChange={(text) => handleManualTextChange('president', text)}
+                                    initialValue={formData.president}
                                     placeholder="Nome do presidente..."
                                 />
                             </div>
@@ -173,12 +183,16 @@ const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({ isOpen, onClo
                                         publishers={publishers}
                                         selectedPublisher={publishers.find(p => p.uid === formData.indicator1Uid) || null}
                                         onSelect={(pub) => handlePublisherSelect('indicator1', pub)}
+                                        onTextChange={(text) => handleManualTextChange('indicator1', text)}
+                                        initialValue={formData.indicator1}
                                         placeholder="Nome do indicador 1..."
                                     />
                                     <PublisherAutocomplete 
                                         publishers={publishers}
                                         selectedPublisher={publishers.find(p => p.uid === formData.indicator2Uid) || null}
                                         onSelect={(pub) => handlePublisherSelect('indicator2', pub)}
+                                        onTextChange={(text) => handleManualTextChange('indicator2', text)}
+                                        initialValue={formData.indicator2}
                                         placeholder="Nome do indicador 2..."
                                     />
                                 </div>
@@ -192,12 +206,16 @@ const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({ isOpen, onClo
                                         publishers={publishers}
                                         selectedPublisher={publishers.find(p => p.uid === formData.mic1Uid) || null}
                                         onSelect={(pub) => handlePublisherSelect('mic1', pub)}
+                                        onTextChange={(text) => handleManualTextChange('mic1', text)}
+                                        initialValue={formData.mic1}
                                         placeholder="Nome do microfone 1..."
                                     />
                                     <PublisherAutocomplete 
                                         publishers={publishers}
                                         selectedPublisher={publishers.find(p => p.uid === formData.mic2Uid) || null}
                                         onSelect={(pub) => handlePublisherSelect('mic2', pub)}
+                                        onTextChange={(text) => handleManualTextChange('mic2', text)}
+                                        initialValue={formData.mic2}
                                         placeholder="Nome do microfone 2..."
                                     />
                                 </div>
@@ -211,6 +229,8 @@ const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({ isOpen, onClo
                                         publishers={publishers}
                                         selectedPublisher={publishers.find(p => p.uid === formData.readerUid) || null}
                                         onSelect={(pub) => handlePublisherSelect('reader', pub)}
+                                        onTextChange={(text) => handleManualTextChange('reader', text)}
+                                        initialValue={formData.reader}
                                         placeholder="Nome do leitor..."
                                     />
                                 </div>
@@ -220,6 +240,8 @@ const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({ isOpen, onClo
                                         publishers={publishers}
                                         selectedPublisher={publishers.find(p => p.uid === formData.audioUid) || null}
                                         onSelect={(pub) => handlePublisherSelect('audio', pub)}
+                                        onTextChange={(text) => handleManualTextChange('audio', text)}
+                                        initialValue={formData.audio}
                                         placeholder="Nome do responsável..."
                                     />
                                 </div>
@@ -230,6 +252,8 @@ const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({ isOpen, onClo
                                     publishers={publishers}
                                     selectedPublisher={publishers.find(p => p.uid === formData.videoUid) || null}
                                     onSelect={(pub) => handlePublisherSelect('video', pub)}
+                                    onTextChange={(text) => handleManualTextChange('video', text)}
+                                    initialValue={formData.video}
                                     placeholder="Nome do responsável..."
                                 />
                             </div>

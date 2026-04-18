@@ -39,7 +39,7 @@ const NotificationModal: React.FC<NotificationModalProps> = ({ isOpen, notificat
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[110] p-4 animate-fade-in" onClick={onClose}>
             <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-md max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
                 <div className="p-6 text-center border-b border-slate-200 dark:border-slate-700">
                     <h3 className="text-lg font-medium leading-6 text-slate-900 dark:text-white">Suas Notificações</h3>
