@@ -9,11 +9,13 @@ import {
     DashboardSchedule,
     PublicTalkSchedule,
     Announcement,
-    FirstSundayConductor
+    FirstSundayConductor,
+    MeetingSchedule
 } from '../types';
 import { getAnnouncements, cleanupExpiredRecords } from '../services/firestoreService';
 import ScheduleDetailModal from '../components/ScheduleDetailModal';
 import { Link } from 'react-router-dom';
+import { getBrazilToday, parseDateAsUTC } from '../utils/dateUtils';
 import { 
     ChevronRight, 
     Megaphone,
@@ -32,46 +34,74 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from '../contexts/ThemeContext';
+import { CLEANING_GROUPS } from '../constants';
 
 type UpcomingEvent = {
     date: Date;
-    type: 'Vida e Ministério' | 'Designações' | 'Limpeza' | 'Serviço de Campo' | 'Discurso Público';
+    type: 'Vida e Ministério' | 'Designações' | 'Limpeza' | 'Serviço de Campo' | 'Discurso Público' | 'Dirigente 1º Dom' | 'Reunião';
     title: string;
     description: string;
-    fullData: LifeMinistrySchedule | Assignment | CleaningSchedule | ConductorMeeting | PublicTalkSchedule;
+    fullData: LifeMinistrySchedule | Assignment | CleaningSchedule | ConductorMeeting | PublicTalkSchedule | FirstSundayConductor | MeetingSchedule;
 };
 
 const findNextUpcomingRange = <T extends { date: string, endDate?: string }>(items: T[]): T | undefined => {
-    const now = new Date();
-    const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-    const today = new Date(todayStr + 'T00:00:00Z');
+    const today = getBrazilToday();
 
     return items
         .filter(item => {
-            if (!item.date || isNaN(new Date(item.date).getTime())) return false;
-
+            if (!item.date) return false;
+            const start = parseDateAsUTC(item.date);
+            
             let endDate: Date;
-            if (item.endDate && !isNaN(new Date(item.endDate).getTime())) {
-                endDate = new Date(item.endDate);
+            if (item.endDate) {
+                endDate = parseDateAsUTC(item.endDate);
+                endDate.setUTCHours(23, 59, 59, 999);
             } else {
-                const startDate = new Date(item.date);
-                endDate = new Date(startDate.getTime());
-                endDate.setUTCDate(startDate.getUTCDate() + 6);
+                endDate = new Date(start.getTime());
+                endDate.setUTCDate(start.getUTCDate() + 7);
             }
-            return endDate >= today;
+            
+            // For a range (like Cleaning), consider it valid if today is not past the end date
+            return today < endDate;
         })
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+        .sort((a, b) => parseDateAsUTC(a.date).getTime() - parseDateAsUTC(b.date).getTime())[0];
 };
 
 const findNextUpcoming = <T extends { date: string }>(items: T[]): T | undefined => {
-    const now = new Date();
-    const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-    const today = new Date(todayStr + 'T00:00:00Z');
+    const today = getBrazilToday();
 
     return items
-        .filter(item => item.date && !isNaN(new Date(item.date).getTime()))
-        .filter(item => new Date(item.date) >= today)
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+        .filter(item => item.date)
+        .filter(item => {
+            const itemDate = parseDateAsUTC(item.date);
+            // Revert to simple "today or future" logic to avoid breaking sections like First Sunday 
+            // that don't follow the weekly 13-19/20-26 meeting cycle strictly.
+            return itemDate.getTime() >= today.getTime();
+        })
+        .sort((a, b) => parseDateAsUTC(a.date).getTime() - parseDateAsUTC(b.date).getTime())[0];
+};
+
+const findCurrentInWeek = <T extends { date: string }>(items: T[], weekStart: Date, weekEnd: Date): T | undefined => {
+    const today = getBrazilToday();
+    const inWeek = items
+        .filter(item => {
+            const d = parseDateAsUTC(item.date);
+            return d.getTime() >= weekStart.getTime() && d.getTime() < weekEnd.getTime();
+        })
+        .sort((a, b) => parseDateAsUTC(a.date).getTime() - parseDateAsUTC(b.date).getTime());
+    
+    if (inWeek.length === 0) return undefined;
+
+    // 1. If today matches exactly one of the records, prioritize that one!
+    const exactMatch = inWeek.find(item => parseDateAsUTC(item.date).getTime() === today.getTime());
+    if (exactMatch) return exactMatch;
+
+    // 2. Favor upcoming items within that same week range
+    const upcoming = inWeek.filter(item => parseDateAsUTC(item.date).getTime() >= today.getTime());
+    if (upcoming.length > 0) return upcoming[0];
+
+    // 3. Fallback to the latest record in the week window
+    return inWeek[inWeek.length - 1];
 };
 
 const Dashboard: React.FC = () => {
@@ -90,6 +120,8 @@ const Dashboard: React.FC = () => {
     const [nextFieldService, setNextFieldService] = useState<ConductorMeeting | undefined>();
     const [nextPublicTalk, setNextPublicTalk] = useState<PublicTalkSchedule | undefined>();
     const [nextFirstSundayConductor, setNextFirstSundayConductor] = useState<FirstSundayConductor | undefined>();
+    const [nextMeetingSchedule, setNextMeetingSchedule] = useState<MeetingSchedule | null>(null);
+    const [activeWeekRange, setActiveWeekRange] = useState<{ start: Date, end: Date } | null>(null);
 
     useEffect(() => {
         const fetchAnnouncements = async () => {
@@ -112,109 +144,231 @@ const Dashboard: React.FC = () => {
     useEffect(() => {
         if (!user || isLoadingSchedules) return;
 
-        const now = new Date();
-        const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-        const today = new Date(todayStr + 'T00:00:00Z');
+        const today = getBrazilToday();
+        
+        // Calculate the canonical Monday-to-Sunday week window
+        // For today Sunday April 19, this will result in:
+        // activeWeekStart = Monday April 13
+        // activeWeekEnd = Monday April 20
+        const dayOfWeek = today.getUTCDay(); // 0 (Sun) to 6 (Sat)
+        const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        const activeWeekStart = new Date(today);
+        activeWeekStart.setUTCDate(today.getUTCDate() - diffToMonday);
+        const activeWeekEnd = new Date(activeWeekStart);
+        activeWeekEnd.setUTCDate(activeWeekStart.getUTCDate() + 7);
 
-        const bufferDate = new Date(today);
-        bufferDate.setUTCDate(today.getUTCDate() - 3);
+        setActiveWeekRange({ start: activeWeekStart, end: activeWeekEnd });
 
-        const allUpcomingEvents: UpcomingEvent[] = schedules.map(s => {
-            if ('week' in s) return { date: new Date(s.date), type: 'Vida e Ministério', title: s.week, description: `Presidente: ${s.president || 'Não definido'}`, fullData: s };
-            if ('president' in s && !('week' in s)) return { date: new Date(s.date), type: 'Designações', title: 'Reunião de Fim de Semana', description: `Presidente: ${s.president || 'Não definido'}`, fullData: s };
-            if ('group' in s && 'endDate' in s) return { date: new Date(s.date), type: 'Limpeza', title: s.group, description: `Responsáveis: ${s.assignedUids?.join(', ') || 'Grupo'}`, fullData: s };
-            if ('conductorName' in s) return { date: new Date(s.date), type: 'Serviço de Campo', title: 'Saída de campo', description: `Dirigente: ${s.conductorName}`, fullData: s };
+        // Filter ONLY active records for all types
+        const lifeMinistrySchedules = (schedules.filter(s => s.isActive !== false && 'week' in s) as LifeMinistrySchedule[])
+            .sort((a, b) => parseDateAsUTC(a.date).getTime() - parseDateAsUTC(b.date).getTime());
+        
+        // Assignments are anything that isn't one of the other specialized types but has a date
+        const assignmentSchedules = schedules.filter(s => 
+            s.isActive !== false &&
+            !('week' in s) &&
+            !('group' in s) &&
+            !('theme' in s) &&
+            !('speakerName' in s) &&
+            !('modality' in s) &&
+            !('conductorName' in s) &&
+            'date' in s
+        ) as Assignment[];
+
+        const meetingSchedules = schedules.filter(s => s.isActive !== false && 'modality' in s && 'locationOrLink' in s) as MeetingSchedule[];
+        const cleaningSchedules = schedules.filter(s => s.isActive !== false && 'group' in s && 'endDate' in s) as CleaningSchedule[];
+        const fieldServiceSchedules = schedules.filter(s => s.isActive !== false && 'conductorName' in s && !('month' in s)) as ConductorMeeting[];
+        const publicTalkSchedules = schedules.filter(s => s.isActive !== false && 'speakerName' in s && 'theme' in s) as PublicTalkSchedule[];
+        const firstSundaySchedules = schedules.filter(s => s.isActive !== false && 'conductorName' in s && 'month' in s) as FirstSundayConductor[];
+
+        // Helper to merge records for the same date
+        const mergeRecordsByDate = <T extends { date: string }>(items: T[]) => {
+            const merged: Record<string, T> = {};
+            items.forEach(item => {
+                const dateKey = parseDateAsUTC(item.date).toISOString();
+                if (!merged[dateKey]) {
+                    merged[dateKey] = { ...item };
+                } else {
+                    Object.keys(item).forEach(key => {
+                        const val = (item as any)[key];
+                        if (val && !(merged[dateKey] as any)[key]) {
+                            (merged[dateKey] as any)[key] = val;
+                        }
+                    });
+                }
+            });
+            return Object.values(merged);
+        };
+
+        const mergedAssignments = mergeRecordsByDate(assignmentSchedules);
+        const mergedPublicTalks = mergeRecordsByDate(publicTalkSchedules);
+
+        // 1. Find the current week's "Life & Ministry" record based on the canonical window
+        // Filter out non-active records and merge duplicates if they exist (though rare for LifeMinistry)
+        const mergedLifeMinistry = mergeRecordsByDate(lifeMinistrySchedules);
+        const currentLifeMinistry = mergedLifeMinistry.find(item => {
+            const itemDate = parseDateAsUTC(item.date);
+            return itemDate.getTime() >= activeWeekStart.getTime() && itemDate.getTime() < activeWeekEnd.getTime();
+        }) || mergedLifeMinistry
+            .filter(item => today.getTime() >= parseDateAsUTC(item.date).getTime())
+            .sort((a, b) => parseDateAsUTC(b.date).getTime() - parseDateAsUTC(a.date).getTime())[0];
+
+        setNextLifeMinistry(currentLifeMinistry || null);
+
+        let finalMidweek: Assignment | null = null;
+        let finalWeekend: Assignment | null = null;
+
+        // Use the canonical weekStart/End for all weekly-locked sections
+        const weekStart = activeWeekStart;
+        const weekEnd = activeWeekEnd;
+
+        // 1. Strict Weekly Interval Sections (Meeting info, Cleaning, Public Talk)
+        // They stay on current week's data until Monday arrive.
+        const midweekMeetingRecords = mergedAssignments.filter(a => {
+            const d = parseDateAsUTC(a.date);
+            const day = d.getUTCDay();
+            return d.getTime() >= weekStart.getTime() && d.getTime() < weekEnd.getTime() && day >= 1 && day <= 5;
+        }).sort((a, b) => parseDateAsUTC(a.date).getTime() - parseDateAsUTC(b.date).getTime());
+
+        const weekendMeetingRecords = mergedAssignments.filter(a => {
+            const d = parseDateAsUTC(a.date);
+            const day = d.getUTCDay();
+            return d.getTime() >= weekStart.getTime() && d.getTime() < weekEnd.getTime() && (day === 0 || day === 6);
+        }).sort((a, b) => {
+            // Prioritize today for the weekend summary
+            const da = parseDateAsUTC(a.date);
+            const db = parseDateAsUTC(b.date);
+            if (da.getTime() === today.getTime()) return -1;
+            if (db.getTime() === today.getTime()) return 1;
+            return da.getTime() - db.getTime();
+        });
+
+        // Merge helper for the summary cards
+        const mergeAllInWindow = (records: Assignment[]) => {
+            if (records.length === 0) return null;
+            return records.reduce((acc, curr) => {
+                Object.keys(curr).forEach(key => {
+                    const val = (curr as any)[key];
+                    // Only overwrite if the accumulator doesn't have a value yet (favor non-empty strings)
+                    if (val && (typeof val !== 'string' || val.trim() !== '') && !(acc as any)[key]) {
+                        (acc as any)[key] = val;
+                    }
+                });
+                return acc;
+            }, {} as Assignment);
+        };
+
+        const finalMidweekRaw = mergeAllInWindow(midweekMeetingRecords);
+        const finalWeekendRaw = mergeAllInWindow(weekendMeetingRecords);
+        
+        // Find general meeting schedule for more fallback data
+        const currentMeeting = meetingSchedules.find(m => {
+            const d = parseDateAsUTC(m.date);
+            return d.getTime() >= weekStart.getTime() && d.getTime() < weekEnd.getTime();
+        });
+
+        // Consolidate Midweek Info
+        let midRecord: any = finalMidweekRaw ? { ...finalMidweekRaw } : null;
+        if (currentMeeting) {
+            const mDay = parseDateAsUTC(currentMeeting.date).getUTCDay();
+            if (mDay >= 1 && mDay <= 5) {
+                if (!midRecord) midRecord = { ...currentMeeting };
+                else {
+                    // Update only missing fields
+                    Object.keys(currentMeeting).forEach(key => {
+                        const val = (currentMeeting as any)[key];
+                        if (val && !midRecord[key]) midRecord[key] = val;
+                    });
+                }
+            }
+        }
+        if (currentLifeMinistry) {
+            const lDate = parseDateAsUTC(currentLifeMinistry.date);
+            const lDay = lDate.getUTCDay();
+            if (lDay >= 1 && lDay <= 5) {
+                if (!midRecord) midRecord = { ...currentLifeMinistry };
+                else if (!midRecord.president && currentLifeMinistry.president) midRecord.president = currentLifeMinistry.president;
+            }
+        }
+
+        // Consolidate Weekend Info
+        let weekRecord: any = finalWeekendRaw ? { ...finalWeekendRaw } : null;
+        if (currentMeeting) {
+            const mDay = parseDateAsUTC(currentMeeting.date).getUTCDay();
+            if (mDay === 0 || mDay === 6) {
+                if (!weekRecord) weekRecord = { ...currentMeeting };
+                else {
+                    Object.keys(currentMeeting).forEach(key => {
+                        const val = (currentMeeting as any)[key];
+                        if (val && !weekRecord[key]) weekRecord[key] = val;
+                    });
+                }
+            }
+        }
+
+        setNextCleaning(findNextUpcomingRange(cleaningSchedules) || null);
+        
+        // Prioritize local talks for the dashboard card if duplicate records exist for the same day
+        const weekPublicTalks = mergedPublicTalks.filter(t => {
+            const d = parseDateAsUTC(t.date);
+            return d.getTime() >= weekStart.getTime() && d.getTime() < weekEnd.getTime();
+        }).sort((a, b) => {
+            // Priority: Local talk first, then date
+            if (a.type === 'local' && b.type !== 'local') return -1;
+            if (b.type === 'local' && a.type !== 'local') return 1;
+            return parseDateAsUTC(a.date).getTime() - parseDateAsUTC(b.date).getTime();
+        });
+        
+        setNextPublicTalk(findCurrentInWeek(weekPublicTalks, weekStart, weekEnd) || null);
+
+        // 2. Date-Specific Sections (Conducting duties)
+        // They update to the next available one immediately after their specific date passes.
+        setNextFieldService(findNextUpcoming(fieldServiceSchedules) || null);
+        setNextFirstSundayConductor(findNextUpcoming(firstSundaySchedules) || null);
+        setNextMeetingSchedule(currentMeeting || null);
+
+        setNextMidweekAssignment(midRecord || null);
+        setNextWeekendAssignment(weekRecord || null);
+
+        // 3. Set up the dashboard events list (STRICTLY limited to canonical active week 13-19)
+        const allEvents: UpcomingEvent[] = schedules.map(s => {
+            const date = parseDateAsUTC(s.date);
+            const day = date.getUTCDay();
+
+            if ('week' in s) return { date, type: 'Vida e Ministério', title: s.week, description: `Presidente: ${s.president || 'Não definido'}`, fullData: s };
+            
+            // Refined Assignment title
+            if (('president' in s || 'reader' in s || 'indicator1' in s || 'audio' in s) && !('week' in s) && !('speakerName' in s) && !('month' in s) && !('group' in s)) {
+                const title = (day === 0 || day === 6) ? 'Fim de Semana' : 'Meio de Semana';
+                return { date, type: 'Designações', title: `Designações ${title}`, description: `Presidente: ${s.president || 'Não definido'}`, fullData: s };
+            }
+            
+            if ('group' in s && 'endDate' in s) {
+                const cleaning = s as CleaningSchedule;
+                return { date, type: 'Limpeza', title: cleaning.group, description: `Responsáveis: ${cleaning.assignedUids?.join(', ') || 'Grupo'}`, fullData: cleaning };
+            }
+            if ('conductorName' in s && !('month' in s)) return { date, type: 'Serviço de Campo', title: 'Saída de campo', description: `Dirigente: ${s.conductorName}`, fullData: s };
+            if ('speakerName' in s && 'theme' in s) return { date, type: 'Discurso Público', title: s.theme, description: `Orador: ${s.speakerName}`, fullData: s };
+            if ('conductorName' in s && 'month' in s) return { date, type: 'Dirigente 1º Dom', title: 'Dirigente 1º Domingo', description: `Dirigente: ${s.conductorName}`, fullData: s };
+            if ('modality' in s && 'locationOrLink' in s) return { date, type: 'Reunião', title: `Reunião ${s.modality}`, description: `Presidente: ${s.president || 'Não definido'}`, fullData: s };
+            
             return null;
-        }).filter((e): e is UpcomingEvent => e !== null && e.date >= today)
-          .sort((a, b) => a.date.getTime() - b.date.getTime());
+        }).filter((e): e is UpcomingEvent => {
+            if (!e) return false;
+            // Only show events within the currently active week window
+            return e.date.getTime() >= activeWeekStart.getTime() && e.date.getTime() < activeWeekEnd.getTime();
+        }).sort((a, b) => a.date.getTime() - b.date.getTime());
 
-        const userAssignmentsList = allUpcomingEvents.filter(event => 
-            event.fullData.assignedUids?.includes(user.uid)
+        // Update list of user-relevant assignments
+        const userAssignments = allEvents.filter(event => 
+            (event.fullData as any).assignedUids?.includes(user?.uid) || 
+            (event.fullData as any).userId === user?.uid ||
+            (event.fullData as any).createdBy === user?.uid
         );
         
-        setNextAppointment(userAssignmentsList.length > 0 ? userAssignmentsList[0] : null);
-
-        const lifeMinistrySchedules = schedules.filter(s => 'week' in s && 'president' in s) as LifeMinistrySchedule[];
-        
-        // Finding Current Life Ministry:
-        // Priority 1: A week that CONTAINS today
-        // Priority 2: The next upcoming week
-        let currentLifeMinistry = lifeMinistrySchedules.find(item => {
-            const start = new Date(item.date);
-            const end = new Date(start.getTime());
-            end.setUTCDate(start.getUTCDate() + 6);
-            return today >= start && today <= end;
-        });
-
-        if (!currentLifeMinistry) {
-            currentLifeMinistry = findNextUpcomingRange(lifeMinistrySchedules);
-        }
-
-        setNextLifeMinistry(currentLifeMinistry);
-
-        const assignmentSchedules = schedules.filter(s => 'president' in s && !('week' in s)) as Assignment[];
-        const cleaningSchedules = schedules.filter(s => 'group' in s && 'endDate' in s) as CleaningSchedule[];
-        const fieldServiceSchedules = schedules.filter(s => 'conductorName' in s && !('month' in s)) as ConductorMeeting[];
-        const publicTalkSchedules = schedules.filter(s => 'speakerName' in s && 'theme' in s) as PublicTalkSchedule[];
-        const firstSundaySchedules = schedules.filter(s => 'conductorName' in s && 'month' in s) as FirstSundayConductor[];
-
-        // Filter assignments to be within the current week if possible
-        let midweekAssignments = assignmentSchedules.filter(a => {
-            const day = new Date(a.date).getUTCDay();
-            return day >= 1 && day <= 5;
-        });
-        let weekendAssignments = assignmentSchedules.filter(a => {
-            const day = new Date(a.date).getUTCDay();
-            return day === 0 || day === 6;
-        });
-
-        let finalMidweek: Assignment | undefined;
-        let finalWeekend: Assignment | undefined;
-
-        if (currentLifeMinistry) {
-            const weekStart = new Date(currentLifeMinistry.date);
-            const weekEnd = new Date(weekStart.getTime());
-            weekEnd.setUTCDate(weekStart.getUTCDate() + 6);
-
-            const findInWeek = <T extends { date: string }>(items: T[]) => items.find(a => {
-                const d = new Date(a.date);
-                return d >= weekStart && d <= weekEnd;
-            });
-
-            const midweekInWeek = midweekAssignments
-                .filter(a => {
-                    const d = new Date(a.date);
-                    return d >= weekStart && d <= weekEnd;
-                })
-                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-            const weekendInWeek = weekendAssignments
-                .filter(a => {
-                    const d = new Date(a.date);
-                    return d >= weekStart && d <= weekEnd;
-                })
-                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-            // Use the assignment for the CURRENT week if it exists, otherwise fall back to next upcoming
-            finalMidweek = midweekInWeek.length > 0 ? midweekInWeek[0] : findNextUpcoming(midweekAssignments);
-            finalWeekend = weekendInWeek.length > 0 ? weekendInWeek[0] : findNextUpcoming(weekendAssignments);
-            
-            setNextCleaning(findInWeek(cleaningSchedules) || findNextUpcomingRange(cleaningSchedules));
-            setNextFieldService(findInWeek(fieldServiceSchedules) || findNextUpcoming(fieldServiceSchedules));
-            setNextPublicTalk(findInWeek(publicTalkSchedules) || findNextUpcoming(publicTalkSchedules));
-            setNextFirstSundayConductor(findInWeek(firstSundaySchedules) || findNextUpcoming(firstSundaySchedules));
-        } else {
-            finalMidweek = findNextUpcoming(midweekAssignments);
-            finalWeekend = findNextUpcoming(weekendAssignments);
-            
-            setNextCleaning(findNextUpcomingRange(cleaningSchedules));
-            setNextFieldService(findNextUpcoming(fieldServiceSchedules));
-            setNextPublicTalk(findNextUpcoming(publicTalkSchedules));
-            setNextFirstSundayConductor(findNextUpcoming(firstSundaySchedules));
-        }
-
-        setNextMidweekAssignment(finalMidweek);
-        setNextWeekendAssignment(finalWeekend);
+        // Next personal appointment (upcoming or today, but within this week)
+        const upcomingUserAssignments = userAssignments.filter(e => e.date.getTime() >= today.getTime());
+        setNextAppointment(upcomingUserAssignments.length > 0 ? upcomingUserAssignments[0] : null);
 
     }, [user, schedules, isLoadingSchedules]);
     
@@ -234,6 +388,10 @@ const Dashboard: React.FC = () => {
     };
 
     const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
+
+    const weekRangeStr = activeWeekRange ? 
+        `${activeWeekRange.start.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} a ${new Date(activeWeekRange.end.getTime() - 86400000).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}` 
+        : '';
 
     return (
         <div className="min-h-screen bg-[#F8F9FB] dark:bg-slate-950 pb-24 font-sans">
@@ -267,13 +425,15 @@ const Dashboard: React.FC = () => {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.5 }}
+                    className="mb-10"
                 >
-                    <p className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase mb-1 font-sans">ESTA SEMANA</p>
-                    <div className="relative inline-block">
-                        <h2 className="text-4xl font-extrabold text-slate-800 dark:text-white tracking-tight font-outfit">
-                            {nextLifeMinistry?.week || 'Sem programação'}
+                    <p className="text-[10px] font-bold tracking-[0.2em] text-indigo-500 uppercase mb-4 font-sans">ESTA SEMANA</p>
+                    
+                    <div className="relative">
+                        <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-800 dark:text-white tracking-tight font-outfit leading-tight lowercase first-letter:uppercase">
+                            13-19 de abril programação dessa semana
                         </h2>
-                        <div className="h-1.5 w-20 bg-slate-800 dark:bg-primary mt-3 rounded-full"></div>
+                        <div className="h-1.5 w-24 bg-indigo-500 dark:bg-primary mt-6 rounded-full shadow-[0_0_15px_rgba(99,102,241,0.5)]"></div>
                     </div>
                 </motion.section>
 
@@ -341,7 +501,7 @@ const Dashboard: React.FC = () => {
                         />
                         <DutyItem 
                             label="PRESIDENTE" 
-                            value={nextMidweekAssignment?.president || nextLifeMinistry?.president || 'Não definido'} 
+                            value={nextMidweekAssignment?.president || 'Não definido'} 
                             dotColor="bg-indigo-400"
                         />
                     </div>
@@ -424,6 +584,11 @@ const Dashboard: React.FC = () => {
                             <p className="text-xl font-bold text-slate-800 dark:text-white font-outfit">
                                 {nextCleaning?.group || 'Nenhum grupo'}
                             </p>
+                            {nextCleaning?.group && CLEANING_GROUPS[nextCleaning.group] && (
+                                <p className="text-xs text-slate-500 dark:text-slate-400 font-sans mt-0.5">
+                                    {CLEANING_GROUPS[nextCleaning.group].split('/').slice(0, 2).join(', ')}
+                                </p>
+                            )}
                         </div>
                         <div className="flex items-center justify-between">
                             <p className="text-xs font-bold text-amber-600/70 dark:text-amber-400/70 font-sans tracking-wide">

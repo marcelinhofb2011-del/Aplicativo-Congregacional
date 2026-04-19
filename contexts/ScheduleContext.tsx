@@ -7,7 +7,8 @@ import {
     getConductorMeetings,
     getPublicTalks,
     getShepherdingVisits,
-    getFirstSundayConductors
+    getFirstSundayConductors,
+    getMeetingSchedules
 } from '../services/firestoreService';
 import type { LifeMinistrySchedule, Assignment, CleaningSchedule, ConductorMeeting, PublicTalkSchedule, ShepherdingVisit, FirstSundayConductor } from '../types';
 
@@ -48,6 +49,7 @@ export const ScheduleProvider: React.FC<{ children: ReactNode }> = ({ children }
                         getPublicTalks(),
                         getShepherdingVisits(),
                         getFirstSundayConductors(),
+                        getMeetingSchedules(),
                     ]);
                     
                     const allSchedules = results.flat();

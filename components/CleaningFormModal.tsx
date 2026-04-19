@@ -3,22 +3,23 @@ import React, { useState, useEffect } from 'react';
 import { CleaningSchedule, BaseRecord, MeetingDay } from '../types';
 import { XIcon } from './icons/Icons';
 import { CLEANING_GROUPS } from '../constants';
-import { getPublisherProfiles } from '../services/firestoreService';
+import { getPublisherProfiles, parseDateAsUTC } from '../services/firestoreService';
+import { getLocalDateString } from '../utils/dateUtils';
 
 interface CleaningFormModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (formData: Omit<CleaningSchedule, 'id' | keyof BaseRecord>) => void;
+    onSave: (formData: Omit<CleaningSchedule, 'id' | keyof BaseRecord>) => Promise<void>;
     initialData: CleaningSchedule | null;
 }
 
-const BLANK_SCHEDULE: Omit<CleaningSchedule, 'id' | keyof BaseRecord> = {
-    date: new Date().toISOString().split('T')[0], // startDate
-    endDate: new Date().toISOString().split('T')[0],
+const getBlankSchedule = (): Omit<CleaningSchedule, 'id' | keyof BaseRecord> => ({
+    date: getLocalDateString(), // Current date in YYYY-MM-DD
+    endDate: getLocalDateString(),
     group: '',
-    meetingDays: [],
+    meetingDays: ['midweek', 'weekend'],
     notes: ''
-};
+});
 
 const MeetingDayButton: React.FC<{ day: MeetingDay, label: string, selectedDays: MeetingDay[], onToggle: (day: MeetingDay) => void }> = ({ day, label, selectedDays, onToggle }) => {
     const isSelected = selectedDays.includes(day);
@@ -38,7 +39,9 @@ const MeetingDayButton: React.FC<{ day: MeetingDay, label: string, selectedDays:
 }
 
 const CleaningFormModal: React.FC<CleaningFormModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
-    const [formData, setFormData] = useState(BLANK_SCHEDULE);
+    const [formData, setFormData] = useState(getBlankSchedule());
+    const [isSaving, setIsSaving] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     useEffect(() => {
         if (initialData) {
@@ -50,7 +53,7 @@ const CleaningFormModal: React.FC<CleaningFormModalProps> = ({ isOpen, onClose, 
                 notes: initialData.notes || ''
             });
         } else {
-            setFormData(BLANK_SCHEDULE);
+            setFormData(getBlankSchedule());
         }
     }, [initialData, isOpen]);
 
@@ -72,14 +75,22 @@ const CleaningFormModal: React.FC<CleaningFormModalProps> = ({ isOpen, onClose, 
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setErrorMessage(null);
+
         if (!formData.group || !formData.date || !formData.endDate || formData.meetingDays.length === 0) {
-            alert('Por favor, preencha todos os campos obrigatórios, incluindo pelo menos um dia de reunião.');
+            setErrorMessage('Por favor, preencha todos os campos obrigatórios, incluindo pelo menos um dia de reunião.');
             return;
         }
-        if (new Date(formData.endDate) < new Date(formData.date)) {
-            alert('A data final não pode ser anterior à data de início.');
+
+        const startParsed = parseDateAsUTC(formData.date);
+        const endParsed = parseDateAsUTC(formData.endDate);
+
+        if (endParsed < startParsed) {
+            setErrorMessage('A data final não pode ser anterior à data de início.');
             return;
         }
+
+        setIsSaving(true);
 
         // Fetch publishers to get UIDs for the selected group
         let assignedUids: string[] = [];
@@ -94,14 +105,21 @@ const CleaningFormModal: React.FC<CleaningFormModalProps> = ({ isOpen, onClose, 
         }
 
         const dataToSave: Omit<CleaningSchedule, 'id' | keyof BaseRecord> = {
-            date: new Date(formData.date).toISOString(),
-            endDate: new Date(formData.endDate).toISOString(),
+            date: startParsed.toISOString(),
+            endDate: endParsed.toISOString(),
             group: formData.group,
             meetingDays: formData.meetingDays,
             notes: formData.notes || '',
             assignedUids,
         };
-        onSave(dataToSave);
+
+        try {
+            await onSave(dataToSave);
+        } catch (error) {
+            setErrorMessage('Ocorreu um erro ao salvar o registro. Tente novamente.');
+            console.error("Submit error:", error);
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -117,6 +135,11 @@ const CleaningFormModal: React.FC<CleaningFormModalProps> = ({ isOpen, onClose, 
                         </button>
                     </div>
                     <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow space-y-6">
+                        {errorMessage && (
+                            <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-md text-sm">
+                                {errorMessage}
+                            </div>
+                        )}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Data Início</label>
@@ -154,8 +177,12 @@ const CleaningFormModal: React.FC<CleaningFormModalProps> = ({ isOpen, onClose, 
                         <button type="button" onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-600 mr-3">
                             Cancelar
                         </button>
-                        <button type="submit" className="px-5 py-2.5 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:bg-primary-dark">
-                            Salvar
+                        <button 
+                            type="submit" 
+                            disabled={isSaving}
+                            className="px-5 py-2.5 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                        >
+                            {isSaving ? 'Salvando...' : 'Salvar'}
                         </button>
                     </div>
                 </form>

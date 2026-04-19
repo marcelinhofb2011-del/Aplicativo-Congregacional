@@ -8,7 +8,7 @@ const DetailItem: React.FC<{ label: string; value?: React.ReactNode; fullWidth?:
     </div>
 );
 
-const ConductorDetail: React.FC<{ schedule: ConductorMeeting }> = ({ schedule }) => {
+const ConductorDetail: React.FC<{ schedule: ConductorMeeting; title?: string }> = ({ schedule, title = "Reunião de Saída de Campo" }) => {
     const formattedDate = new Date(schedule.date).toLocaleDateString('pt-BR', {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC'
     });
@@ -16,7 +16,7 @@ const ConductorDetail: React.FC<{ schedule: ConductorMeeting }> = ({ schedule })
     return (
         <div className="p-4 sm:p-6">
             <h3 className="text-xl font-semibold mb-4 border-b border-slate-200 dark:border-slate-700 pb-3 text-slate-900 dark:text-white">
-                Reunião de Saída de Campo
+                {title}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <DetailItem label="Data" value={formattedDate} />

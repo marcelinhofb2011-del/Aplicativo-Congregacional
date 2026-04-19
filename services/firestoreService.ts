@@ -1,6 +1,8 @@
 
 
 import { getDbInstance } from './firebase';
+import { getBrazilToday, parseDateAsUTC } from '../utils/dateUtils';
+export { parseDateAsUTC };
 import {
     collection,
     query,
@@ -49,7 +51,8 @@ const getCollection = async <T>(collectionName: string, sortField?: keyof T, ord
 
 const getActiveCollection = async <T extends BaseRecord>(collectionName: string, sortField: keyof T = 'createdAt' as keyof T, order: 'asc' | 'desc' = 'desc'): Promise<T[]> => {
     const allItems = await getCollection<T>(collectionName, sortField, order);
-    return allItems.filter(item => item.isActive === true);
+    // Use !== false to include records that might not have the isActive field yet (legacy)
+    return allItems.filter(item => item.isActive !== false);
 };
 
 
@@ -344,9 +347,8 @@ export const markNotificationsAsRead = async (notificationIds: string[]) => {
 
 // Cleanup expired records
 export const cleanupExpiredRecords = async (userUid: string) => {
+    const today = getBrazilToday();
     const now = new Date();
-    const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-    const today = new Date(todayStr + 'T00:00:00Z');
 
     const collectionsToCleanup = [
         { name: 'programacao', type: 'range' },
@@ -361,33 +363,48 @@ export const cleanupExpiredRecords = async (userUid: string) => {
             const records = await getActiveCollection<any>(coll.name, 'date', 'asc');
             for (const record of records) {
                 let isExpired = false;
+                if (!record.date) continue;
+
+                const startDate = parseDateAsUTC(record.date);
+
                 if (coll.type === 'range') {
-                    const startDate = new Date(record.date);
-                    // Use endDate if exists, otherwise assume 7 days from startDate
+                    // For ranges (like cleaning or weekly schedules), determine the end date
                     let endDate: Date;
                     if (record.endDate) {
-                        endDate = new Date(record.endDate);
+                        endDate = parseDateAsUTC(record.endDate);
                     } else {
+                        // Assumption: if no endDate, it's a 7-day week schedule starting on startDate (usually Monday)
                         endDate = new Date(startDate.getTime());
-                        endDate.setUTCDate(startDate.getUTCDate() + 6); // End of the week
+                        endDate.setUTCDate(startDate.getUTCDate() + 6); // Sunday of the same week
                     }
-                    // Only expire if the LAST day of the range has passed
-                    if (endDate < today) isExpired = true;
+                    
+                    // ARCHIVE ONLY ON MONDAY OF THE NEXT WEEK
+                    // We want the current week range to stay active throughout its last day (Sunday)
+                    const mondayAfter = new Date(endDate.getTime());
+                    mondayAfter.setUTCDate(endDate.getUTCDate() + 1);
+                    mondayAfter.setUTCHours(0, 0, 0, 0);
+
+                    if (today.getTime() >= mondayAfter.getTime()) {
+                        isExpired = true;
+                    }
                 } else if (coll.type === 'single') {
-                    // Expire ONLY after the Sunday of that week has passed
-                    if (record.date) {
-                        const itemDate = new Date(record.date);
-                        const dayOfWeek = itemDate.getUTCDay(); // 0 is Sunday, 1 is Monday...
-                        const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
-                        const sundayOfThatWeek = new Date(itemDate.getTime());
-                        sundayOfThatWeek.setUTCDate(itemDate.getUTCDate() + daysUntilSunday);
-                        
-                        if (sundayOfThatWeek < today) isExpired = true;
+                    // For single-day events, archive only after the Sunday of that specific week has passed
+                    // (Ensures midweek and weekend parts stay visible until the next Monday)
+                    const dayOfWeek = startDate.getUTCDay(); // 0 is Sunday
+                    const daysUntilMonday = dayOfWeek === 0 ? 1 : (7 - dayOfWeek + 1);
+                    
+                    const mondayOfNextWeek = new Date(startDate.getTime());
+                    mondayOfNextWeek.setUTCDate(startDate.getUTCDate() + daysUntilMonday);
+                    mondayOfNextWeek.setUTCHours(0, 0, 0, 0);
+                    
+                    if (today.getTime() >= mondayOfNextWeek.getTime()) {
+                        isExpired = true;
                     }
                 }
                 
                 if (isExpired) {
                     await archiveBaseRecord(coll.name, record.id, userUid);
+                    console.log(`Archived expired record from ${coll.name}: ${record.id}`);
                 }
             }
         } catch (e) {

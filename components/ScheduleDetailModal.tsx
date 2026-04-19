@@ -28,7 +28,9 @@ const DetailedScheduleModal: React.FC<DetailedScheduleModalProps> = ({ schedule,
             case 'Limpeza':
                 return <CleaningDetail schedule={fullData as CleaningSchedule} />;
             case 'Serviço de Campo':
-                 return <ConductorDetail schedule={fullData as ConductorMeeting} />;
+                 return <ConductorDetail schedule={fullData as ConductorMeeting} title="Saída de Campo" />;
+            case 'Dirigente 1º Dom':
+                 return <ConductorDetail schedule={fullData as any} title="Dirigente 1º Domingo" />;
             case 'Pastoreio':
                 return <ShepherdingDetail schedule={fullData as ShepherdingVisit} />;
             case 'Discurso Público':
