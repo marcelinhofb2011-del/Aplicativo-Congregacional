@@ -204,23 +204,61 @@ const Dashboard: React.FC = () => {
         const mergedPublicTalks = mergeRecordsByDate(publicTalkSchedules);
 
         // 1. Find the current week's "Life & Ministry" record based on the canonical window
-        // Filter out non-active records and merge duplicates if they exist (though rare for LifeMinistry)
+        // Optimized logic: 
+        // - Try to find a record for the current week first.
+        // - If today is Sunday or late Saturday, and there's a record for NEXT week, show that one instead 
+        //   since the current week's meetings have likely passed.
         const mergedLifeMinistry = mergeRecordsByDate(lifeMinistrySchedules);
-        const currentLifeMinistry = mergedLifeMinistry.find(item => {
+        
+        let currentLifeMinistry = mergedLifeMinistry.find(item => {
             const itemDate = parseDateAsUTC(item.date);
             return itemDate.getTime() >= activeWeekStart.getTime() && itemDate.getTime() < activeWeekEnd.getTime();
-        }) || mergedLifeMinistry
-            .filter(item => today.getTime() >= parseDateAsUTC(item.date).getTime())
-            .sort((a, b) => parseDateAsUTC(b.date).getTime() - parseDateAsUTC(a.date).getTime())[0];
+        });
+
+        // Advance to next week if today is Sunday (or past the current meeting) and a future record exists
+        if (dayOfWeek === 0 || !currentLifeMinistry) {
+            const nextWeekStart = new Date(activeWeekEnd);
+            const futureRecord = mergedLifeMinistry.find(item => {
+                const itemDate = parseDateAsUTC(item.date);
+                return itemDate.getTime() >= nextWeekStart.getTime();
+            });
+            
+            if (futureRecord && (!currentLifeMinistry || dayOfWeek === 0)) {
+                currentLifeMinistry = futureRecord;
+            }
+        }
+
+        // Fallback to most recent if still null
+        if (!currentLifeMinistry) {
+            currentLifeMinistry = mergedLifeMinistry
+                .filter(item => today.getTime() >= parseDateAsUTC(item.date).getTime())
+                .sort((a, b) => parseDateAsUTC(b.date).getTime() - parseDateAsUTC(a.date).getTime())[0];
+        }
 
         setNextLifeMinistry(currentLifeMinistry || null);
+
+        // Update the active range based on the record found
+        let weekStart = activeWeekStart;
+        let weekEnd = activeWeekEnd;
+
+        if (currentLifeMinistry) {
+            const recordDate = parseDateAsUTC(currentLifeMinistry.date);
+            const rDayOfWeek = recordDate.getUTCDay();
+            const rDiffToMonday = rDayOfWeek === 0 ? 6 : rDayOfWeek - 1;
+            weekStart = new Date(recordDate);
+            weekStart.setUTCDate(recordDate.getUTCDate() - rDiffToMonday);
+            weekEnd = new Date(weekStart);
+            weekEnd.setUTCDate(weekStart.getUTCDate() + 7);
+            
+            // Sync the active range with the record found
+            setActiveWeekRange({ start: weekStart, end: weekEnd });
+        }
 
         let finalMidweek: Assignment | null = null;
         let finalWeekend: Assignment | null = null;
 
-        // Use the canonical weekStart/End for all weekly-locked sections
-        const weekStart = activeWeekStart;
-        const weekEnd = activeWeekEnd;
+        // Use the displayed week window for all filtered sections
+        // This ensures all cards match the week range shown at the top
 
         // 1. Strict Weekly Interval Sections (Meeting info, Cleaning, Public Talk)
         // They stay on current week's data until Monday arrive.
@@ -431,7 +469,11 @@ const Dashboard: React.FC = () => {
                     
                     <div className="relative">
                         <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-800 dark:text-white tracking-tight font-outfit leading-tight lowercase first-letter:uppercase">
-                            13-19 de abril programação dessa semana
+                            {activeWeekRange ? (
+                                `${activeWeekRange.start.getUTCDate()}-${new Date(activeWeekRange.end.getTime() - 86400000).getUTCDate()} de ${activeWeekRange.end.toLocaleDateString('pt-BR', { month: 'long', timeZone: 'UTC' })} programação dessa semana`
+                            ) : (
+                                'programação da semana'
+                            )}
                         </h2>
                         <div className="h-1.5 w-24 bg-indigo-500 dark:bg-primary mt-6 rounded-full shadow-[0_0_15px_rgba(99,102,241,0.5)]"></div>
                     </div>
