@@ -203,11 +203,7 @@ const Dashboard: React.FC = () => {
         const mergedAssignments = mergeRecordsByDate(assignmentSchedules);
         const mergedPublicTalks = mergeRecordsByDate(publicTalkSchedules);
 
-        // 1. Find the current week's "Life & Ministry" record based on the canonical window
-        // Optimized logic: 
-        // - Try to find a record for the current week first.
-        // - If today is Sunday or late Saturday, and there's a record for NEXT week, show that one instead 
-        //   since the current week's meetings have likely passed.
+        // 1. Find the current week's "Life & Ministry" record based on the canonical window (Monday to Sunday)
         const mergedLifeMinistry = mergeRecordsByDate(lifeMinistrySchedules);
         
         let currentLifeMinistry = mergedLifeMinistry.find(item => {
@@ -215,20 +211,14 @@ const Dashboard: React.FC = () => {
             return itemDate.getTime() >= activeWeekStart.getTime() && itemDate.getTime() < activeWeekEnd.getTime();
         });
 
-        // Advance to next week if today is Sunday (or past the current meeting) and a future record exists
-        if (dayOfWeek === 0 || !currentLifeMinistry) {
-            const nextWeekStart = new Date(activeWeekEnd);
-            const futureRecord = mergedLifeMinistry.find(item => {
-                const itemDate = parseDateAsUTC(item.date);
-                return itemDate.getTime() >= nextWeekStart.getTime();
-            });
-            
-            if (futureRecord && (!currentLifeMinistry || dayOfWeek === 0)) {
-                currentLifeMinistry = futureRecord;
-            }
+        // ONLY if there is no record for the current week, try to find the next available future record
+        if (!currentLifeMinistry) {
+            currentLifeMinistry = mergedLifeMinistry
+                .filter(item => parseDateAsUTC(item.date).getTime() >= activeWeekEnd.getTime())
+                .sort((a, b) => parseDateAsUTC(a.date).getTime() - parseDateAsUTC(b.date).getTime())[0];
         }
 
-        // Fallback to most recent if still null
+        // Fallback to the most recent past record if still null (to ensure something is always shown)
         if (!currentLifeMinistry) {
             currentLifeMinistry = mergedLifeMinistry
                 .filter(item => today.getTime() >= parseDateAsUTC(item.date).getTime())
