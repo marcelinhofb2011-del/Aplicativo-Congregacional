@@ -336,16 +336,11 @@ const Dashboard: React.FC = () => {
 
         setNextCleaning(findNextUpcomingRange(cleaningSchedules) || null);
         
-        // Prioritize local talks for the dashboard card if duplicate records exist for the same day
+        // Only show local talks for the dashboard card this week
         const weekPublicTalks = mergedPublicTalks.filter(t => {
             const d = parseDateAsUTC(t.date);
-            return d.getTime() >= weekStart.getTime() && d.getTime() < weekEnd.getTime();
-        }).sort((a, b) => {
-            // Priority: Local talk first, then date
-            if (a.type === 'local' && b.type !== 'local') return -1;
-            if (b.type === 'local' && a.type !== 'local') return 1;
-            return parseDateAsUTC(a.date).getTime() - parseDateAsUTC(b.date).getTime();
-        });
+            return d.getTime() >= weekStart.getTime() && d.getTime() < weekEnd.getTime() && t.type === 'local';
+        }).sort((a, b) => parseDateAsUTC(a.date).getTime() - parseDateAsUTC(b.date).getTime());
         
         setNextPublicTalk(findCurrentInWeek(weekPublicTalks, weekStart, weekEnd) || null);
 
@@ -557,9 +552,14 @@ const Dashboard: React.FC = () => {
                     
                     <div className="bg-emerald-50/50 dark:bg-emerald-900/10 rounded-3xl p-8 mb-8 border border-emerald-100/50 dark:border-emerald-800/30">
                         <p className="text-[10px] font-bold tracking-[0.2em] text-emerald-600/70 dark:text-emerald-400 uppercase mb-4 font-sans">DISCURSO PÚBLICO</p>
-                        <h4 className="text-xl font-bold text-slate-800 dark:text-white leading-snug mb-5 font-outfit">
+                        <h4 className="text-xl font-bold text-slate-800 dark:text-white leading-snug mb-2 font-outfit">
                             {nextPublicTalk?.theme || 'Tema não definido'}
                         </h4>
+                        {nextPublicTalk?.song && (
+                            <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mb-5 font-sans">
+                                Cântico {nextPublicTalk.song}
+                            </p>
+                        )}
                         <div className="flex items-center gap-2.5 text-slate-500 dark:text-slate-400">
                             <User className="h-4 w-4 text-emerald-500" />
                             <p className="text-sm font-semibold font-sans">
@@ -636,7 +636,7 @@ const Dashboard: React.FC = () => {
                         className="bg-gradient-to-br from-sky-50 to-white dark:from-sky-900/20 dark:to-slate-900 rounded-[32px] p-6 flex flex-col justify-between min-h-[160px] relative overflow-hidden border border-sky-100 dark:border-sky-800/30 shadow-lg shadow-sky-100/20 dark:shadow-none"
                     >
                         <div>
-                            <p className="text-[10px] font-bold tracking-[0.2em] text-sky-600 dark:text-sky-400 uppercase mb-3 font-sans">DIRIGENTE SÁBADO</p>
+                            <p className="text-[10px] font-bold tracking-[0.2em] text-sky-600 dark:text-sky-400 uppercase mb-3 font-sans">DIRIGENTE</p>
                             <p className="text-xl font-bold text-slate-800 dark:text-white font-outfit">
                                 {nextFieldService?.conductorName || 'Não definido'}
                             </p>
