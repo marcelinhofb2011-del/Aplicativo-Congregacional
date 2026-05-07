@@ -53,7 +53,7 @@ const Header: React.FC = () => {
     };
 
     return (
-        <header className={`flex items-center justify-between h-16 bg-primary px-4 sm:px-6 lg:px-8 flex-shrink-0 sticky top-0 z-30 shadow-md`}>
+        <header className={`flex items-center justify-between h-16 bg-primary px-4 sm:px-6 lg:px-8 flex-shrink-0 fixed top-0 left-0 right-0 z-50 shadow-md`}>
             <div className="flex-1">
                 {showBackButton && (
                     <button onClick={handleBack} className="flex items-center gap-1 text-blue-100 hover:text-white transition-colors p-2 -ml-2 rounded-md">

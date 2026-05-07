@@ -4,7 +4,7 @@ import { CLEANING_GROUPS } from '../../constants';
 
 const DetailItem: React.FC<{ label: string; value?: React.ReactNode; fullWidth?: boolean }> = ({ label, value, fullWidth = false }) => (
     <div className={fullWidth ? 'sm:col-span-2' : ''}>
-        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{label}</p>
+        <p className="text-sm font-bold text-slate-600 dark:text-slate-400">{label}</p>
         <p className="text-md text-slate-800 dark:text-slate-200 whitespace-pre-wrap">{value || '-'}</p>
     </div>
 );

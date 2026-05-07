@@ -241,8 +241,8 @@ const Calendar: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-slate-50 pb-24">
-            {/* Top Bar */}
-            <div className="sticky top-0 left-0 right-0 z-50 flex justify-between items-center px-6 py-4 bg-slate-800/80 backdrop-blur-md shadow-lg">
+            {/* Top Bar - Fixed */}
+            <div className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-6 py-4 bg-slate-800/80 backdrop-blur-md shadow-lg">
                 <button 
                     onClick={() => navigate(-1)}
                     className="p-2 bg-white/10 rounded-xl text-white hover:bg-white/20 transition-colors"
@@ -252,6 +252,9 @@ const Calendar: React.FC = () => {
                 <h2 className="text-white font-bold text-lg">Agenda Pessoal</h2>
                 <div className="w-10" /> {/* Spacer to center title */}
             </div>
+
+            {/* Spacer for fixed header */}
+            <div className="h-16"></div>
 
             {/* Hero Header */}
             <div className="relative h-80 w-full overflow-hidden">
@@ -268,13 +271,13 @@ const Calendar: React.FC = () => {
                         animate={{ opacity: 1, y: 0 }}
                         className="space-y-2"
                     >
-                        <span className="text-sm font-bold uppercase tracking-widest opacity-80">
+                        <span className="text-sm font-bold uppercase tracking-widest text-white/90">
                             {selectedDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
                         </span>
                         <h1 className="text-8xl font-black tracking-tighter drop-shadow-2xl">
                             {selectedDate.getDate()}
                         </h1>
-                        <p className="text-2xl font-medium capitalize opacity-90">
+                        <p className="text-2xl font-medium capitalize text-white">
                             {selectedWeekday}
                         </p>
                     </motion.div>
@@ -289,20 +292,20 @@ const Calendar: React.FC = () => {
                     className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 p-6"
                 >
                     <div className="flex justify-between items-center mb-8">
-                        <h2 className="text-xl font-bold text-slate-800 capitalize">{monthName}</h2>
+                        <h2 className="text-xl font-bold text-slate-900 capitalize">{monthName}</h2>
                         <div className="flex gap-2">
                             <button onClick={handlePrevMonth} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                                <ChevronLeft className="w-5 h-5 text-slate-400" />
+                                <ChevronLeft className="w-5 h-5 text-slate-600" />
                             </button>
                             <button onClick={handleNextMonth} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                                <ChevronRight className="w-5 h-5 text-slate-400" />
+                                <ChevronRight className="w-5 h-5 text-slate-600" />
                             </button>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-7 gap-y-4 text-center">
                         {['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'].map(day => (
-                            <span key={day} className="text-[10px] font-bold text-slate-400 tracking-widest">{day}</span>
+                            <span key={day} className="text-[10px] font-bold text-slate-500 tracking-widest">{day}</span>
                         ))}
                         
                         {daysInMonth.map((d, i) => {
@@ -369,13 +372,13 @@ const Calendar: React.FC = () => {
                 {/* Notes List */}
                 <div className="space-y-4">
                     <div className="flex justify-between items-center px-2">
-                        <h3 className="text-xl font-bold text-slate-800">
+                        <h3 className="text-xl font-bold text-slate-900">
                             {showAll ? 'Todas as Anotações' : 'Minhas Anotações'}
-                            <span className="ml-2 text-sm text-slate-400 font-medium">({filteredNotes.length})</span>
+                            <span className="ml-2 text-sm text-slate-500 font-bold">({filteredNotes.length})</span>
                         </h3>
                         <button 
                             onClick={() => setShowAll(!showAll)}
-                            className="text-sm font-bold text-blue-600"
+                            className="text-sm font-bold text-blue-700"
                         >
                             {showAll ? 'Ver por dia' : 'Ver todos'}
                         </button>
@@ -412,15 +415,15 @@ const Calendar: React.FC = () => {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex justify-between items-start mb-1">
-                                            <h4 className={`font-bold text-slate-800 truncate ${note.isCompleted ? 'line-through opacity-50' : ''}`}>
+                                            <h4 className={`font-bold text-slate-900 truncate ${note.isCompleted ? 'line-through opacity-50' : ''}`}>
                                                 {note.title}
                                             </h4>
-                                            <span className="text-xs font-medium text-slate-400">
+                                            <span className="text-xs font-bold text-slate-600">
                                                 {showAll && <span className="mr-2">{new Date(note.date + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>}
                                                 {note.time}
                                             </span>
                                         </div>
-                                        <p className={`text-sm text-slate-500 line-clamp-2 mb-3 ${note.isCompleted ? 'opacity-50' : ''}`}>
+                                        <p className={`text-sm text-slate-700 font-medium line-clamp-2 mb-3 ${note.isCompleted ? 'opacity-50' : ''}`}>
                                             {note.description}
                                         </p>
                                         <div className="flex justify-between items-center">
@@ -432,13 +435,13 @@ const Calendar: React.FC = () => {
                                                     onClick={() => handleToggleComplete(note)}
                                                     className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
                                                 >
-                                                    {note.isCompleted ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <Circle className="w-4 h-4 text-slate-300" />}
+                                                    {note.isCompleted ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <Circle className="w-4 h-4 text-slate-400" />}
                                                 </button>
                                                 <button 
                                                     onClick={() => openEditModal(note)}
                                                     className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
                                                 >
-                                                    <MoreVertical className="w-4 h-4 text-slate-400" />
+                                                    <MoreVertical className="w-4 h-4 text-slate-600" />
                                                 </button>
                                                 <button 
                                                     onClick={() => setDeleteConfirmId(note.id)}
@@ -531,73 +534,73 @@ const Calendar: React.FC = () => {
                             className="relative w-full max-w-md bg-white rounded-t-[40px] sm:rounded-[40px] p-8 shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar"
                         >
                             <div className="flex justify-between items-center mb-8">
-                                <h2 className="text-2xl font-black text-slate-800">
+                                <h2 className="text-2xl font-black text-slate-900">
                                     {editingNote ? 'Editar Anotação' : 'Nova Anotação'}
                                 </h2>
                                 <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full">
-                                    <X className="w-6 h-6 text-slate-400" />
+                                    <X className="w-6 h-6 text-slate-600" />
                                 </button>
                             </div>
 
                             <div className="space-y-6">
                                 <div>
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Título</label>
+                                    <label className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-2 block">Título</label>
                                     <input 
                                         type="text" 
                                         value={newNote.title}
                                         onChange={e => setNewNote({...newNote, title: e.target.value})}
                                         placeholder="Ex: Consulta Médica"
-                                        className="w-full bg-slate-50 border-none rounded-2xl p-4 text-slate-800 font-medium focus:ring-2 focus:ring-slate-800 transition-all"
+                                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 font-bold focus:ring-2 focus:ring-slate-800 transition-all placeholder:text-slate-400"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Descrição</label>
+                                    <label className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-2 block">Descrição</label>
                                     <textarea 
                                         value={newNote.description}
                                         onChange={e => setNewNote({...newNote, description: e.target.value})}
                                         placeholder="Detalhes da anotação..."
                                         rows={3}
-                                        className="w-full bg-slate-50 border-none rounded-2xl p-4 text-slate-800 font-medium focus:ring-2 focus:ring-slate-800 transition-all resize-none"
+                                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 font-bold focus:ring-2 focus:ring-slate-800 transition-all resize-none placeholder:text-slate-400"
                                     />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Data</label>
+                                        <label className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-2 block">Data</label>
                                         <div className="relative">
-                                            <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                            <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
                                             <input 
                                                 type="date" 
                                                 value={newNote.date}
                                                 onChange={e => setNewNote({...newNote, date: e.target.value})}
-                                                className="w-full bg-slate-50 border-none rounded-2xl pl-11 pr-4 py-4 text-slate-800 font-medium focus:ring-2 focus:ring-slate-800 transition-all"
+                                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-11 pr-4 py-4 text-slate-900 font-bold focus:ring-2 focus:ring-slate-800 transition-all"
                                             />
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Horário</label>
+                                        <label className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-2 block">Horário</label>
                                         <div className="relative">
-                                            <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                            <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
                                             <input 
                                                 type="time" 
                                                 value={newNote.time}
                                                 onChange={e => setNewNote({...newNote, time: e.target.value})}
-                                                className="w-full bg-slate-50 border-none rounded-2xl pl-11 pr-4 py-4 text-slate-800 font-medium focus:ring-2 focus:ring-slate-800 transition-all"
+                                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-11 pr-4 py-4 text-slate-900 font-bold focus:ring-2 focus:ring-slate-800 transition-all"
                                             />
                                         </div>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 block">Categoria</label>
+                                    <label className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-4 block">Categoria</label>
                                     <div className="flex flex-wrap gap-2">
                                         {(['NOTAS', 'SAÚDE', 'VIAGEM', 'LEMBRETE'] as CalendarNote['category'][]).map(cat => (
                                             <button
                                                 key={cat}
                                                 onClick={() => setNewNote({...newNote, category: cat})}
-                                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border
-                                                    ${newNote.category === cat ? 'bg-slate-800 text-white border-slate-800 shadow-lg shadow-slate-800/20' : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'}
+                                                className={`px-4 py-2 rounded-xl text-xs font-black transition-all border
+                                                    ${newNote.category === cat ? 'bg-slate-800 text-white border-slate-800 shadow-lg shadow-slate-800/20' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}
                                                 `}
                                             >
                                                 {cat}

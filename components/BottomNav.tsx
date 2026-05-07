@@ -26,43 +26,33 @@ const BottomNav: React.FC = () => {
     const itemsToShow = BOTTOM_NAV_ITEMS;
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200/50 dark:border-slate-800/50 pb-4 shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
-            <nav className="max-w-md mx-auto h-20 flex justify-around items-center px-4">
+        <div className="fixed bottom-0 left-0 right-0 z-50 h-20 bg-white/90 dark:bg-slate-950 border-t border-slate-200 dark:border-white/5 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_-10px_30px_rgba(0,0,0,0.3)] backdrop-blur-md">
+            <nav className="max-w-2xl mx-auto h-full flex justify-around items-center px-4">
                 {itemsToShow.map((item) => (
                     <NavLink key={item.path} to={item.path} className={navLinkClass}>
                         {({ isActive }) => (
-                            <>
-                                <item.icon className={`h-6 w-6 mb-1 transition-transform duration-300 ${isActive ? 'scale-110' : ''}`} />
-                                <span className={`text-[10px] font-bold uppercase tracking-tighter transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-60'}`}>
+                            <div className="flex flex-col items-center gap-1.5">
+                                <div className={`p-2 rounded-xl transition-all duration-500 ${isActive ? 'bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-500 hover:text-indigo-500 dark:hover:text-slate-300'}`}>
+                                    <item.icon className="h-6 w-6" />
+                                </div>
+                                <span className={`text-[10px] font-bold uppercase tracking-[0.1em] transition-all duration-500 ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-500'}`}>
                                     {item.label}
                                 </span>
-                                {isActive && (
-                                    <motion.div 
-                                        layoutId="activeTab"
-                                        className="absolute -top-2 h-1 w-8 bg-primary rounded-full"
-                                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                                    />
-                                )}
-                            </>
+                            </div>
                         )}
                     </NavLink>
                 ))}
                 {user.role === UserRole.SERVANT && (
                     <NavLink to="/menu" className={navLinkClass}>
                         {({ isActive }) => (
-                            <>
-                                <Squares2X2Icon className={`h-6 w-6 mb-1 transition-transform duration-300 ${isActive ? 'scale-110' : ''}`} />
-                                <span className={`text-[10px] font-bold uppercase tracking-tighter transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-60'}`}>
+                            <div className="flex flex-col items-center gap-1.5">
+                                <div className={`p-2 rounded-xl transition-all duration-500 ${isActive ? 'bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-500 hover:text-indigo-500 dark:hover:text-slate-300'}`}>
+                                    <Squares2X2Icon className="h-6 w-6" />
+                                </div>
+                                <span className={`text-[10px] font-bold uppercase tracking-[0.1em] transition-all duration-500 ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-500'}`}>
                                     Menu
                                 </span>
-                                {isActive && (
-                                    <motion.div 
-                                        layoutId="activeTab"
-                                        className="absolute -top-2 h-1 w-8 bg-primary rounded-full"
-                                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                                    />
-                                )}
-                            </>
+                            </div>
                         )}
                     </NavLink>
                 )}

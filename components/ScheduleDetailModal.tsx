@@ -41,16 +41,16 @@ const DetailedScheduleModal: React.FC<DetailedScheduleModalProps> = ({ schedule,
     };
     
     return (
-        <div className="fixed inset-0 bg-light dark:bg-dark z-50 overflow-y-auto animate-fade-in">
-            <header className="sticky top-0 z-10 flex items-center h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm px-4 sm:px-6 border-b-2 border-primary">
+        <div className="fixed inset-0 bg-slate-50 dark:bg-slate-950 z-50 overflow-y-auto animate-fade-in transition-colors duration-300">
+            <header className="sticky top-0 z-10 flex items-center h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md px-4 sm:px-6 border-b border-slate-200 dark:border-white/10">
                 <div className="flex-1 flex justify-start">
-                    <button onClick={onClose} className="flex items-center gap-1 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors p-2 -ml-2 rounded-md">
+                    <button onClick={onClose} className="flex items-center gap-1 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white transition-colors p-2 -ml-2 rounded-md">
                         <ArrowLeftIcon className="h-5 w-5" />
                         <span className="text-sm font-medium">Voltar</span>
                     </button>
                 </div>
                 <div className="flex-1 text-center">
-                    <h1 className="text-xl font-semibold text-slate-900 dark:text-white truncate">Detalhes da Programação</h1>
+                    <h1 className="text-xl font-bold text-slate-900 dark:text-white truncate font-outfit">Detalhes</h1>
                 </div>
                  <div className="flex-1"></div> {/* Placeholder for balance */}
             </header>

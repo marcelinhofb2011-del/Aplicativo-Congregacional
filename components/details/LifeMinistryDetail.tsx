@@ -62,52 +62,52 @@ const LifeMinistryDetail: React.FC<{ schedule: LifeMinistrySchedule }> = ({ sche
                 <SectionHeader title="Tesouros da Palavra de Deus" colorClass="bg-slate-600" />
                 <div className="px-4 py-2 border border-t-0 border-slate-200 dark:border-slate-700 rounded-b-md">
                     <DetailRow 
-                        left={<>1. {schedule?.treasuresTheme?.theme || 'Tema não definido'} <span className="text-slate-500">(10 min)</span></>}
+                        left={<>1. {schedule?.treasuresTheme?.theme || 'Tema não definido'} <span className="text-slate-600 dark:text-slate-500">(10 min)</span></>}
                         right={schedule?.treasuresTheme?.speaker || 'Não definido'}
                     />
                     <DetailRow 
-                        left={<>2. Joias espirituais <span className="text-slate-500">(10 min)</span></>}
+                        left={<>2. Joias espirituais <span className="text-slate-600 dark:text-slate-500">(10 min)</span></>}
                         right={schedule?.spiritualGems?.speaker || 'Não definido'}
                     />
                     <DetailRow 
-                        left={<>3. Leitura da Bíblia <span className="text-slate-500">(4 min)</span></>}
+                        left={<>3. Leitura da Bíblia <span className="text-slate-600 dark:text-slate-500">(4 min)</span></>}
                         right={schedule?.bibleReading?.student || 'Não definido'}
                     />
                 </div>
             </div>
-
+ 
             {/* Ministério */}
             <div className="mt-6">
                 <SectionHeader title="Faça Seu Melhor no Ministério" colorClass="bg-amber-500" />
                 <div className="px-4 py-2 border border-t-0 border-slate-200 dark:border-slate-700 rounded-b-md">
                     {/* Header Row */}
-                    <div className="flex items-start text-xs text-slate-500 dark:text-slate-400 mb-1 font-semibold border-b border-slate-200 dark:border-slate-700 pb-2">
+                    <div className="flex items-start text-xs text-slate-600 dark:text-slate-400 mb-1 font-bold border-b border-slate-200 dark:border-slate-700 pb-2">
                         <div className="w-1/2 sm:w-3/5 pr-4"></div> {/* Spacer for the theme column */}
                         <div className="w-1/2 sm:w-2/5 flex text-right">
                             <p className="w-1/2 px-2">Estudante</p>
                             <p className="w-1/2 px-2">Ajudante</p>
                         </div>
                     </div>
-
+ 
                     {activeStudentParts.map((part) => {
                          partCounter++;
                          return (
                             <div key={part.id} className="flex items-start py-2.5 border-b border-slate-200 dark:border-slate-700 last:border-b-0">
                                 {/* Left: Theme */}
                                 <div className="w-1/2 sm:w-3/5 pr-4">
-                                    <p className="text-slate-800 dark:text-slate-200">{partCounter}. {part.theme} <span className="text-slate-500">({part.time} min)</span></p>
+                                    <p className="text-slate-800 dark:text-slate-200">{partCounter}. {part.theme} <span className="text-slate-600 dark:text-slate-500">({part.time} min)</span></p>
                                 </div>
                                 {/* Right: Names */}
                                 <div className="w-1/2 sm:w-2/5 flex text-right">
-                                    <p className="w-1/2 font-semibold text-slate-900 dark:text-slate-100 px-2 break-words">{part.student}</p>
-                                    <p className="w-1/2 font-semibold text-slate-900 dark:text-slate-100 px-2 break-words">{part.helper || ''}</p>
+                                    <p className="w-1/2 font-bold text-slate-900 dark:text-slate-100 px-2 break-words">{part.student}</p>
+                                    <p className="w-1/2 font-bold text-slate-900 dark:text-slate-100 px-2 break-words">{part.helper || ''}</p>
                                 </div>
                             </div>
                         )
                     })}
                 </div>
             </div>
-
+ 
             {/* Vida Cristã */}
              <div className="mt-6">
                 <SectionHeader title="Nossa Vida Cristã" colorClass="bg-rose-700" />
@@ -119,17 +119,17 @@ const LifeMinistryDetail: React.FC<{ schedule: LifeMinistrySchedule }> = ({ sche
                        return (
                            <DetailRow 
                                 key={part.id}
-                                left={<>{partCounter}. {part.theme} <span className="text-slate-500">({part.time} min)</span></>}
+                                left={<>{partCounter}. {part.theme} <span className="text-slate-600 dark:text-slate-500">({part.time} min)</span></>}
                                 right={part.speaker}
                             />
                         )
                     })}
-
+ 
                     <DetailRow 
-                        left={<>{partCounter + 1}. Estudo bíblico de congregação <span className="text-slate-500">(30 min)</span></>}
+                        left={<>{partCounter + 1}. Estudo bíblico de congregação <span className="text-slate-600 dark:text-slate-500">(30 min)</span></>}
                         right={
                             <>
-                                <span className="text-xs text-slate-500 dark:text-slate-400 block">Dirigente/leitor</span>
+                                <span className="text-xs text-slate-600 dark:text-slate-400 block font-bold">Dirigente/leitor</span>
                                 {schedule?.congregationBibleStudy?.conductor || 'N/D'} / {schedule?.congregationBibleStudy?.reader || 'N/D'}
                             </>
                         }

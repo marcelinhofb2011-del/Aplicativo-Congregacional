@@ -74,10 +74,10 @@ const Register: React.FC = () => {
                     <div className="mx-auto mb-4 w-20 h-20 bg-primary rounded-full flex items-center justify-center shadow-lg">
                         <span className="text-white font-bold text-3xl tracking-wider">VC</span>
                     </div>
-                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
                         Cadastro de Administrador
                     </h2>
-                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                    <p className="mt-2 text-sm font-bold text-slate-700 dark:text-slate-300">
                         Crie sua conta para gerenciar o sistema.
                     </p>
                 </div>
@@ -116,8 +116,8 @@ const Register: React.FC = () => {
                     </div>
                 </form>
                 <div className="text-center mt-6 text-sm">
-                    <span className="text-slate-600 dark:text-slate-400">Já tem uma conta? </span>
-                    <Link to="/login" className="font-medium text-primary hover:text-primary-dark">
+                    <span className="text-slate-700 dark:text-slate-300 font-medium">Já tem uma conta? </span>
+                    <Link to="/login" className="font-bold text-primary hover:text-primary-dark ml-1">
                         Faça login
                     </Link>
                 </div>

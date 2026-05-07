@@ -94,23 +94,23 @@ const Login: React.FC = () => {
                     </form>
 
                      <div className="text-center mt-6 text-sm">
-                        <span className="text-slate-600 dark:text-slate-400">Não tem uma conta? </span>
-                        <Link to="/cadastro" className="font-medium text-primary hover:text-primary-dark">
+                        <span className="text-slate-700 dark:text-slate-300 font-medium">Não tem uma conta? </span>
+                        <Link to="/cadastro" className="font-bold text-primary hover:text-primary-dark ml-1 opacity-100">
                             Cadastre-se
                         </Link>
                     </div>
 
                     <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
-                        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-center">
-                            <p className="text-xs font-bold text-blue-800 dark:text-blue-300 uppercase tracking-wider mb-2">
+                        <div className="bg-blue-50 dark:bg-blue-900/40 rounded-lg p-4 text-center border border-blue-100 dark:border-blue-800">
+                            <p className="text-xs font-black text-blue-900 dark:text-blue-200 uppercase tracking-wider mb-2">
                                 Acesso para Publicadores
                             </p>
                             <div className="space-y-1">
-                                <p className="text-sm text-blue-700 dark:text-blue-400">
-                                    <span className="font-semibold">Email:</span> publicador@app.dev
+                                <p className="text-sm text-blue-800 dark:text-blue-300">
+                                    <span className="font-bold">Email:</span> publicador@app.dev
                                 </p>
-                                <p className="text-sm text-blue-700 dark:text-blue-400">
-                                    <span className="font-semibold">Senha:</span> 123456
+                                <p className="text-sm text-blue-800 dark:text-blue-300">
+                                    <span className="font-bold">Senha:</span> 123456
                                 </p>
                             </div>
                         </div>

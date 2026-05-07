@@ -51,8 +51,9 @@ const AppContent: React.FC = () => {
 
     if (authLoading) {
         return (
-            <div className="flex items-center justify-center h-screen bg-light dark:bg-dark">
-                <div className="text-xl font-semibold">Carregando...</div>
+            <div className="flex flex-col items-center justify-center h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+                <div className="h-12 w-12 rounded-2xl bg-indigo-500 animate-bounce mb-4"></div>
+                <div className="text-xl font-bold font-outfit text-slate-900 dark:text-white">Carregando...</div>
             </div>
         );
     }
