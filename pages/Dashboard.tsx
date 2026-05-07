@@ -607,6 +607,19 @@ const Dashboard: React.FC = () => {
                     </h3>
                     
                     <div className="space-y-10">
+                        {/* President Header */}
+                        <div className="flex items-center gap-4 p-4 bg-indigo-500/[0.03] dark:bg-indigo-500/[0.05] border border-indigo-500/10 rounded-3xl group-hover:bg-indigo-500/[0.08] transition-colors">
+                            <div className="h-10 w-10 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                                <User className="h-5 w-5" />
+                            </div>
+                            <div className="space-y-0.5">
+                                <p className="text-[10px] font-bold text-indigo-500/80 uppercase tracking-widest">Presidente da Reunião</p>
+                                <p className="text-lg font-bold text-slate-900 dark:text-white font-outfit">
+                                    {nextMidweekAssignment?.president || nextLifeMinistry?.president || 'Não definido'}
+                                </p>
+                            </div>
+                        </div>
+
                         {/* Parts with Icons */}
                         <div className="space-y-6">
                             <PremiumPartItem 
@@ -676,7 +689,7 @@ const Dashboard: React.FC = () => {
                         <h4 className="text-2xl font-bold text-slate-900 dark:text-white leading-snug mb-3 font-outfit">
                             {nextPublicTalk?.theme || 'Tema não definido'}
                         </h4>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 mb-6">
                             <div className="h-8 w-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400">
                                 <User className="h-4 w-4" />
                             </div>
@@ -685,6 +698,23 @@ const Dashboard: React.FC = () => {
                                 <span className="mx-2 text-slate-300 dark:text-slate-700">•</span> 
                                 {nextPublicTalk?.congregation || 'Local'}
                             </p>
+                        </div>
+
+                        <div className="h-px w-full bg-emerald-500/10 mb-6"></div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div className="space-y-1">
+                                <p className="text-[9px] font-bold text-emerald-600/70 uppercase tracking-widest font-sans">Presidente</p>
+                                <p className="text-base font-bold text-slate-900 dark:text-white font-outfit">
+                                    {nextWeekendAssignment?.president || 'Não definido'}
+                                </p>
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-[9px] font-bold text-emerald-600/70 uppercase tracking-widest font-sans">Leitor Sentinela</p>
+                                <p className="text-base font-bold text-slate-900 dark:text-white font-outfit">
+                                    {nextWeekendAssignment?.reader || 'Não definido'}
+                                </p>
+                            </div>
                         </div>
                     </div>
 
