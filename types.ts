@@ -22,16 +22,25 @@ export interface BaseRecord {
     isActive: boolean;
 }
 
-// Type for generic Notifications
+export enum NotificationType {
+    DESIGNATION = 'designacao',
+    SCHEDULE_CHANGE = 'alteracao_programacao',
+    IMPORTANT_ALERT = 'aviso_importante',
+    CLEANING = 'limpeza',
+    ASSEMBLY_CONGRESS = 'assembleia_congresso',
+    EMERGENCY = 'emergencia',
+}
+
 export interface AppNotification extends BaseRecord {
-    tipo: 'vida_ministerio' | 'designacao' | 'limpeza' | 'servico_campo' | 'discurso_publico';
-    titulo: string;
-    descricao: string;
-    data: string; // ISO (Timestamp in Firestore)
-    referenciaId: string; // ID of the original document
-    usuarioUid: string;
-    notificado: boolean;
-    link: string; // Path to navigate to on click
+    type: NotificationType;
+    title: string;
+    description: string;
+    date: string; // ISO (Timestamp in Firestore)
+    referenceId?: string; // ID of the original document
+    userUid: string;
+    isRead: boolean;
+    isPinned: boolean;
+    link?: string; // Path to navigate to on click
 }
 
 

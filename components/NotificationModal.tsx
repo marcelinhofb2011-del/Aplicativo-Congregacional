@@ -10,7 +10,7 @@ interface NotificationModalProps {
     onClose: () => void;
 }
 
-const NotificationIcon: React.FC<{ type: AppNotification['tipo'] }> = ({ type }) => {
+const NotificationIcon: React.FC<{ type: any }> = ({ type }) => {
     const iconProps = { className: "h-6 w-6 text-primary" };
     switch (type) {
         case 'vida_ministerio': return <LifeMinistryIcon {...iconProps} />;
@@ -33,9 +33,9 @@ const NotificationModal: React.FC<NotificationModalProps> = ({ isOpen, notificat
         return null;
     }
 
-    const handleNavigate = (path: string) => {
+    const handleNavigate = (path?: string) => {
         onClose();
-        navigate(path);
+        if (path) navigate(path);
     };
 
     return (
@@ -53,11 +53,11 @@ const NotificationModal: React.FC<NotificationModalProps> = ({ isOpen, notificat
                         <div key={notification.id} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                             <div className="flex items-start gap-4">
                                 <div className="mt-1 flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900">
-                                    <NotificationIcon type={notification.tipo} />
+                                    <NotificationIcon type={(notification as any).type || (notification as any).tipo} />
                                 </div>
                                 <div>
-                                    <p className="font-semibold text-slate-800 dark:text-slate-200">{notification.titulo}</p>
-                                    <p className="text-sm text-slate-600 dark:text-slate-400">{notification.descricao}</p>
+                                    <p className="font-semibold text-slate-800 dark:text-slate-200">{notification.title || (notification as any).titulo}</p>
+                                    <p className="text-sm text-slate-600 dark:text-slate-400">{notification.description || (notification as any).descricao}</p>
                                     <button
                                         onClick={() => handleNavigate(notification.link)}
                                         className="text-sm font-medium text-primary hover:underline mt-1"

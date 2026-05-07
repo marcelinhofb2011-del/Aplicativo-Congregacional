@@ -10,10 +10,14 @@ import {
     PublicTalkSchedule,
     Announcement,
     FirstSundayConductor,
-    MeetingSchedule
+    MeetingSchedule,
+    AppNotification
 } from '../types';
 import { getAnnouncements, cleanupExpiredRecords } from '../services/firestoreService';
+import { notificationService } from '../services/notificationService';
+import { assignmentNotificationService } from '../services/assignmentNotificationService';
 import ScheduleDetailModal from '../components/ScheduleDetailModal';
+import NotificationOverlay from '../components/NotificationOverlay';
 import { Link } from 'react-router-dom';
 import { getBrazilToday, parseDateAsUTC } from '../utils/dateUtils';
 import { 
@@ -131,6 +135,19 @@ const Dashboard: React.FC = () => {
     const [nextCleaningGroups, setNextCleaningGroups] = useState<CleaningSchedule[]>([]);
     const [nextMeetingSchedule, setNextMeetingSchedule] = useState<MeetingSchedule | null>(null);
     const [activeWeekRange, setActiveWeekRange] = useState<{ start: Date, end: Date } | null>(null);
+    const [notifications, setNotifications] = useState<AppNotification[]>([]);
+    const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+
+    useEffect(() => {
+        if (user) {
+            const unsubscribe = notificationService.subscribeToNotifications(user.uid, (data) => {
+                setNotifications(data);
+            });
+            return () => unsubscribe();
+        }
+    }, [user]);
+
+    const unreadCount = notifications.filter(n => !n.isRead).length;
 
     useEffect(() => {
         const fetchAnnouncements = async () => {
@@ -418,6 +435,11 @@ const Dashboard: React.FC = () => {
         const upcomingUserAssignments = userAssignments.filter(e => e.date.getTime() >= today.getTime());
         setNextAppointment(upcomingUserAssignments.length > 0 ? upcomingUserAssignments[0] : null);
 
+        // Check for reminders
+        if (userAssignments.length > 0) {
+            assignmentNotificationService.checkUpcomingReminders(user.uid, userAssignments.map(e => ({ ...e.fullData, id: e.fullData.id })));
+        }
+
     }, [user, schedules, isLoadingSchedules]);
     
     const handleViewDetails = (event: ScheduleItem, type: UpcomingEvent['type']) => {
@@ -465,9 +487,16 @@ const Dashboard: React.FC = () => {
                             {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                         </button>
                         <div className="h-4 w-px bg-slate-200 dark:bg-white/[0.1] mx-1"></div>
-                        <button className="p-2.5 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white relative transition-colors">
+                        <button 
+                            onClick={() => setIsNotificationOpen(true)}
+                            className="p-2.5 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white relative transition-colors"
+                        >
                             <Bell className="h-5 w-5" />
-                            <span className="absolute top-2.5 right-2.5 h-2 w-2 bg-indigo-500 rounded-full border-2 border-white dark:border-slate-950"></span>
+                            {unreadCount > 0 && (
+                                <span className="absolute top-2 right-2 h-4 w-4 bg-rose-500 text-[9px] font-black text-white rounded-full border-2 border-white dark:border-slate-950 flex items-center justify-center">
+                                    {unreadCount > 9 ? '9+' : unreadCount}
+                                </span>
+                            )}
                         </button>
                         <button 
                             onClick={logout}
@@ -851,6 +880,13 @@ const Dashboard: React.FC = () => {
                     </div>
                 </section>
             </main>
+
+            <NotificationOverlay 
+                isOpen={isNotificationOpen} 
+                onClose={() => setIsNotificationOpen(false)} 
+                userUid={user?.uid || ''} 
+                notifications={notifications}
+            />
 
             <ScheduleDetailModal
                 schedule={viewingSchedule}

@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { LifeMinistrySchedule, UserRole } from '../types';
 import { getSchedules, addSchedule, updateSchedule, deleteSchedule } from '../services/firestoreService';
+import { assignmentNotificationService } from '../services/assignmentNotificationService';
 import LifeMinistryFormModal from '../components/LifeMinistryFormModal';
 import ConfirmationModal from '../components/ConfirmationModal';
 import Toast from '../components/Toast';
@@ -106,9 +107,13 @@ const LifeMinistry: React.FC = () => {
         try {
             if (editingSchedule) {
                 await updateSchedule(editingSchedule.id, scheduleData, user.uid);
+                // Notify if something changed or just notify everyone again (safe)
+                await assignmentNotificationService.notifyLifeMinistry({ ...scheduleData, id: editingSchedule.id } as any);
                 setToastMessage('Programação atualizada com sucesso!');
             } else {
-                await addSchedule(scheduleData, user.uid);
+                const newSchedule = await addSchedule(scheduleData, user.uid);
+                // Notify everyone assigned
+                await assignmentNotificationService.notifyLifeMinistry(newSchedule as any);
                 setToastMessage('Programação criada com sucesso!');
             }
             setExpandedItems(new Set()); // Collapse all items after save

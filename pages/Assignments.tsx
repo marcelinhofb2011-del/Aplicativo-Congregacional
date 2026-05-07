@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Assignment, UserRole } from '../types';
 import { getAssignments, addAssignment, updateAssignment, deleteAssignment } from '../services/firestoreService';
+import { assignmentNotificationService } from '../services/assignmentNotificationService';
 import { showNewAssignmentNotification } from '../utils/notifications';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
@@ -99,9 +100,11 @@ const Assignments: React.FC = () => {
         try {
             if (editingAssignment) {
                 await updateAssignment(editingAssignment.id, formData, user.uid);
+                await assignmentNotificationService.notifyPlatformAssignment({ ...formData, id: editingAssignment.id } as any);
                 setToastMessage('Designações atualizadas com sucesso!');
             } else {
-                await addAssignment(formData, user.uid);
+                const newAssignment = await addAssignment(formData, user.uid);
+                await assignmentNotificationService.notifyPlatformAssignment(newAssignment as any);
                 setToastMessage(`Designações para ${new Date(formData.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})} criadas!`);
                 showNewAssignmentNotification(`para ${new Date(formData.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}`, "Novas designações de plataforma");
             }

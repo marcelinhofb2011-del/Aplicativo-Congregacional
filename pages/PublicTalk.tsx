@@ -5,6 +5,7 @@ import html2canvas from 'html2canvas';
 import { useAuth } from '../hooks/useAuth';
 import { PublicTalkSchedule, UserRole } from '../types';
 import { getPublicTalks, addPublicTalk, updatePublicTalk, deletePublicTalk } from '../services/firestoreService';
+import { assignmentNotificationService } from '../services/assignmentNotificationService';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
 import PublicTalkFormModal from '../components/PublicTalkFormModal';
@@ -97,9 +98,11 @@ const PublicTalk: React.FC = () => {
         try {
             if (editingTalk) {
                 await updatePublicTalk(editingTalk.id, formData, user.uid);
+                await assignmentNotificationService.notifyPublicTalk({ ...formData, id: editingTalk.id } as any);
                 setToastMessage('Discurso atualizado com sucesso!');
             } else {
-                await addPublicTalk(formData, user.uid);
+                const newTalk = await addPublicTalk(formData, user.uid);
+                await assignmentNotificationService.notifyPublicTalk(newTalk as any);
                 setToastMessage('Novo discurso adicionado à programação.');
             }
             setExpandedItems(new Set()); // Collapse all items after save

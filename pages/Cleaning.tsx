@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { CleaningSchedule, UserRole } from '../types';
 import { getCleaningSchedules, addCleaningSchedule, updateCleaningSchedule, deleteCleaningSchedule } from '../services/firestoreService';
+import { assignmentNotificationService } from '../services/assignmentNotificationService';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
 import CleaningFormModal from '../components/CleaningFormModal';
@@ -92,9 +93,11 @@ const Cleaning: React.FC = () => {
         try {
             if (editingSchedule) {
                 await updateCleaningSchedule(editingSchedule.id, formData, user.uid);
+                await assignmentNotificationService.notifyCleaning({ ...formData, id: editingSchedule.id } as any);
                 setToastMessage('Escala de limpeza atualizada!');
             } else {
-                await addCleaningSchedule(formData, user.uid);
+                const newSchedule = await addCleaningSchedule(formData, user.uid);
+                await assignmentNotificationService.notifyCleaning(newSchedule as any);
                 setToastMessage('Nova escala de limpeza adicionada.');
             }
             setExpandedItems(new Set()); // Collapse all items after save
