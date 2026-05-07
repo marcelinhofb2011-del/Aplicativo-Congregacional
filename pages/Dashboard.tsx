@@ -469,6 +469,13 @@ const Dashboard: React.FC = () => {
                             <Bell className="h-5 w-5" />
                             <span className="absolute top-2.5 right-2.5 h-2 w-2 bg-indigo-500 rounded-full border-2 border-white dark:border-slate-950"></span>
                         </button>
+                        <button 
+                            onClick={logout}
+                            className="p-2.5 text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                            title="Sair"
+                        >
+                            <LogOut className="h-5 w-5" />
+                        </button>
                     </div>
                 </div>
             </header>
