@@ -137,6 +137,7 @@ const Dashboard: React.FC = () => {
     const [activeWeekRange, setActiveWeekRange] = useState<{ start: Date, end: Date } | null>(null);
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+    const [expandedAnnouncement, setExpandedAnnouncement] = useState<string | null>(null);
 
     useEffect(() => {
         if (user) {
@@ -881,26 +882,48 @@ const Dashboard: React.FC = () => {
                         {isLoadingAnnouncements ? (
                             [1, 2].map(i => <div key={i} className="h-28 bg-slate-200 dark:bg-slate-900/40 rounded-[32px] animate-pulse border border-slate-100 dark:border-white/[0.05]"></div>)
                         ) : announcements.length > 0 ? (
-                            announcements.slice(0, 3).map((ann, idx) => (
-                                <motion.div 
-                                    key={ann.id} 
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.7 + (idx * 0.1) }}
-                                    className="bg-white dark:bg-slate-900/80 p-8 rounded-[32px] border border-slate-200 dark:border-white/[0.05] flex items-center gap-6 group cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900 transition-all shadow-md dark:shadow-lg"
-                                >
-                                    <div className="h-16 w-16 rounded-[24px] bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 flex-shrink-0 group-hover:scale-110 transition-transform">
-                                        {ann.title.toLowerCase().includes('manutenção') ? <Monitor className="h-8 w-8" /> : 
-                                         ann.title.toLowerCase().includes('urgente') ? <ShieldCheck className="h-8 w-8 text-rose-500 dark:text-rose-400" /> :
-                                         <Megaphone className="h-8 w-8" />}
-                                    </div>
-                                    <div className="flex-1 min-w-0 space-y-1">
-                                        <h4 className="text-lg font-bold text-slate-900 dark:text-white truncate font-outfit uppercase tracking-tight">{ann.title}</h4>
-                                        <p className="text-sm text-slate-700 dark:text-slate-400 line-clamp-2 leading-relaxed font-sans">{ann.body}</p>
-                                    </div>
-                                    <ChevronRight className="h-6 w-6 text-slate-400 dark:text-slate-700 group-hover:translate-x-2 transition-all" />
-                                </motion.div>
-                            ))
+                            announcements.slice(0, 3).map((ann, idx) => {
+                                const isExpanded = expandedAnnouncement === ann.id;
+                                return (
+                                    <motion.div 
+                                        key={ann.id} 
+                                        layout
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ 
+                                            delay: 0.7 + (idx * 0.1),
+                                            layout: { duration: 0.3, ease: "easeOut" }
+                                        }}
+                                        onClick={() => setExpandedAnnouncement(isExpanded ? null : ann.id)}
+                                        className={`bg-white dark:bg-slate-900/80 p-8 rounded-[32px] border border-slate-200 dark:border-white/[0.05] flex items-start gap-6 group cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900 transition-all shadow-md dark:shadow-lg ${isExpanded ? 'ring-1 ring-indigo-500/30' : ''}`}
+                                    >
+                                        <div className="h-16 w-16 rounded-[24px] bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 flex-shrink-0 group-hover:scale-110 transition-transform">
+                                            {ann.title.toLowerCase().includes('manutenção') ? <Monitor className="h-8 w-8" /> : 
+                                             ann.title.toLowerCase().includes('urgente') ? <ShieldCheck className="h-8 w-8 text-rose-500 dark:text-rose-400" /> :
+                                             <Megaphone className="h-8 w-8" />}
+                                        </div>
+                                        <div className="flex-1 min-w-0 space-y-1 py-1">
+                                            <h4 className="text-lg font-bold text-slate-900 dark:text-white truncate font-outfit uppercase tracking-tight">{ann.title}</h4>
+                                            <p className={`text-sm text-slate-700 dark:text-slate-400 leading-relaxed font-sans transition-all duration-300 ${isExpanded ? 'whitespace-pre-wrap' : 'line-clamp-2'}`}>
+                                                {ann.body}
+                                            </p>
+                                            {isExpanded && ann.date && (
+                                                <div className="pt-2">
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                        Publicado em {new Date(ann.date).toLocaleDateString('pt-BR')}
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <motion.div
+                                            animate={{ rotate: isExpanded ? 90 : 0 }}
+                                            transition={{ duration: 0.2 }}
+                                        >
+                                            <ChevronRight className="h-6 w-6 text-slate-400 dark:text-slate-700 group-hover:translate-x-2 transition-all" />
+                                        </motion.div>
+                                    </motion.div>
+                                );
+                            })
                         ) : (
                             <div className="text-center py-16 bg-slate-100 dark:bg-slate-900/20 rounded-[32px] border border-slate-200 dark:border-white/[0.03]">
                                 <Info className="h-10 w-10 text-slate-400 dark:text-slate-700 mx-auto mb-3" />
