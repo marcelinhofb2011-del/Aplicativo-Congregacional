@@ -42,7 +42,14 @@ import {
     Mic2,
     Video,
     LayoutGrid,
-    Search
+    Search,
+    Star,
+    MoreVertical,
+    Clock,
+    Layout,
+    Play,
+    Droplets,
+    Tv
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from '../contexts/ThemeContext';
@@ -73,8 +80,8 @@ const findNextUpcomingRange = <T extends { date: string, endDate?: string }>(ite
                 endDate.setUTCDate(start.getUTCDate() + 7);
             }
             
-            // For a range (like Cleaning), consider it valid if today is not past the end date
-            return today < endDate;
+            // For a range (like Cleaning), consider it valid if today is not past the end date (inclusive)
+            return today.getTime() <= endDate.getTime();
         })
         .sort((a, b) => parseDateAsUTC(a.date).getTime() - parseDateAsUTC(b.date).getTime())[0];
 };
@@ -137,7 +144,78 @@ const Dashboard: React.FC = () => {
     const [activeWeekRange, setActiveWeekRange] = useState<{ start: Date, end: Date } | null>(null);
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+    const [unreadAnnouncementsCount, setUnreadAnnouncementsCount] = useState(0);
+    const [unreadSchedulesCount, setUnreadSchedulesCount] = useState(0);
+    const notificationRef = useRef<HTMLDivElement>(null);
     const [expandedAnnouncement, setExpandedAnnouncement] = useState<string | null>(null);
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<UpcomingEvent[]>([]);
+
+    useEffect(() => {
+        if (!searchQuery.trim()) {
+            setSearchResults([]);
+            return;
+        }
+
+        const normalizedQuery = searchQuery.toLowerCase().trim();
+        
+        const allPossibleEvents: UpcomingEvent[] = schedules.map(s => {
+            const date = parseDateAsUTC(s.date);
+            const day = date.getUTCDay();
+
+            if ('week' in s) return { date, type: 'Vida e Ministério' as const, title: s.week, description: `Presidente: ${s.president || 'Não definido'}`, fullData: s };
+            
+            if (('president' in s || 'reader' in s || 'indicator1' in s || 'audio' in s) && !('week' in s) && !('speakerName' in s) && !('month' in s) && !('group' in s)) {
+                const title = (day === 0 || day === 6) ? 'Fim de Semana' : 'Meio de Semana';
+                return { date, type: 'Designações' as const, title: `Designações ${title}`, description: `Presidente: ${s.president || 'Não definido'}`, fullData: s };
+            }
+            
+            if ('group' in s && 'endDate' in s) {
+                const cleaning = s as CleaningSchedule;
+                const responsable = CLEANING_GROUPS[cleaning.group] || 'Equipe';
+                return { 
+                    date, 
+                    type: 'Limpeza' as const, 
+                    title: cleaning.group, 
+                    description: `Período: ${parseDateAsUTC(cleaning.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })} a ${parseDateAsUTC(cleaning.endDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })} • Responsáveis: ${responsable}`, 
+                    fullData: cleaning 
+                };
+            }
+            if ('conductorName' in s && !('month' in s)) return { date, type: 'Serviço de Campo' as const, title: 'Saída de campo', description: `Dirigente: ${s.conductorName}`, fullData: s };
+            if ('speakerName' in s && 'theme' in s) return { date, type: 'Discurso Público' as const, title: s.theme, description: `Orador: ${s.speakerName}`, fullData: s };
+            if ('conductorName' in s && 'month' in s) return { date, type: 'Dirigente 1º Dom' as const, title: 'Dirigente 1º Domingo', description: `Dirigente: ${s.conductorName}`, fullData: s };
+            if ('modality' in s && 'locationOrLink' in s) return { date, type: 'Reunião' as const, title: `Reunião ${s.modality}`, description: `Presidente: ${s.president || 'Não definido'}`, fullData: s };
+            
+            return null;
+        }).filter((e): e is UpcomingEvent => e !== null);
+
+        const results = allPossibleEvents.filter(event => {
+            const data = event.fullData as any;
+            const fieldsToSearch = [
+                data.president,
+                data.reader,
+                data.indicator1,
+                data.indicator2,
+                data.audio,
+                data.video,
+                data.mic1,
+                data.mic2,
+                data.speakerName,
+                data.conductorName,
+                data.treasuresTheme?.speaker,
+                data.spiritualGems?.speaker,
+                data.bibleReading?.student,
+                ...(data.assignedUids || [])
+            ];
+
+            return fieldsToSearch.some(field => 
+                typeof field === 'string' && field.toLowerCase().includes(normalizedQuery)
+            );
+        }).sort((a, b) => b.date.getTime() - a.date.getTime());
+
+        setSearchResults(results);
+    }, [searchQuery, schedules]);
 
     useEffect(() => {
         if (user) {
@@ -148,7 +226,56 @@ const Dashboard: React.FC = () => {
         }
     }, [user]);
 
-    const unreadCount = notifications.filter(n => !n.isRead).length;
+    const unreadCount = notifications.filter(n => !n.isRead).length + unreadAnnouncementsCount + unreadSchedulesCount;
+
+    useEffect(() => {
+        const lastCheckAnn = localStorage.getItem(`lastCheck_announcements_${user?.uid}`) || '0';
+        const lastCheckSched = localStorage.getItem(`lastCheck_schedules_${user?.uid}`) || '0';
+        
+        const lastCheckAnnDate = new Date(lastCheckAnn);
+        const lastCheckSchedDate = new Date(lastCheckSched);
+
+        const newAnns = announcements.filter(ann => new Date(ann.createdAt).getTime() > lastCheckAnnDate.getTime());
+        const newScheds = schedules.filter(s => new Date(s.createdAt).getTime() > lastCheckSchedDate.getTime());
+
+        setUnreadAnnouncementsCount(newAnns.length);
+        setUnreadSchedulesCount(newScheds.length);
+    }, [announcements, schedules, user]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+                setIsNotificationOpen(false);
+            }
+        };
+
+        if (isNotificationOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isNotificationOpen]);
+
+    const handleOpenNotifications = () => {
+        setIsNotificationOpen(!isNotificationOpen);
+        if (!isNotificationOpen) {
+            // Mark items as "seen" local-only
+            const now = new Date().toISOString();
+            localStorage.setItem(`lastCheck_announcements_${user?.uid}`, now);
+            localStorage.setItem(`lastCheck_schedules_${user?.uid}`, now);
+            setUnreadAnnouncementsCount(0);
+            setUnreadSchedulesCount(0);
+        }
+    };
+
+    const handleNotificationClick = async (notif: AppNotification) => {
+        await notificationService.markAsRead(notif.id);
+        if (notif.link) {
+            // Logic to navigate or scroll to the reference info
+        }
+        setIsNotificationOpen(false);
+    };
 
     useEffect(() => {
         const fetchAnnouncements = async () => {
@@ -361,7 +488,8 @@ const Dashboard: React.FC = () => {
             }
         }
 
-        setNextCleaning(findNextUpcomingRange(cleaningSchedules) || null);
+        const nextCl = findNextUpcomingRange(cleaningSchedules) || null;
+        setNextCleaning(nextCl);
         
         // Find next 3 cleaning cycles for the "Próximos Grupos" section
         // Skip the first one if it's already shown in the main cleaning card
@@ -369,11 +497,11 @@ const Dashboard: React.FC = () => {
             .filter(item => {
                 const endDate = parseDateAsUTC(item.endDate);
                 endDate.setUTCHours(23, 59, 59, 999);
-                return today < endDate;
+                return today.getTime() <= endDate.getTime(); // Use inclusive check consistently
             })
             .sort((a, b) => parseDateAsUTC(a.date).getTime() - parseDateAsUTC(b.date).getTime());
             
-        const nextGroups = sortedCleaning.length > 0 && findNextUpcomingRange(cleaningSchedules)?.id === sortedCleaning[0].id
+        const nextGroups = (nextCl && sortedCleaning.length > 0 && nextCl.id === sortedCleaning[0].id)
             ? sortedCleaning.slice(1, 4)
             : sortedCleaning.slice(0, 3);
             
@@ -443,10 +571,12 @@ const Dashboard: React.FC = () => {
 
     }, [user, schedules, isLoadingSchedules]);
     
-    const handleViewDetails = (event: ScheduleItem, type: UpcomingEvent['type']) => {
+    const handleViewDetails = (event: ScheduleItem, type: UpcomingEvent['type'], displayMode: DashboardSchedule['displayMode'] = 'full') => {
         let title = 'details';
         if ('week' in event) title = event.week;
         if ('president' in event && !('week' in event)) title = 'Reunião de Fim de Semana';
+        if (displayMode === 'midweek_part') title = 'Designação';
+        if (displayMode === 'weekend_talk') title = 'Discurso Público';
 
         setViewingSchedule({
             id: event.id,
@@ -455,484 +585,405 @@ const Dashboard: React.FC = () => {
             date: event.date,
             details: '',
             fullData: event as any,
+            displayMode: displayMode
+        });
+    };
+
+    const handlePartClick = (partName: string, speaker: string, date: string) => {
+        setViewingSchedule({
+            id: `part-${partName}`,
+            type: 'Vida e Ministério',
+            title: partName,
+            date: date,
+            details: speaker,
+            fullData: { speaker, partName },
+            displayMode: 'midweek_part'
         });
     };
 
     const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
 
     const weekRangeStr = activeWeekRange ? 
-        `${activeWeekRange.start.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} a ${new Date(activeWeekRange.end.getTime() - 86400000).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}` 
+        `${activeWeekRange.start.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })} a ${new Date(activeWeekRange.end.getTime() - 86400000).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}` 
         : '';
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-32 font-sans text-slate-900 dark:text-slate-100 overflow-x-hidden transition-colors duration-300">
-            {/* Optimized Background Accents - Subtler for both modes */}
-            <div className="fixed top-0 left-1/4 w-[500px] h-[500px] bg-indigo-600/[0.05] dark:bg-indigo-600/[0.03] rounded-full pointer-events-none -z-10 blur-[80px]"></div>
-            <div className="fixed bottom-0 right-1/4 w-[500px] h-[500px] bg-emerald-600/[0.04] dark:bg-emerald-600/[0.02] rounded-full pointer-events-none -z-10 blur-[80px]"></div>
+        <div className="min-h-screen bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-slate-100 font-sans selection:bg-indigo-500/30 overflow-x-hidden transition-colors duration-300 pb-32">
+            {/* New Header */}
+            <header className="px-6 pt-10 pb-6 flex items-center justify-between sticky top-0 bg-slate-50/80 dark:bg-[#070b14]/80 backdrop-blur-lg z-40">
+                <div className="flex items-center gap-2">
+                    <span className="text-xl font-bold tracking-tight text-indigo-600 dark:text-white uppercase">CONGREGAÇÃO</span>
+                </div>
+                <div className="flex items-center gap-4">
+                    <button 
+                        onClick={toggleTheme} 
+                        className="p-2 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white transition-colors"
+                        title={theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
+                    >
+                        {theme === 'dark' ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
+                    </button>
+                    <button 
+                        onClick={() => setIsSearchOpen(true)}
+                        className="p-2 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white transition-colors"
+                    >
+                        <Search className="h-6 w-6" />
+                    </button>
+                    <button 
+                        onClick={handleOpenNotifications}
+                        className={`p-2 relative transition-all duration-300 ${unreadCount > 0 ? 'text-amber-500 dark:text-amber-400 scale-110' : 'text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white'}`}
+                    >
+                        <Bell className={`h-6 w-6 ${unreadCount > 0 ? 'animate-bounce' : ''}`} />
+                        {unreadCount > 0 && (
+                            <span className="absolute top-0 right-0 h-5 w-5 bg-amber-500 text-white text-[10px] font-black rounded-full border-2 border-slate-50 dark:border-[#070b14] flex items-center justify-center shadow-lg">
+                                {unreadCount > 9 ? '9+' : unreadCount}
+                            </span>
+                        )}
+                    </button>
 
-            {/* Custom Header - Fixed top */}
-            <header className="fixed top-0 left-0 right-0 z-40 px-6 py-6 flex items-center justify-between bg-white/80 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-200 dark:border-white/[0.05] transition-colors">
-                <div className="flex items-center gap-3 max-w-2xl mx-auto w-full flex-row justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 border border-indigo-400/30 shadow-lg shadow-indigo-500/20 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-2xl flex items-center justify-center">
-                            <Home className="h-5 w-5 text-white" />
-                        </div>
-                        <div>
-                            <h1 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight font-outfit">Aplicativo da</h1>
-                            <p className="text-[10px] text-slate-700 dark:text-slate-500 font-bold uppercase tracking-widest font-sans">congregação</p>
-                        </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                        <button onClick={toggleTheme} className="p-2.5 text-slate-700 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white transition-colors">
-                            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                        </button>
-                        <div className="h-4 w-px bg-slate-200 dark:bg-white/[0.1] mx-1"></div>
-                        <button 
-                            onClick={() => setIsNotificationOpen(true)}
-                            className="p-2.5 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white relative transition-colors"
-                        >
-                            <Bell className="h-5 w-5" />
-                            {unreadCount > 0 && (
-                                <span className="absolute top-2 right-2 h-4 w-4 bg-rose-500 text-[9px] font-black text-white rounded-full border-2 border-white dark:border-slate-950 flex items-center justify-center">
-                                    {unreadCount > 9 ? '9+' : unreadCount}
-                                </span>
-                            )}
-                        </button>
-                        <button 
-                            onClick={logout}
-                            className="p-2.5 text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
-                            title="Sair"
-                        >
-                            <LogOut className="h-5 w-5" />
-                        </button>
-                    </div>
+                    {/* Notifications Popover */}
+                    <AnimatePresence>
+                        {isNotificationOpen && (
+                            <div 
+                                ref={notificationRef}
+                                className="absolute right-6 top-24 z-50"
+                            >
+                                <motion.div 
+                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    className="w-80 max-h-[80vh] bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+                                >
+                                    <div className="p-5 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-white/[0.02]">
+                                        <h3 className="font-black text-xs uppercase tracking-widest text-slate-400">Notificações</h3>
+                                        {notifications.some(n => !n.isRead) && (
+                                            <button 
+                                                onClick={() => user && notificationService.markAllAsRead(user.uid)}
+                                                className="text-[10px] font-bold text-indigo-500 hover:text-indigo-600 uppercase"
+                                            >
+                                                Ler tudo
+                                            </button>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="overflow-y-auto custom-scrollbar">
+                                        {(notifications.length === 0 && announcements.length === 0 && schedules.length === 0) ? (
+                                            <div className="p-10 text-center space-y-3">
+                                                <Bell className="h-10 w-10 text-slate-300 mx-auto opacity-20" />
+                                                <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Tudo limpo por aqui</p>
+                                            </div>
+                                        ) : (
+                                            <div className="divide-y divide-slate-50 dark:divide-white/5">
+                                                {/* Announcements in Notifications */}
+                                                {announcements.slice(0, 3).map(ann => (
+                                                    <div key={`ann-${ann.id}`} className="p-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors relative group">
+                                                        <div className="flex gap-4">
+                                                            <div className="h-10 w-10 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 flex-shrink-0">
+                                                                <Megaphone className="h-5 w-5" />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <p className="text-xs font-black text-slate-900 dark:text-white uppercase line-clamp-1">{ann.title}</p>
+                                                                <p className="text-[11px] text-slate-500 line-clamp-2">{ann.body}</p>
+                                                                <p className="text-[9px] font-bold text-slate-400 uppercase pt-1">Novo Anúncio</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+
+                                                {/* Schedule Updates (General) */}
+                                                {schedules.filter(s => {
+                                                    const lastCheck = localStorage.getItem(`lastCheck_schedules_${user?.uid}`) || '0';
+                                                    return new Date(s.createdAt).getTime() > new Date(lastCheck).getTime();
+                                                }).slice(0, 3).map(s => (
+                                                    <div key={`sched-${s.id}`} className="p-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors relative group">
+                                                        <div className="flex gap-4">
+                                                            <div className="h-10 w-10 bg-amber-50 dark:bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-600 dark:text-amber-500 flex-shrink-0">
+                                                                <Layout className="h-5 w-5" />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <p className="text-xs font-black text-slate-900 dark:text-white uppercase line-clamp-1">Programação Atualizada</p>
+                                                                <p className="text-[11px] text-slate-500 line-clamp-2">Novas designações foram lançadas para {parseDateAsUTC(s.date).toLocaleDateString('pt-BR')}.</p>
+                                                                <p className="text-[9px] font-bold text-amber-500 uppercase pt-1">Atualização</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+
+                                                {/* User Notifications */}
+                                                {notifications.map(notif => (
+                                                    <div 
+                                                        key={notif.id} 
+                                                        onClick={() => handleNotificationClick(notif)}
+                                                        className={`p-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer relative group ${!notif.isRead ? 'bg-indigo-50/30' : ''}`}
+                                                    >
+                                                        {!notif.isRead && (
+                                                            <div className="absolute left-2 top-1/2 -translate-y-1/2 h-1.5 w-1.5 bg-indigo-500 rounded-full"></div>
+                                                        )}
+                                                        <div className="flex gap-4">
+                                                            <div className="h-10 w-10 bg-slate-100 dark:bg-white/5 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400 flex-shrink-0">
+                                                                <Calendar className="h-5 w-5" />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <p className="text-xs font-black text-slate-900 dark:text-white uppercase line-clamp-1">{notif.title}</p>
+                                                                <p className="text-[11px] text-slate-500 line-clamp-2">{notif.description}</p>
+                                                                <p className="text-[9px] font-bold text-slate-400 uppercase pt-1">
+                                                                    {new Date(notif.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="p-4 border-t border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
+                                        <Link 
+                                            to="/announcements" 
+                                            onClick={() => setIsNotificationOpen(false)}
+                                            className="block text-center text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] hover:text-indigo-600 transition-colors"
+                                        >
+                                            Ver todos os anúncios
+                                        </Link>
+                                    </div>
+                                </motion.div>
+                            </div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </header>
 
-            {/* Spacer for fixed header */}
-            <div className="h-24"></div>
-
-            <main className="px-6 py-8 space-y-12 max-w-2xl mx-auto">
-                {/* Greeting & Date Section */}
-                <motion.section 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex flex-col gap-2"
-                >
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h2 className="text-3xl font-bold text-slate-900 dark:text-white font-outfit">Olá, {user?.displayName?.split(' ')[0] || 'Irmão'}</h2>
-                            <p className="text-sm text-slate-600 dark:text-slate-400 font-sans font-semibold mt-1">Veja sua programação para os próximos dias.</p>
-                        </div>
-                        <Link 
-                            to="/calendario" 
-                            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 rounded-2xl transition-all border border-indigo-500/10 group overflow-hidden relative"
-                        >
-                            <Calendar className="h-4 w-4 relative z-10" />
-                            <span className="text-[10px] font-bold font-sans uppercase tracking-[0.1em] relative z-10">Agenda</span>
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.05] to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                        </Link>
+            <main className="px-6 space-y-10">
+                {/* Hero / Greeting */}
+                <section className="pt-4 space-y-4">
+                    <div className="space-y-1">
+                        <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.25em]">ESTA SEMANA</p>
+                        <h2 className="text-5xl font-bold tracking-tight text-slate-900 dark:text-white">Olá, {user?.displayName?.split(' ')[0] || 'Irmão'}</h2>
+                        <p className="text-slate-500 dark:text-slate-400 text-lg font-medium leading-tight max-w-[300px]">
+                            Veja sua programação para os próximos dias de adoração e serviço.
+                        </p>
                     </div>
-                </motion.section>
 
-                {/* Week Heading Section */}
-                <motion.section 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                >
-                    <p className="text-[10px] font-bold tracking-[0.3em] text-indigo-500 uppercase mb-4 font-sans drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]">ESTA SEMANA</p>
-                    
-                    <div className="relative group">
-                        <h2 className="text-4xl sm:text-5xl font-bold tracking-tight font-outfit leading-tight lowercase first-letter:uppercase transition-all duration-500 group-hover:tracking-normal">
-                            {activeWeekRange ? (
-                                <>
-                                    <span className="text-slate-900 dark:text-white bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400">{activeWeekRange.start.getUTCDate()}–{new Date(activeWeekRange.end.getTime() - 86400000).getUTCDate()} de {activeWeekRange.end.toLocaleDateString('pt-BR', { month: 'long', timeZone: 'UTC' })}</span>
-                                    <br />
-                                    <span className="text-slate-900 dark:text-white">programação dessa semana</span>
-                                </>
-                            ) : (
-                                'programação da semana'
-                            )}
-                        </h2>
-                        <div className="h-1.5 w-16 bg-indigo-500 mt-8 rounded-full shadow-[0_0_20px_rgba(99,102,241,0.8)] dark:shadow-[0_0_20px_rgba(99,102,241,0.8)] group-hover:w-24 transition-all duration-500"></div>
-                    </div>
-                </motion.section>
+                    <button className="w-full h-14 bg-indigo-500 dark:bg-[#d8b4fe] hover:bg-indigo-600 dark:hover:bg-[#c084fc] text-white dark:text-[#4c1d95] rounded-2xl flex items-center justify-center gap-3 font-bold uppercase tracking-wider transition-all shadow-lg shadow-indigo-500/20 group">
+                        <Calendar className="h-6 w-6 group-hover:scale-110 transition-transform" />
+                        AGENDA
+                    </button>
+                </section>
 
-                {/* Personal Assignment Reminder (Modified to match image style) */}
-                <AnimatePresence>
-                    {nextAppointment && (
-                        <motion.div 
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            whileHover={{ scale: 1.01 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="bg-white dark:bg-[#0f172a] border border-indigo-100 dark:border-indigo-500/30 rounded-[32px] p-7 flex items-center justify-between group cursor-pointer hover:bg-slate-50 dark:hover:bg-[#131c33] transition-all shadow-[0_20px_40px_rgba(0,0,0,0.05)] dark:shadow-[0_20px_40px_rgba(79,70,229,0.05)] relative overflow-hidden"
-                            onClick={() => handleViewDetails(nextAppointment.fullData, nextAppointment.type)}
-                        >
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full blur-[40px] -mr-16 -mt-16 pointer-events-none"></div>
-                            <div className="flex items-center gap-6 relative z-10">
-                                <div className="h-16 w-16 rounded-[24px] bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center text-white shadow-[0_10px_25px_rgba(99,102,241,0.4)] border border-indigo-400/30 group-hover:rotate-6 transition-transform">
-                                    <BookOpen className="h-8 w-8" />
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-300 uppercase tracking-[0.2em] font-sans">DESIGNADO PARA VOCÊ</p>
-                                    <p className="text-2xl font-bold text-slate-900 dark:text-white leading-tight font-outfit">{nextAppointment.type}</p>
-                                    <p className="text-sm text-indigo-700 dark:text-indigo-400/70 font-sans font-bold lowercase first-letter:uppercase">
-                                        {new Date(nextAppointment.date).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', timeZone: 'UTC' })}
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="h-12 w-12 rounded-full flex items-center justify-center text-indigo-500 dark:text-indigo-400 group-hover:translate-x-2 transition-transform relative z-10">
-                                <ChevronRight className="h-8 w-8" />
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Midweek Card */}
-                <motion.section 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.15 }}
-                    className="bg-white dark:bg-slate-900/80 rounded-[40px] p-10 border border-slate-200 dark:border-white/[0.05] relative shadow-2xl shadow-indigo-500/5 group hover:border-indigo-500/20 transition-all hover:bg-slate-100 dark:hover:bg-slate-900"
-                >
-                    <div className="absolute top-8 right-8 h-12 w-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-500 dark:text-indigo-400 border border-indigo-500/20 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
-                        <BookOpen className="h-6 w-6" />
-                    </div>
-                    
-                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-10 font-outfit flex items-center gap-4">
-                        <span className="h-8 w-1 bg-indigo-500 rounded-full shadow-[0_0_15px_rgba(99,102,241,0.8)] group-hover:h-10 transition-all duration-500"></span>
-                        Reunião Meio de Semana
+                {/* Date Splitter */}
+                <section className="flex items-center gap-6">
+                    <h3 className="text-4xl font-bold text-slate-900 dark:text-white whitespace-nowrap tracking-tight">
+                        {activeWeekRange ? (
+                            `${activeWeekRange.start.getUTCDate()}–${new Date(activeWeekRange.end.getTime() - 86400000).getUTCDate()} de ${activeWeekRange.end.toLocaleDateString('pt-BR', { month: 'long', timeZone: 'UTC' })}`
+                        ) : (
+                            'Carregando...'
+                        )}
                     </h3>
-                    
-                    <div className="space-y-10">
-                        {/* President Header */}
-                        <div className="flex items-center gap-4 p-4 bg-indigo-500/[0.03] dark:bg-indigo-500/[0.05] border border-indigo-500/10 rounded-3xl group-hover:bg-indigo-500/[0.08] transition-colors">
-                            <div className="h-10 w-10 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                                <User className="h-5 w-5" />
-                            </div>
-                            <div className="space-y-0.5">
-                                <p className="text-[10px] font-bold text-indigo-500/80 uppercase tracking-widest">Presidente da Reunião</p>
-                                <p className="text-lg font-bold text-slate-900 dark:text-white font-outfit">
-                                    {nextMidweekAssignment?.president || nextLifeMinistry?.president || 'Não definido'}
-                                </p>
-                            </div>
-                        </div>
+                    <div className="h-[2px] flex-1 bg-gradient-to-r from-slate-200 dark:from-slate-800 to-transparent"></div>
+                </section>
 
-                        {/* Parts with Icons */}
-                        <div className="space-y-6">
-                            <PremiumPartItem 
-                                icon={<Library className="h-5 w-5" />}
-                                iconColor="bg-indigo-500/20 text-indigo-400 border-indigo-500/10"
-                                label="Tesouro da Palavra de Deus"
-                                value={nextLifeMinistry?.treasuresTheme?.speaker || 'Não definido'}
-                            />
-                            <PremiumPartItem 
-                                icon={<Gem className="h-5 w-5" />}
-                                iconColor="bg-emerald-500/20 text-emerald-400 border-emerald-500/10"
-                                label="Jóias espirituais"
-                                value={nextLifeMinistry?.spiritualGems?.speaker || 'Não definido'}
-                            />
-                            <PremiumPartItem 
-                                icon={<Book className="h-5 w-5" />}
-                                iconColor="bg-amber-500/20 text-amber-400 border-amber-500/10"
-                                label="Leitura da Bíblia"
-                                value={nextLifeMinistry?.bibleReading?.student || 'Não definido'}
-                            />
-                        </div>
-
-                        <div className="relative">
-                            <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-200 dark:via-white/[0.05] to-transparent"></div>
-                            <div className="absolute left-1/2 -translate-x-1/2 -top-2 px-4 bg-slate-50 dark:bg-slate-900 backdrop-blur-md rounded-full border border-slate-200 dark:border-white/[0.05] text-[8px] font-bold text-slate-600 dark:text-slate-500 tracking-[0.3em] uppercase">Designações</div>
-                        </div>
-
-                        {/* General Assignments with Dots */}
-                        <div className="space-y-6">
-                            <DutyItem 
-                                label="INDICADORES" 
-                                value={`${nextMidweekAssignment?.indicator1 || 'Não definido'}${nextMidweekAssignment?.indicator2 ? ` / ${nextMidweekAssignment.indicator2}` : ''}`} 
-                                dotColor="bg-indigo-500"
-                            />
-                            <DutyItem 
-                                label="ÁUDIO E VÍDEO" 
-                                value={`${nextMidweekAssignment?.audio || 'Não definido'}${nextMidweekAssignment?.video ? ` / ${nextMidweekAssignment.video}` : ''}`} 
-                                dotColor="bg-indigo-500"
-                            />
-                            <DutyItem 
-                                label="MICROFONE" 
-                                value={`${nextMidweekAssignment?.mic1 || 'Não definido'}${nextMidweekAssignment?.mic2 ? ` / ${nextMidweekAssignment.mic2}` : ''}`} 
-                                dotColor="bg-indigo-500"
-                            />
-                        </div>
-                    </div>
-                </motion.section>
-
-                {/* Weekend Card */}
-                <motion.section 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.25 }}
-                    className="bg-white dark:bg-slate-900/80 rounded-[40px] p-10 border border-slate-200 dark:border-white/[0.05] relative shadow-2xl shadow-emerald-500/5 group hover:border-emerald-500/20 transition-all hover:bg-slate-100 dark:hover:bg-slate-900"
-                >
-                    <div className="absolute top-8 right-8 h-12 w-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-500 dark:text-emerald-400 border border-emerald-500/20 group-hover:scale-110 group-hover:-rotate-3 transition-all duration-500">
-                        <Home className="h-6 w-6" />
-                    </div>
-
-                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-10 font-outfit flex items-center gap-4">
-                        <span className="h-8 w-1 bg-emerald-500 rounded-full shadow-[0_0_15px_rgba(16,185,129,0.8)] group-hover:h-10 transition-all duration-500"></span>
-                        Reunião de Final de Semana
-                    </h3>
-                    
-                    <div className="bg-emerald-500/[0.04] dark:bg-emerald-500/[0.04] border border-emerald-100 dark:border-emerald-500/20 rounded-[32px] p-8 mb-10 group-hover:bg-emerald-500/10 transition-colors">
-                        <p className="text-[10px] font-bold tracking-[0.2em] text-emerald-500 uppercase mb-4 font-sans">DISCURSO PÚBLICO</p>
-                        <h4 className="text-2xl font-bold text-slate-900 dark:text-white leading-snug mb-3 font-outfit">
-                            {nextPublicTalk?.theme || 'Tema não definido'}
-                        </h4>
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="h-8 w-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400">
-                                <User className="h-4 w-4" />
-                            </div>
-                            <p className="text-sm font-bold text-slate-700 dark:text-slate-400 font-sans uppercase tracking-tight">
-                                {nextPublicTalk?.speakerName || 'Orador não definido'} 
-                                <span className="mx-2 text-slate-300 dark:text-slate-700">•</span> 
-                                {nextPublicTalk?.congregation || 'Local'}
-                            </p>
-                        </div>
-
-                        <div className="h-px w-full bg-emerald-500/10 mb-6"></div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            <div className="space-y-1">
-                                <p className="text-[9px] font-bold text-emerald-600/70 uppercase tracking-widest font-sans">Presidente</p>
-                                <p className="text-base font-bold text-slate-900 dark:text-white font-outfit">
-                                    {nextWeekendAssignment?.president || 'Não definido'}
-                                </p>
-                            </div>
-                            <div className="space-y-1">
-                                <p className="text-[9px] font-bold text-emerald-600/70 uppercase tracking-widest font-sans">Leitor Sentinela</p>
-                                <p className="text-base font-bold text-slate-900 dark:text-white font-outfit">
-                                    {nextWeekendAssignment?.reader || 'Não definido'}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="space-y-6">
-                        <DutyItem 
-                            label="INDICADORES" 
-                            value={`${nextWeekendAssignment?.indicator1 || 'Não definido'}${nextWeekendAssignment?.indicator2 ? ` / ${nextWeekendAssignment.indicator2}` : ''}`} 
-                            dotColor="bg-emerald-500"
-                        />
-                        <DutyItem 
-                            label="MICROFONE" 
-                            value={`${nextWeekendAssignment?.mic1 || 'Não definido'}${nextWeekendAssignment?.mic2 ? ` / ${nextWeekendAssignment.mic2}` : ''}`} 
-                            dotColor="bg-emerald-500"
-                        />
-                        <DutyItem 
-                            label="ÁUDIO E VÍDEO" 
-                            value={`${nextWeekendAssignment?.audio || 'Não definido'}${nextWeekendAssignment?.video ? ` / ${nextWeekendAssignment.video}` : ''}`} 
-                            dotColor="bg-indigo-500"
-                        />
-                    </div>
-                </motion.section>
-
-                {/* Small Cards Grid - Compacted */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pb-8">
-                    {/* Dirigente Sábado */}
-                    <motion.div 
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.35 }}
-                        className="bg-white dark:bg-slate-900/80 rounded-[28px] p-6 border border-slate-200 dark:border-white/[0.05] flex flex-col justify-between min-h-[150px] group transition-all hover:bg-slate-50 dark:hover:bg-slate-900 hover:border-indigo-500/20"
-                    >
-                        <div className="flex items-start justify-between">
-                            <div className="space-y-4">
-                                <p className="text-[10px] font-bold tracking-[0.15em] text-slate-600 dark:text-slate-500 uppercase font-sans">DIRIGENTE SÁBADO</p>
-                                <div className="flex items-center gap-4">
-                                    <div className="h-10 w-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 group-hover:scale-110 transition-transform flex-shrink-0">
-                                        <Users className="h-5 w-5" />
-                                    </div>
-                                    <div className="space-y-0.5">
-                                        <p className="text-[9px] font-bold text-slate-500 dark:text-slate-500 uppercase tracking-tighter">RESPONSÁVEL</p>
-                                        <p className="text-lg font-bold text-slate-900 dark:text-white font-outfit line-clamp-1">
-                                            {nextFieldService?.conductorName || 'Não definido'}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/[0.03] flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <Calendar className="h-3 w-3 text-indigo-500" />
-                                <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 font-sans uppercase tracking-[0.1em]">
-                                    {nextFieldService ? new Date(nextFieldService.date).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: 'UTC' }) : 'Sem data'}
-                                </p>
-                            </div>
-                            <ChevronRight className="h-4 w-4 text-slate-400 dark:text-slate-700" />
-                        </div>
-                    </motion.div>
-
-                    {/* Dirigente 1º Domingo */}
-                    <motion.div 
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.45 }}
-                        className="bg-white dark:bg-slate-900/80 rounded-[28px] p-6 border border-slate-200 dark:border-white/[0.05] flex flex-col justify-between min-h-[150px] relative overflow-hidden group hover:bg-slate-50 dark:hover:bg-slate-900 hover:border-rose-500/20 transition-all"
-                    >
-                        <div className="flex items-start justify-between">
-                            <div className="space-y-4">
-                                <p className="text-[10px] font-bold tracking-[0.15em] text-rose-600 dark:text-rose-500 uppercase font-sans">DIRIGENTE 1º DOMINGO</p>
-                                <div className="flex items-center gap-4">
-                                    <div className="h-10 w-10 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-600 dark:text-rose-400 border border-rose-500/20 group-hover:scale-110 transition-transform flex-shrink-0">
-                                        <Users className="h-5 w-5" />
-                                    </div>
-                                    <div className="space-y-0.5">
-                                        <p className="text-[9px] font-bold text-slate-500 dark:text-slate-500 uppercase tracking-tighter">RESPONSÁVEL</p>
-                                        <p className="text-lg font-bold text-slate-900 dark:text-white font-outfit line-clamp-1">
-                                            {nextFirstSundayConductor?.conductorName || 'Não definido'}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <ChevronRight className="h-4 w-4 text-slate-500 dark:text-slate-700 group-hover:translate-x-1 transition-transform" />
-                        </div>
-                        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/[0.03]">
-                            <div className="flex items-center gap-2">
-                                <Calendar className="h-3 w-3 text-rose-500" />
-                                <p className="text-[10px] font-bold text-rose-600 dark:text-rose-400/80 font-sans uppercase tracking-[0.1em]">
-                                    {nextFirstSundayConductor ? new Date(nextFirstSundayConductor.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', timeZone: 'UTC' }) : 'Sem data'}
-                                </p>
-                            </div>
-                        </div>
-                    </motion.div>
-
-                    {/* Limpeza Card */}
-                    <motion.div 
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.55 }}
-                        className="bg-white dark:bg-slate-900/80 rounded-[28px] p-6 border border-slate-200 dark:border-white/[0.05] flex flex-col justify-between min-h-[150px] group hover:bg-slate-50 dark:hover:bg-slate-900 hover:border-amber-500/20 transition-all"
-                    >
-                        <div className="space-y-4">
-                            <p className="text-[10px] font-bold tracking-[0.2em] text-amber-700 dark:text-amber-500 uppercase font-sans">LIMPEZA DO SALÃO</p>
+                {/* Midweek Meeting Card */}
+                <section>
+                    <div className="bg-white dark:bg-[#0f141f] border border-slate-200 dark:border-white/[0.03] rounded-3xl p-8 space-y-8 relative overflow-hidden shadow-xl shadow-slate-200/50 dark:shadow-2xl transition-all hover:bg-slate-50 dark:hover:bg-[#131a29]">
+                        {/* Decorative background icon */}
+                        <Library className="absolute -right-4 -top-4 h-32 w-32 text-slate-200 dark:text-white/[0.02] -rotate-12 pointer-events-none" />
+                        
+                        {/* Title Row */}
+                        <div className="flex items-center justify-between relative z-10">
                             <div className="flex items-center gap-4">
-                                <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-700 dark:text-amber-400 border border-amber-500/20 group-hover:rotate-6 transition-transform flex-shrink-0">
-                                    <LayoutGrid className="h-5 w-5" />
+                                <BookOpen className="h-7 w-7 text-indigo-600 dark:text-white" />
+                                <h4 className="text-2xl font-bold text-slate-900 dark:text-white">Reunião Meio de Semana</h4>
+                            </div>
+                        </div>
+
+                        {/* President Block */}
+                        <div className="bg-slate-100 dark:bg-[#1f2937]/40 rounded-3xl p-5 flex items-center gap-5 border border-slate-200 dark:border-white/[0.05] relative z-10">
+                            <div className="h-14 w-14 bg-white dark:bg-[#2e3744] rounded-2xl flex items-center justify-center text-slate-400 dark:text-slate-300 shadow-sm dark:shadow-inner">
+                                <User className="h-8 w-8" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest leading-none mb-1">PRESIDENTE</p>
+                                <p className="text-xl font-bold text-slate-900 dark:text-white">{nextMidweekAssignment?.president || nextLifeMinistry?.president || 'Não definido'}</p>
+                            </div>
+                        </div>
+
+                        {/* Meeting Parts */}
+                        <div className="space-y-6 pt-2 relative z-10">
+                            <PartListItem icon={<LayoutGrid className="h-5 w-5" />} label="Tesouro da Palavra" value={nextLifeMinistry?.treasuresTheme?.speaker || 'Não definido'} />
+                            <PartListItem icon={<Gem className="h-5 w-5" />} label="Joias Espirituais" value={nextLifeMinistry?.spiritualGems?.speaker || 'Não definido'} />
+                            <PartListItem icon={<Book className="h-5 w-5" />} label="Leitura da Bíblia" value={nextLifeMinistry?.bibleReading?.student || 'Não definido'} />
+                        </div>
+
+                        {/* Assignments Block */}
+                        <div className="bg-slate-50 dark:bg-black/20 rounded-[32px] p-7 space-y-7 relative z-10 border border-slate-100 dark:border-transparent">
+                            <h5 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em] text-center mb-2">DESIGNAÇÕES</h5>
+                            <div className="space-y-6">
+                                <AssignmentBullet label="INDICADORES" value={nextMidweekAssignment ? `${nextMidweekAssignment.indicator1 || 'N/A'}${nextMidweekAssignment.indicator2 ? ` / ${nextMidweekAssignment.indicator2}` : ''}` : 'N/A'} color="bg-purple-500" />
+                                <AssignmentBullet label="ÁUDIO E VÍDEO" value={nextMidweekAssignment ? `${nextMidweekAssignment.audio || 'N/A'}${nextMidweekAssignment.video ? ` / ${nextMidweekAssignment.video}` : ''}` : 'N/A'} color="bg-cyan-500" />
+                                <AssignmentBullet label="MICROFONE" value={nextMidweekAssignment ? `${nextMidweekAssignment.mic1 || 'N/A'}${nextMidweekAssignment.mic2 ? ` / ${nextMidweekAssignment.mic2}` : ''}` : 'N/A'} color="bg-orange-500" />
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Weekend Meeting Card */}
+                <section>
+                    <div className="bg-white dark:bg-[#0f172a] border-l-4 border-cyan-500 rounded-3xl p-8 space-y-8 shadow-xl shadow-slate-200/50 dark:shadow-2xl relative overflow-hidden border-y border-r border-slate-100 dark:border-transparent">
+                        {/* Title Row */}
+                        <div className="flex items-center justify-between">
+                            <h4 className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">Reunião de Fim de Semana</h4>
+                            <Home className="h-7 w-7 text-cyan-600 dark:text-cyan-400" />
+                        </div>
+
+                        {/* Talk Special Box */}
+                        <div className="border border-cyan-200 dark:border-cyan-500/30 bg-cyan-50 dark:bg-cyan-500/5 rounded-[32px] p-6 space-y-4">
+                            <div>
+                                <p className="text-[11px] font-black text-cyan-600 dark:text-cyan-400 uppercase tracking-widest mb-1">DISCURSO PÚBLICO</p>
+                                <h5 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">
+                                    {nextPublicTalk?.theme || 'Tema não definido'}
+                                </h5>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 bg-cyan-100 dark:bg-cyan-500/20 rounded-xl flex items-center justify-center text-cyan-600 dark:text-cyan-400">
+                                    <User className="h-6 w-6" />
                                 </div>
-                                <div className="space-y-0.5 min-w-0">
-                                    <p className="text-lg font-bold text-slate-900 dark:text-white font-outfit truncate">{nextCleaning?.group || 'Nenhum grupo'}</p>
-                                    {nextCleaning?.group && CLEANING_GROUPS[nextCleaning.group] && (
-                                        <p className="text-[9px] font-bold text-slate-600 dark:text-slate-500 font-sans uppercase tracking-tight line-clamp-1">
-                                            {CLEANING_GROUPS[nextCleaning.group]}
-                                        </p>
-                                    )}
+                                <div>
+                                    <p className="text-sm font-bold text-slate-900 dark:text-white uppercase">{nextPublicTalk?.speakerName || 'N/A'}</p>
+                                    <p className="text-[10px] font-bold text-cyan-600/60 dark:text-cyan-400/60 uppercase tracking-wider">{nextPublicTalk?.congregation || 'LOCAL'}</p>
                                 </div>
                             </div>
                         </div>
-                        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/[0.03]">
-                            <p className="text-[10px] font-bold text-amber-600/70 dark:text-amber-400/60 font-sans uppercase tracking-[0.15em]">
-                                {nextCleaning ? `${new Date(nextCleaning.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })} a ${new Date(nextCleaning.endDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}` : 'Sem data'}
-                            </p>
-                        </div>
-                    </motion.div>
 
-                    {/* Próximos Grupos Card - Compacted as well */}
-                    <motion.div 
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.65 }}
-                        className="bg-white dark:bg-slate-900/80 rounded-[28px] p-6 border border-slate-200 dark:border-white/[0.05] flex flex-col justify-between min-h-[150px] group hover:bg-slate-50 dark:hover:bg-slate-900 hover:border-emerald-500/20 transition-all"
-                    >
-                        <div className="space-y-3">
-                            <p className="text-[10px] font-bold tracking-[0.2em] text-emerald-600 dark:text-emerald-500 uppercase font-sans">PRÓXIMOS GRUPOS</p>
-                            <div className="grid grid-cols-1 gap-2">
-                                {nextCleaningGroups.length > 0 ? (
-                                    nextCleaningGroups.map((group, idx) => (
-                                        <div key={group.id || idx} className="flex items-center justify-between gap-2">
-                                            <div className="flex items-center gap-2 min-w-0">
-                                                <div className="h-5 w-5 rounded-md bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex-shrink-0">
-                                                    <span className="text-[8px] font-bold uppercase">{group.group.split(' ')[1] || 'G'}</span>
-                                                </div>
-                                                <span className="text-[11px] font-bold text-slate-900 dark:text-white font-sans truncate">{group.group}</span>
-                                            </div>
-                                            <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 font-sans uppercase tracking-tighter flex-shrink-0">
-                                                {new Date(group.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}
-                                            </span>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p className="text-[10px] text-slate-500 font-sans">Sem programações</p>
-                                )}
+                        {/* Additional Weekend Info */}
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">PRESIDENTE</p>
+                                <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{nextWeekendAssignment?.president || 'Não definido'}</p>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">LEITOR SENTINELA</p>
+                                <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{nextWeekendAssignment?.reader || 'Não definido'}</p>
                             </div>
                         </div>
-                    </motion.div>
-                </div>
+                    </div>
+                </section>
 
+                {/* Service Card */}
+                <section>
+                    <div className="bg-white dark:bg-[#111827] border border-slate-100 dark:border-white/5 rounded-3xl p-7 flex items-center justify-between group cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all shadow-lg shadow-slate-200/30 dark:shadow-none">
+                        <div className="flex flex-col gap-2">
+                            <h4 className="text-lg font-bold text-slate-700 dark:text-slate-100 flex items-center gap-3 uppercase tracking-wider">
+                                DIRIGENTE SÁBADO
+                                <ChevronRight className="h-5 w-5 text-slate-400 dark:text-slate-600 group-hover:translate-x-1 transition-transform" />
+                            </h4>
+                            <p className="text-xl font-bold text-slate-900 dark:text-white">{nextFieldService?.conductorName || 'N/A'}</p>
+                            <div className="flex items-center gap-2 text-slate-500 mt-1">
+                                <Calendar className="h-4 w-4" />
+                                <span className="text-xs font-bold uppercase tracking-widest">SÁB., {nextFieldService?.date ? parseDateAsUTC(nextFieldService.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' }) : 'N/A'}</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Cleaning Card */}
+                <section>
+                    <div className="bg-white dark:bg-[#111827] border-l-4 border-amber-500 rounded-3xl p-8 space-y-8 shadow-xl shadow-slate-200/50 dark:shadow-2xl border-y border-r border-slate-100 dark:border-transparent">
+                        <div className="flex items-center gap-6">
+                            <div className="h-18 w-18 rounded-[28px] bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-500 border border-amber-100 dark:border-amber-500/20">
+                                <Droplets className="h-10 w-10" />
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-[11px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest leading-none">LIMPEZA DO SALÃO</p>
+                                <h4 className="text-2xl font-bold text-slate-900 dark:text-white">{nextCleaning?.group || 'Grupo não definido'}</h4>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                    {nextCleaning ? `${CLEANING_GROUPS[nextCleaning.group] || 'Responsáveis'} • ${parseDateAsUTC(nextCleaning.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })} a ${parseDateAsUTC(nextCleaning.endDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}` : '--'}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Future Cleaning Groups */}
+                        <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-white/5">
+                            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em]">PRÓXIMOS GRUPOS</p>
+                            {nextCleaningGroups.length > 0 ? (
+                                nextCleaningGroups.map((group, idx) => (
+                                    <div key={idx} className="flex items-center justify-between py-1">
+                                        <p className="text-base font-bold text-slate-700 dark:text-slate-300">{group.group}</p>
+                                        <p className="text-sm font-bold text-slate-400 dark:text-slate-500">{parseDateAsUTC(group.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}</p>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-sm italic text-slate-400 dark:text-slate-600">Nenhum grupo futuro</p>
+                            )}
+                        </div>
+                    </div>
+                </section>
 
                 {/* Announcements Section */}
-                <section className="space-y-8 pt-8">
+                <section className="pb-12 space-y-6">
                     <div className="flex items-center justify-between">
-                        <h3 className="text-2xl font-bold text-slate-900 dark:text-white font-outfit">Anúncios</h3>
-                        <Link to="/announcements" className="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 transition-colors font-sans uppercase tracking-[0.1em]">Ver todas</Link>
+                        <h3 className="text-3xl font-bold text-slate-900 dark:text-white">Anúncios</h3>
+                        <Link to="/announcements" className="text-sm font-black text-slate-500 uppercase tracking-widest hover:text-indigo-600 dark:hover:text-white transition-colors">VER TODAS</Link>
                     </div>
-
-                    <div className="space-y-5 pb-12">
-                        {isLoadingAnnouncements ? (
-                            [1, 2].map(i => <div key={i} className="h-28 bg-slate-200 dark:bg-slate-900/40 rounded-[32px] animate-pulse border border-slate-100 dark:border-white/[0.05]"></div>)
-                        ) : announcements.length > 0 ? (
-                            announcements.slice(0, 3).map((ann, idx) => {
-                                const isExpanded = expandedAnnouncement === ann.id;
-                                return (
-                                    <motion.div 
-                                        key={ann.id} 
-                                        layout
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ 
-                                            delay: 0.7 + (idx * 0.1),
-                                            layout: { duration: 0.3, ease: "easeOut" }
-                                        }}
-                                        onClick={() => setExpandedAnnouncement(isExpanded ? null : ann.id)}
-                                        className={`bg-white dark:bg-slate-900/80 p-8 rounded-[32px] border border-slate-200 dark:border-white/[0.05] flex items-start gap-6 group cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900 transition-all shadow-md dark:shadow-lg ${isExpanded ? 'ring-1 ring-indigo-500/30' : ''}`}
-                                    >
-                                        <div className="h-16 w-16 rounded-[24px] bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 flex-shrink-0 group-hover:scale-110 transition-transform">
-                                            {ann.title.toLowerCase().includes('manutenção') ? <Monitor className="h-8 w-8" /> : 
-                                             ann.title.toLowerCase().includes('urgente') ? <ShieldCheck className="h-8 w-8 text-rose-500 dark:text-rose-400" /> :
-                                             <Megaphone className="h-8 w-8" />}
-                                        </div>
-                                        <div className="flex-1 min-w-0 space-y-1 py-1">
-                                            <h4 className="text-lg font-bold text-slate-900 dark:text-white truncate font-outfit uppercase tracking-tight">{ann.title}</h4>
-                                            <p className={`text-sm text-slate-700 dark:text-slate-400 leading-relaxed font-sans transition-all duration-300 ${isExpanded ? 'whitespace-pre-wrap' : 'line-clamp-2'}`}>
-                                                {ann.body}
-                                            </p>
-                                            {isExpanded && ann.date && (
-                                                <div className="pt-2">
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                                        Publicado em {new Date(ann.date).toLocaleDateString('pt-BR')}
+                    <div className="space-y-4">
+                        {announcements.slice(0, 3).map((ann) => {
+                            const isExpanded = expandedAnnouncement === ann.id;
+                            return (
+                                <motion.div 
+                                    key={ann.id}
+                                    layout
+                                    className="bg-white dark:bg-[#111827] border border-slate-100 dark:border-white/5 p-6 rounded-3xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all shadow-md dark:shadow-none overflow-hidden"
+                                    onClick={() => setExpandedAnnouncement(isExpanded ? null : ann.id)}
+                                >
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="flex items-start gap-6">
+                                            <div className="h-16 w-16 bg-slate-50 dark:bg-[#1f2937] rounded-[24px] flex-shrink-0 flex items-center justify-center text-slate-400 dark:text-slate-300">
+                                                <Megaphone className="h-7 w-7" />
+                                            </div>
+                                            <div className="space-y-2 pt-1">
+                                                <h4 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight leading-tight">{ann.title}</h4>
+                                                <p className={`text-sm text-slate-500 font-medium ${isExpanded ? '' : 'line-clamp-1'}`}>{ann.body}</p>
+                                                {isExpanded && ann.images && ann.images.length > 0 && (
+                                                    <div className="grid grid-cols-1 gap-4 mt-4">
+                                                        {ann.images.map((img, i) => (
+                                                            <img key={i} src={img} alt="" className="rounded-2xl w-full object-cover max-h-60" referrerPolicy="no-referrer" />
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                {isExpanded && (
+                                                    <p className="text-[10px] font-bold text-slate-400 pt-2 uppercase tracking-widest">
+                                                        Publicado em {parseDateAsUTC(ann.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                                     </p>
-                                                </div>
-                                            )}
+                                                )}
+                                            </div>
                                         </div>
-                                        <motion.div
-                                            animate={{ rotate: isExpanded ? 90 : 0 }}
-                                            transition={{ duration: 0.2 }}
-                                        >
-                                            <ChevronRight className="h-6 w-6 text-slate-400 dark:text-slate-700 group-hover:translate-x-2 transition-all" />
-                                        </motion.div>
-                                    </motion.div>
-                                );
-                            })
-                        ) : (
-                            <div className="text-center py-16 bg-slate-100 dark:bg-slate-900/20 rounded-[32px] border border-slate-200 dark:border-white/[0.03]">
-                                <Info className="h-10 w-10 text-slate-400 dark:text-slate-700 mx-auto mb-3" />
-                                <p className="text-sm text-slate-500 font-sans">Nenhum anúncio no momento.</p>
-                            </div>
-                        )}
+                                        <div className={`mt-5 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`}>
+                                            <ChevronRight className="h-6 w-6 text-slate-300 dark:text-slate-700" />
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            );
+                        })}
                     </div>
                 </section>
             </main>
+
+            {/* Fixed Bottom Tab Bar */}
+            <nav className="fixed bottom-0 left-0 right-0 h-24 bg-white/80 dark:bg-[#070b14]/90 backdrop-blur-2xl border-t border-slate-200 dark:border-white/5 z-50 px-6 flex items-center justify-between shadow-[0_-10px_20px_rgba(0,0,0,0.05)] dark:shadow-[0_-10px_20px_rgba(0,0,0,0.5)] transition-colors">
+                <BottomNavItem icon={<Home />} label="Início" active theme={theme} />
+                <BottomNavItem icon={<Book />} label="Pioneiro" theme={theme} />
+                <BottomNavItem icon={<Users />} label="Assistência" theme={theme} />
+                <BottomNavItem icon={<LayoutGrid />} label="Menu" theme={theme} />
+            </nav>
+
+            {/* Search Overlay */}
+            <SearchOverlay 
+                isOpen={isSearchOpen}
+                onClose={() => {
+                    setIsSearchOpen(false);
+                    setSearchQuery('');
+                }}
+                query={searchQuery}
+                onQueryChange={setSearchQuery}
+                results={searchResults}
+            />
 
             <NotificationOverlay 
                 isOpen={isNotificationOpen} 
@@ -949,26 +1000,147 @@ const Dashboard: React.FC = () => {
     );
 };
 
-const PremiumPartItem: React.FC<{ icon: React.ReactNode, iconColor: string, label: string, value: string }> = ({ icon, iconColor, label, value }) => (
-    <div className="flex items-center justify-between gap-6 group/item">
-        <div className="flex items-center gap-5">
-            <div className={`h-12 w-12 rounded-2xl flex items-center justify-center border transition-all duration-500 group-hover/item:scale-110 ${iconColor}`}>
-                {icon}
-            </div>
-            <p className="text-base font-bold text-slate-900 dark:text-white font-outfit tracking-tight">{label}</p>
+const SearchOverlay: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    query: string;
+    onQueryChange: (q: string) => void;
+    results: UpcomingEvent[];
+}> = ({ isOpen, onClose, query, onQueryChange, results }) => {
+    return (
+        <AnimatePresence>
+            {isOpen && (
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-[60] bg-slate-900/40 dark:bg-black/80 backdrop-blur-md flex flex-col p-6 overflow-y-auto"
+                >
+                    <div className="w-full max-w-2xl mx-auto space-y-6 pt-12 pb-32">
+                        <div className="flex items-center justify-between mb-2">
+                            <h2 className="text-2xl font-bold text-white">Buscar Designação</h2>
+                            <button 
+                                onClick={onClose}
+                                className="p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all"
+                            >
+                                <LogOut className="h-6 w-6 rotate-180" />
+                            </button>
+                        </div>
+                        
+                        <div className="relative">
+                            <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-6 w-6 text-slate-400" />
+                            <input 
+                                autoFocus
+                                type="text"
+                                value={query}
+                                onChange={(e) => onQueryChange(e.target.value)}
+                                placeholder="Digite seu nome..."
+                                className="w-full h-16 pl-14 pr-6 bg-white dark:bg-slate-800 rounded-3xl text-slate-900 dark:text-white font-bold text-lg border-none focus:ring-4 focus:ring-indigo-500/50 transition-all placeholder:text-slate-400"
+                            />
+                        </div>
+
+                        <div className="space-y-4">
+                            {query.trim() === '' ? (
+                                <div className="text-center py-20">
+                                    <div className="inline-flex h-20 w-20 bg-white/5 rounded-[32px] items-center justify-center text-slate-400 mb-6">
+                                        <Search className="h-10 w-10" />
+                                    </div>
+                                    <p className="text-slate-400 font-medium">Digite seu nome para encontrar suas próximas designações</p>
+                                </div>
+                            ) : results.length > 0 ? (
+                                results.map((res, i) => (
+                                    <motion.div 
+                                        key={`${res.type}-${i}`}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: i * 0.05 }}
+                                        className="bg-white dark:bg-slate-800/50 p-6 rounded-[32px] border border-slate-100 dark:border-white/5 shadow-lg"
+                                    >
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl text-indigo-600 dark:text-indigo-400">
+                                                    {res.type === 'Vida e Ministério' ? <BookOpen className="h-5 w-5" /> : 
+                                                     res.type === 'Designações' ? <Users className="h-5 w-5" /> :
+                                                     res.type === 'Limpeza' ? <Droplets className="h-5 w-5" /> :
+                                                     <Calendar className="h-5 w-5" />}
+                                                </div>
+                                                <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">{res.type}</span>
+                                            </div>
+                                            <span className="text-xs font-bold text-slate-400">
+                                                {res.date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'UTC' })}
+                                            </span>
+                                        </div>
+                                        <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-1">{res.title}</h4>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{res.description}</p>
+                                    </motion.div>
+                                ))
+                            ) : (
+                                <div className="text-center py-20">
+                                    <div className="inline-flex h-20 w-20 bg-rose-500/10 rounded-[32px] items-center justify-center text-rose-400 mb-6 font-bold text-3xl">!</div>
+                                    <p className="text-slate-400 font-medium">Nenhuma designação encontrada para "{query}"</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
+};
+
+const MiniAssignmentItem: React.FC<{ icon: React.ReactNode, label: string, value: string }> = ({ icon, label, value }) => (
+    <div className="flex items-center gap-4">
+        <div className="h-10 w-10 bg-slate-100 dark:bg-[#1f2937] border border-slate-200 dark:border-white/5 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400 transition-colors">
+            {React.cloneElement(icon as React.ReactElement, { className: "h-5 w-5" })}
         </div>
-        <p className="text-sm font-bold text-slate-900 dark:text-slate-300 font-sans text-right max-w-[120px] truncate" title={value}>{value}</p>
+        <div className="min-w-0">
+            <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1 transition-colors">{label}</p>
+            <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate transition-colors">{value}</p>
+        </div>
     </div>
 );
 
-const DutyItem: React.FC<{ label: string, value: string, dotColor: string }> = ({ label, value, dotColor }) => (
-    <div className="flex items-center justify-between gap-6 group/duty">
-        <div className="flex items-center gap-5">
-            <div className={`h-2 w-2 rounded-full ${dotColor} flex-shrink-0 shadow-[0_0_12px_rgba(255,255,255,0.3)] transition-transform group-hover/duty:scale-150 duration-500`}></div>
-            <p className="text-[10px] font-bold tracking-[0.2em] text-slate-800 dark:text-slate-400 uppercase font-sans group-hover/duty:text-slate-950 dark:group-hover/duty:text-slate-300 transition-colors">{label}</p>
+const PartListItem: React.FC<{ icon: React.ReactNode, label: string, value: string }> = ({ icon, label, value }) => (
+    <div className="flex items-center justify-between group cursor-pointer hover:bg-indigo-50 dark:hover:bg-white/[0.03] p-2 -mx-2 rounded-xl transition-all">
+        <div className="flex items-center gap-4">
+            <div className="p-2 bg-slate-100 dark:bg-slate-800/30 rounded-lg text-indigo-600 dark:text-indigo-400 group-hover:scale-110 group-hover:bg-indigo-500/10 transition-all">
+                {icon}
+            </div>
+            <p className="text-base font-bold text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">{label}</p>
         </div>
-        <p className="text-sm font-bold text-slate-900 dark:text-slate-200 font-sans text-right">{value}</p>
+        <p className="text-sm font-bold text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{value}</p>
     </div>
+);
+
+const AssignmentBullet: React.FC<{ label: string, value: string, color: string }> = ({ label, value, color }) => (
+    <div className="flex items-center justify-between px-1">
+        <div className="flex items-center gap-3">
+            <div className={`h-2 w-2 rounded-full ${color}`}></div>
+            <p className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{label}</p>
+        </div>
+        <p className="text-sm font-bold text-slate-900 dark:text-white text-right max-w-[150px] leading-tight">{value}</p>
+    </div>
+);
+
+const PartIcon: React.FC<{ icon: React.ReactNode; label: string; active?: boolean; onClick?: () => void }> = ({ icon, label, active, onClick }) => (
+    <button 
+        onClick={onClick}
+        className={`p-3 rounded-2xl flex flex-col items-center gap-2 transition-all ${active ? 'bg-indigo-500/10 border border-indigo-500/20' : 'hover:bg-slate-100 dark:hover:bg-white/5'} cursor-pointer outline-none focus:ring-1 focus:ring-indigo-500/50`}
+    >
+        <div className={`transition-all ${active ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-600'}`}>
+            {React.cloneElement(icon as React.ReactElement, { className: "h-5 w-5" })}
+        </div>
+        <span className={`text-[8px] font-bold uppercase tracking-widest ${active ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-600'}`}>{label}</span>
+    </button>
+);
+
+const BottomNavItem: React.FC<{ icon: React.ReactNode; label: string; active?: boolean; theme?: string }> = ({ icon, label, active, theme }) => (
+  <button className={`flex flex-col items-center gap-1.5 transition-all outline-none ${active ? (theme === 'dark' ? 'text-white' : 'text-indigo-600') : 'text-slate-400 dark:text-slate-500'}`}>
+    <div className={`transition-all ${active ? 'scale-110' : ''}`}>
+      {React.cloneElement(icon as React.ReactElement, { className: "h-7 w-7" })}
+    </div>
+    <span className="text-[10px] font-bold tracking-wider">{label}</span>
+  </button>
 );
 
 export default Dashboard;

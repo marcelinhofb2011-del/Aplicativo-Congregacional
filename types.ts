@@ -341,7 +341,8 @@ export interface DashboardSchedule {
     title: string;
     date: string;
     details: string;
-    fullData: LifeMinistrySchedule | Assignment | CleaningSchedule | ConductorMeeting | PublicTalkSchedule | ShepherdingVisit;
+    fullData: LifeMinistrySchedule | Assignment | CleaningSchedule | ConductorMeeting | PublicTalkSchedule | ShepherdingVisit | any;
+    displayMode?: 'full' | 'midweek_part' | 'weekend_talk';
 }
 
 // Type for Announcements
