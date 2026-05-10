@@ -322,9 +322,6 @@ const Dashboard: React.FC = () => {
             s.isActive !== false &&
             !('week' in s) &&
             !('group' in s) &&
-            !('theme' in s) &&
-            !('speakerName' in s) &&
-            !('modality' in s) &&
             !('conductorName' in s) &&
             'date' in s
         ) as Assignment[];
@@ -507,10 +504,10 @@ const Dashboard: React.FC = () => {
             
         setNextCleaningGroups(nextGroups);
         
-        // Only show local talks for the dashboard card this week
+        // Show both local and visiting talks for the dashboard card this week
         const weekPublicTalks = mergedPublicTalks.filter(t => {
             const d = parseDateAsUTC(t.date);
-            return d.getTime() >= weekStart.getTime() && d.getTime() < weekEnd.getTime() && t.type === 'local';
+            return d.getTime() >= weekStart.getTime() && d.getTime() < weekEnd.getTime();
         }).sort((a, b) => parseDateAsUTC(a.date).getTime() - parseDateAsUTC(b.date).getTime());
         
         setNextPublicTalk(findCurrentInWeek(weekPublicTalks, weekStart, weekEnd) || null);
@@ -532,7 +529,7 @@ const Dashboard: React.FC = () => {
             if ('week' in s) return { date, type: 'Vida e Ministério', title: s.week, description: `Presidente: ${s.president || 'Não definido'}`, fullData: s };
             
             // Refined Assignment title
-            if (('president' in s || 'reader' in s || 'indicator1' in s || 'audio' in s) && !('week' in s) && !('speakerName' in s) && !('month' in s) && !('group' in s)) {
+            if (('president' in s || 'reader' in s || 'indicator1' in s || 'audio' in s) && !('week' in s) && !('month' in s) && !('group' in s)) {
                 const title = (day === 0 || day === 6) ? 'Fim de Semana' : 'Meio de Semana';
                 return { date, type: 'Designações', title: `Designações ${title}`, description: `Presidente: ${s.president || 'Não definido'}`, fullData: s };
             }
@@ -861,6 +858,16 @@ const Dashboard: React.FC = () => {
                             <div className="flex items-center justify-between">
                                 <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">LEITOR SENTINELA</p>
                                 <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{nextWeekendAssignment?.reader || 'Não definido'}</p>
+                            </div>
+                        </div>
+
+                        {/* Assignments Block (Weekend) */}
+                        <div className="bg-cyan-500/5 dark:bg-black/20 rounded-[32px] p-6 space-y-6 relative z-10 border border-cyan-100/50 dark:border-transparent">
+                            <h5 className="text-[11px] font-black text-cyan-600 dark:text-cyan-400 opacity-60 uppercase tracking-[0.25em] text-center mb-2">DESIGNAÇÕES</h5>
+                            <div className="space-y-5">
+                                <AssignmentBullet label="INDICADORES" value={nextWeekendAssignment ? `${nextWeekendAssignment.indicator1 || 'N/A'}${nextWeekendAssignment.indicator2 ? ` / ${nextWeekendAssignment.indicator2}` : ''}` : 'N/A'} color="bg-cyan-500" />
+                                <AssignmentBullet label="ÁUDIO E VÍDEO" value={nextWeekendAssignment ? `${nextWeekendAssignment.audio || 'N/A'}${nextWeekendAssignment.video ? ` / ${nextWeekendAssignment.video}` : ''}` : 'N/A'} color="bg-indigo-500" />
+                                <AssignmentBullet label="MICROFONE" value={nextWeekendAssignment ? `${nextWeekendAssignment.mic1 || 'N/A'}${nextWeekendAssignment.mic2 ? ` / ${nextWeekendAssignment.mic2}` : ''}` : 'N/A'} color="bg-blue-500" />
                             </div>
                         </div>
                     </div>
