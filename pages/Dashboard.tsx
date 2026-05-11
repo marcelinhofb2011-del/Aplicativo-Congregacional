@@ -605,9 +605,9 @@ const Dashboard: React.FC = () => {
         : '';
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-slate-100 font-sans selection:bg-indigo-500/30 overflow-x-hidden transition-colors duration-300 pb-32">
+        <div className="min-h-screen bg-white dark:bg-[#07060b] text-slate-900 dark:text-slate-100 font-sans selection:bg-indigo-500/30 overflow-x-hidden transition-colors duration-300 pb-40">
             {/* New Header */}
-            <header className="px-6 pt-10 pb-6 flex items-center justify-between fixed top-0 left-0 right-0 bg-slate-50/95 dark:bg-[#070b14]/95 backdrop-blur-xl z-50 transition-colors border-b border-slate-200/10 dark:border-white/5">
+            <header className="px-6 pt-12 pb-6 flex items-center justify-between fixed top-0 left-0 right-0 bg-white/80 dark:bg-[#07060b]/80 backdrop-blur-2xl z-50 transition-all border-b border-slate-100 dark:border-white/5">
                 <div className="flex items-center gap-2">
                     <span className="text-xl font-bold tracking-tight text-indigo-600 dark:text-white uppercase">CONGREGAÇÃO</span>
                 </div>
@@ -656,58 +656,40 @@ const Dashboard: React.FC = () => {
                                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                    className="w-80 max-h-[80vh] bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+                                    className="w-80 max-h-[80vh] bg-white/90 dark:bg-[#07060b]/90 backdrop-blur-3xl border border-slate-100 dark:border-white/5 rounded-[32px] shadow-2xl overflow-hidden flex flex-col"
                                 >
-                                    <div className="p-5 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-white/[0.02]">
-                                        <h3 className="font-black text-xs uppercase tracking-widest text-slate-400">Notificações</h3>
+                                    <div className="p-6 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
+                                        <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-400">Atividade</h3>
                                         {notifications.some(n => !n.isRead) && (
                                             <button 
                                                 onClick={() => user && notificationService.markAllAsRead(user.uid)}
-                                                className="text-[10px] font-bold text-indigo-500 hover:text-indigo-600 uppercase"
+                                                className="text-[9px] font-black text-indigo-500 hover:text-indigo-600 uppercase tracking-widest"
                                             >
-                                                Ler tudo
+                                                Limpar tudo
                                             </button>
                                         )}
                                     </div>
                                     
-                                    <div className="overflow-y-auto custom-scrollbar">
+                                    <div className="overflow-y-auto no-scrollbar">
                                         {(notifications.length === 0 && announcements.length === 0 && schedules.length === 0) ? (
-                                            <div className="p-10 text-center space-y-3">
-                                                <Bell className="h-10 w-10 text-slate-300 mx-auto opacity-20" />
-                                                <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Tudo limpo por aqui</p>
+                                            <div className="p-12 text-center space-y-4">
+                                                <div className="h-12 w-12 bg-slate-50 dark:bg-white/5 rounded-2xl flex items-center justify-center mx-auto text-slate-300 dark:text-slate-700">
+                                                    <Bell className="h-6 w-6" />
+                                                </div>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sem novidades</p>
                                             </div>
                                         ) : (
-                                            <div className="divide-y divide-slate-50 dark:divide-white/5">
-                                                {/* Announcements in Notifications */}
+                                            <div className="divide-y divide-slate-50 dark:divide-white/[0.03]">
+                                                {/* Announcements */}
                                                 {announcements.slice(0, 3).map(ann => (
-                                                    <div key={`ann-${ann.id}`} className="p-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors relative group">
+                                                    <div key={`ann-${ann.id}`} className="p-5 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors relative">
                                                         <div className="flex gap-4">
-                                                            <div className="h-10 w-10 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 flex-shrink-0">
+                                                            <div className="h-10 w-10 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-500 flex-shrink-0">
                                                                 <Megaphone className="h-5 w-5" />
                                                             </div>
                                                             <div className="space-y-1">
-                                                                <p className="text-xs font-black text-slate-900 dark:text-white uppercase line-clamp-1">{ann.title}</p>
-                                                                <p className="text-[11px] text-slate-500 line-clamp-2">{ann.body}</p>
-                                                                <p className="text-[9px] font-bold text-slate-400 uppercase pt-1">Novo Anúncio</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-
-                                                {/* Schedule Updates (General) */}
-                                                {schedules.filter(s => {
-                                                    const lastCheck = localStorage.getItem(`lastCheck_schedules_${user?.uid}`) || '0';
-                                                    return new Date(s.createdAt).getTime() > new Date(lastCheck).getTime();
-                                                }).slice(0, 3).map(s => (
-                                                    <div key={`sched-${s.id}`} className="p-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors relative group">
-                                                        <div className="flex gap-4">
-                                                            <div className="h-10 w-10 bg-amber-50 dark:bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-600 dark:text-amber-500 flex-shrink-0">
-                                                                <Layout className="h-5 w-5" />
-                                                            </div>
-                                                            <div className="space-y-1">
-                                                                <p className="text-xs font-black text-slate-900 dark:text-white uppercase line-clamp-1">Programação Atualizada</p>
-                                                                <p className="text-[11px] text-slate-500 line-clamp-2">Novas designações foram lançadas para {parseDateAsUTC(s.date).toLocaleDateString('pt-BR')}.</p>
-                                                                <p className="text-[9px] font-bold text-amber-500 uppercase pt-1">Atualização</p>
+                                                                <p className="text-xs font-bold text-slate-900 dark:text-white uppercase line-clamp-1">{ann.title}</p>
+                                                                <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">{ann.body}</p>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -718,21 +700,15 @@ const Dashboard: React.FC = () => {
                                                     <div 
                                                         key={notif.id} 
                                                         onClick={() => handleNotificationClick(notif)}
-                                                        className={`p-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer relative group ${!notif.isRead ? 'bg-indigo-50/30' : ''}`}
+                                                        className={`p-5 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer relative ${!notif.isRead ? 'bg-indigo-50/20' : ''}`}
                                                     >
-                                                        {!notif.isRead && (
-                                                            <div className="absolute left-2 top-1/2 -translate-y-1/2 h-1.5 w-1.5 bg-indigo-500 rounded-full"></div>
-                                                        )}
                                                         <div className="flex gap-4">
-                                                            <div className="h-10 w-10 bg-slate-100 dark:bg-white/5 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400 flex-shrink-0">
+                                                            <div className="h-10 w-10 bg-slate-50 dark:bg-white/10 rounded-xl flex items-center justify-center text-slate-400 dark:text-slate-600 flex-shrink-0">
                                                                 <Calendar className="h-5 w-5" />
                                                             </div>
                                                             <div className="space-y-1">
-                                                                <p className="text-xs font-black text-slate-900 dark:text-white uppercase line-clamp-1">{notif.title}</p>
-                                                                <p className="text-[11px] text-slate-500 line-clamp-2">{notif.description}</p>
-                                                                <p className="text-[9px] font-bold text-slate-400 uppercase pt-1">
-                                                                    {new Date(notif.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
-                                                                </p>
+                                                                <p className="text-xs font-bold text-slate-900 dark:text-white uppercase line-clamp-1">{notif.title}</p>
+                                                                <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">{notif.description}</p>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -740,13 +716,13 @@ const Dashboard: React.FC = () => {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="p-4 border-t border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
+                                    <div className="p-6 border-t border-slate-100 dark:border-white/5">
                                         <Link 
                                             to="/announcements" 
                                             onClick={() => setIsNotificationOpen(false)}
-                                            className="block text-center text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] hover:text-indigo-600 transition-colors"
+                                            className="block text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] hover:text-indigo-600 transition-colors"
                                         >
-                                            Ver todos os anúncios
+                                            Ver Histórico
                                         </Link>
                                     </div>
                                 </motion.div>
@@ -756,256 +732,257 @@ const Dashboard: React.FC = () => {
                 </div>
             </header>
 
-            <main className="px-6 space-y-10 pt-32">
+            <main className="px-6 space-y-12 pt-36">
                 {/* Hero / Greeting */}
-                <section className="pt-4 space-y-4">
-                    <div className="space-y-1">
-                        <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.25em]">ESTA SEMANA</p>
-                        <h2 className="text-5xl font-bold tracking-tight text-slate-900 dark:text-white">Olá, {user?.displayName?.split(' ')[0] || 'Irmão'}</h2>
-                        <p className="text-slate-500 dark:text-slate-400 text-lg font-medium leading-tight max-w-[300px]">
-                            Veja sua programação para os próximos dias de adoração e serviço.
-                        </p>
-                    </div>
-
-                    <button className="w-full h-14 bg-indigo-500 dark:bg-[#d8b4fe] hover:bg-indigo-600 dark:hover:bg-[#c084fc] text-white dark:text-[#4c1d95] rounded-2xl flex items-center justify-center gap-3 font-bold uppercase tracking-wider transition-all shadow-lg shadow-indigo-500/20 group">
-                        <Calendar className="h-6 w-6 group-hover:scale-110 transition-transform" />
-                        AGENDA
-                    </button>
+                <section className="space-y-2">
+                    <h2 className="text-5xl font-bold tracking-tight text-slate-900 dark:text-white leading-[1.1]">Olá, <span className="text-indigo-600 dark:text-indigo-400">{user?.displayName?.split(' ')[0] || 'Irmão'}</span></h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-lg font-medium leading-snug max-w-sm">
+                        Sua programação semanal e designações em um só lugar.
+                    </p>
                 </section>
 
                 {/* Date Splitter */}
-                <section className="flex items-center gap-6">
-                    <h3 className="text-4xl font-bold text-slate-900 dark:text-white whitespace-nowrap tracking-tight">
-                        {activeWeekRange ? (
-                            `${activeWeekRange.start.getUTCDate()}–${new Date(activeWeekRange.end.getTime() - 86400000).getUTCDate()} de ${activeWeekRange.end.toLocaleDateString('pt-BR', { month: 'long', timeZone: 'UTC' })}`
-                        ) : (
-                            'Carregando...'
-                        )}
+                <section className="pt-4">
+                    <h3 className="text-sm font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.4em] mb-4">
+                        ESTA SEMANA
                     </h3>
-                    <div className="h-[2px] flex-1 bg-gradient-to-r from-slate-200 dark:from-slate-800 to-transparent"></div>
+                    <div className="flex items-end gap-3 translate-x-[-2px]">
+                        <h3 className="text-5xl font-bold text-slate-900 dark:text-white tracking-tighter">
+                            {activeWeekRange ? (
+                                `${activeWeekRange.start.getUTCDate()}–${new Date(activeWeekRange.end.getTime() - 86400000).getUTCDate()}`
+                            ) : (
+                                '--'
+                            )}
+                        </h3>
+                        <span className="text-2xl font-bold text-slate-400 dark:text-slate-600 pb-[6px]">
+                            {activeWeekRange?.end.toLocaleDateString('pt-BR', { month: 'long', timeZone: 'UTC' })}
+                        </span>
+                    </div>
                 </section>
 
-                {/* Midweek Meeting Card */}
-                <section>
-                    <div className="bg-white dark:bg-[#0f141f] border border-slate-200 dark:border-white/[0.03] rounded-3xl p-8 space-y-8 relative overflow-hidden shadow-xl shadow-slate-200/50 dark:shadow-2xl transition-all hover:bg-slate-50 dark:hover:bg-[#131a29]">
-                        {/* Decorative background icon */}
-                        <Library className="absolute -right-4 -top-4 h-32 w-32 text-slate-200 dark:text-white/[0.02] -rotate-12 pointer-events-none" />
-                        
-                        {/* Title Row */}
-                        <div className="flex items-center justify-between relative z-10">
-                            <div className="flex items-center gap-4">
-                                <BookOpen className="h-7 w-7 text-indigo-600 dark:text-white" />
-                                <h4 className="text-2xl font-bold text-slate-900 dark:text-white">Reunião Meio de Semana</h4>
+                {/* Midweek Meeting Section */}
+                <section className="space-y-8">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="h-12 w-12 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                                <BookOpen className="h-6 w-6" />
                             </div>
+                            <h4 className="text-2xl font-bold text-slate-900 dark:text-white">Meio de Semana</h4>
                         </div>
+                    </div>
 
-                        {/* President Block */}
-                        <div className="bg-slate-100 dark:bg-[#1f2937]/40 rounded-3xl p-5 flex items-center gap-5 border border-slate-200 dark:border-white/[0.05] relative z-10">
-                            <div className="h-14 w-14 bg-white dark:bg-[#2e3744] rounded-2xl flex items-center justify-center text-slate-400 dark:text-slate-300 shadow-sm dark:shadow-inner">
-                                <User className="h-8 w-8" />
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest leading-none mb-1">PRESIDENTE</p>
+                    <div className="space-y-1">
+                        {/* Integrated Block */}
+                        <div className="py-6 border-b border-slate-100 dark:border-white/5 flex items-center justify-between group cursor-pointer active:opacity-70 transition-opacity">
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest">PRESIDENTE</p>
                                 <p className="text-xl font-bold text-slate-900 dark:text-white">{nextMidweekAssignment?.president || nextLifeMinistry?.president || 'Não definido'}</p>
                             </div>
+                            <ChevronRight className="h-5 w-5 text-slate-300 dark:text-slate-700" />
                         </div>
 
-                        {/* Meeting Parts */}
-                        <div className="space-y-6 pt-2 relative z-10">
+                        <div className="grid grid-cols-1 gap-1">
                             <PartListItem icon={<LayoutGrid className="h-5 w-5" />} label="Tesouro da Palavra" value={nextLifeMinistry?.treasuresTheme?.speaker || 'Não definido'} />
                             <PartListItem icon={<Gem className="h-5 w-5" />} label="Joias Espirituais" value={nextLifeMinistry?.spiritualGems?.speaker || 'Não definido'} />
                             <PartListItem icon={<Book className="h-5 w-5" />} label="Leitura da Bíblia" value={nextLifeMinistry?.bibleReading?.student || 'Não definido'} />
                         </div>
 
-                        {/* Assignments Block */}
-                        <div className="bg-slate-50 dark:bg-black/20 rounded-[32px] p-7 space-y-7 relative z-10 border border-slate-100 dark:border-transparent">
-                            <h5 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em] text-center mb-2">DESIGNAÇÕES</h5>
-                            <div className="space-y-6">
-                                <AssignmentBullet label="INDICADORES" value={nextMidweekAssignment ? `${nextMidweekAssignment.indicator1 || 'N/A'}${nextMidweekAssignment.indicator2 ? ` / ${nextMidweekAssignment.indicator2}` : ''}` : 'N/A'} color="bg-purple-500" />
-                                <AssignmentBullet label="ÁUDIO E VÍDEO" value={nextMidweekAssignment ? `${nextMidweekAssignment.audio || 'N/A'}${nextMidweekAssignment.video ? ` / ${nextMidweekAssignment.video}` : ''}` : 'N/A'} color="bg-cyan-500" />
-                                <AssignmentBullet label="MICROFONE" value={nextMidweekAssignment ? `${nextMidweekAssignment.mic1 || 'N/A'}${nextMidweekAssignment.mic2 ? ` / ${nextMidweekAssignment.mic2}` : ''}` : 'N/A'} color="bg-orange-500" />
-                            </div>
+                        {/* Assignments Integrated */}
+                        <div className="mt-8 pt-8 border-t border-slate-100 dark:border-white/5 grid grid-cols-1 gap-6">
+                            <AssignmentBullet label="INDICADORES" value={nextMidweekAssignment ? `${nextMidweekAssignment.indicator1 || 'N/A'}${nextMidweekAssignment.indicator2 ? ` / ${nextMidweekAssignment.indicator2}` : ''}` : 'N/A'} color="bg-purple-500" />
+                            <AssignmentBullet label="ÁUDIO E VÍDEO" value={nextMidweekAssignment ? `${nextMidweekAssignment.audio || 'N/A'}${nextMidweekAssignment.video ? ` / ${nextMidweekAssignment.video}` : ''}` : 'N/A'} color="bg-cyan-500" />
+                            <AssignmentBullet label="MICROFONE" value={nextMidweekAssignment ? `${nextMidweekAssignment.mic1 || 'N/A'}${nextMidweekAssignment.mic2 ? ` / ${nextMidweekAssignment.mic2}` : ''}` : 'N/A'} color="bg-orange-500" />
                         </div>
                     </div>
                 </section>
 
-                {/* Weekend Meeting Card */}
-                <section>
-                    <div className="bg-white dark:bg-[#0f172a] border-l-4 border-cyan-500 rounded-3xl p-8 space-y-8 shadow-xl shadow-slate-200/50 dark:shadow-2xl relative overflow-hidden border-y border-r border-slate-100 dark:border-transparent">
-                        {/* Title Row */}
-                        <div className="flex items-center justify-between">
-                            <h4 className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">Reunião de Fim de Semana</h4>
-                            <Home className="h-7 w-7 text-cyan-600 dark:text-cyan-400" />
-                        </div>
+                <div className="h-px bg-slate-100 dark:bg-white/5 w-full"></div>
 
-                        {/* Talk Special Box */}
-                        <div className="border border-cyan-200 dark:border-cyan-500/30 bg-cyan-50 dark:bg-cyan-500/5 rounded-[32px] p-6 space-y-4">
-                            <div>
-                                <p className="text-[11px] font-black text-cyan-600 dark:text-cyan-400 uppercase tracking-widest mb-1">DISCURSO PÚBLICO</p>
-                                <h5 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">
-                                    {nextPublicTalk?.theme || 'Tema não definido'}
-                                </h5>
-                            </div>
+                {/* Weekend Meeting Section */}
+                <section className="space-y-8">
+                    <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 bg-cyan-50 dark:bg-cyan-500/10 rounded-2xl flex items-center justify-center text-cyan-600 dark:text-cyan-400">
+                            <Home className="h-6 w-6" />
+                        </div>
+                        <h4 className="text-2xl font-bold text-slate-900 dark:text-white">Fim de Semana</h4>
+                    </div>
+
+                    <div className="space-y-8">
+                        <div className="py-6 border-b border-slate-100 dark:border-white/5 group cursor-pointer active:opacity-70 transition-opacity">
+                            <p className="text-[10px] font-black text-cyan-600 dark:text-cyan-400 uppercase tracking-widest mb-2">DISCURSO PÚBLICO</p>
+                            <h5 className="text-2xl font-bold text-slate-900 dark:text-white leading-tight mb-4">
+                                {nextPublicTalk?.theme || 'Tema não definido'}
+                            </h5>
                             <div className="flex items-center gap-3">
-                                <div className="h-10 w-10 bg-cyan-100 dark:bg-cyan-500/20 rounded-xl flex items-center justify-center text-cyan-600 dark:text-cyan-400">
-                                    <User className="h-6 w-6" />
+                                <div className="h-8 w-8 bg-slate-100 dark:bg-white/5 rounded-full flex items-center justify-center text-slate-400">
+                                    <User className="h-4 w-4" />
                                 </div>
-                                <div>
-                                    <p className="text-sm font-bold text-slate-900 dark:text-white uppercase">{nextPublicTalk?.speakerName || 'N/A'}</p>
-                                    <p className="text-[10px] font-bold text-cyan-600/60 dark:text-cyan-400/60 uppercase tracking-wider">{nextPublicTalk?.congregation || 'LOCAL'}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Additional Weekend Info */}
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">PRESIDENTE</p>
-                                <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{nextWeekendAssignment?.president || 'Não definido'}</p>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">LEITOR SENTINELA</p>
-                                <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{nextWeekendAssignment?.reader || 'Não definido'}</p>
-                            </div>
-                        </div>
-
-                        {/* Assignments Block (Weekend) */}
-                        <div className="bg-cyan-500/5 dark:bg-black/20 rounded-[32px] p-6 space-y-6 relative z-10 border border-cyan-100/50 dark:border-transparent">
-                            <h5 className="text-[11px] font-black text-cyan-600 dark:text-cyan-400 opacity-60 uppercase tracking-[0.25em] text-center mb-2">DESIGNAÇÕES</h5>
-                            <div className="space-y-5">
-                                <AssignmentBullet label="INDICADORES" value={nextWeekendAssignment ? `${nextWeekendAssignment.indicator1 || 'N/A'}${nextWeekendAssignment.indicator2 ? ` / ${nextWeekendAssignment.indicator2}` : ''}` : 'N/A'} color="bg-cyan-500" />
-                                <AssignmentBullet label="ÁUDIO E VÍDEO" value={nextWeekendAssignment ? `${nextWeekendAssignment.audio || 'N/A'}${nextWeekendAssignment.video ? ` / ${nextWeekendAssignment.video}` : ''}` : 'N/A'} color="bg-indigo-500" />
-                                <AssignmentBullet label="MICROFONE" value={nextWeekendAssignment ? `${nextWeekendAssignment.mic1 || 'N/A'}${nextWeekendAssignment.mic2 ? ` / ${nextWeekendAssignment.mic2}` : ''}` : 'N/A'} color="bg-blue-500" />
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Service Card (Field Service Conductors) */}
-                <section>
-                    <div className="bg-white dark:bg-[#111827] border border-slate-100 dark:border-white/5 rounded-3xl p-8 space-y-8 shadow-xl shadow-slate-200/50 dark:shadow-2xl transition-all hover:bg-slate-50 dark:hover:bg-[#131a29]">
-                        <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-4">
-                            <h4 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-3">
-                                <Users className="h-6 w-6 text-indigo-500" />
-                                Saídas de Campo
-                            </h4>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Saturday Conductor */}
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="h-10 w-10 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                                        <Calendar className="h-5 w-5" />
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">SÁBADO</p>
-                                        <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
-                                            {nextFieldService?.date ? parseDateAsUTC(nextFieldService.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' }) : 'N/A'}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="bg-slate-50 dark:bg-black/20 rounded-2xl p-4 border border-slate-100 dark:border-transparent">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">DIRIGENTE</p>
-                                    <p className="text-lg font-bold text-slate-900 dark:text-white">{nextFieldService?.conductorName || 'Não definido'}</p>
-                                </div>
-                            </div>
-
-                            {/* 1st Sunday Conductor */}
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="h-10 w-10 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-600 dark:text-emerald-500">
-                                        <Calendar className="h-5 w-5" />
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">1º DOMINGO</p>
-                                        <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
-                                            {nextFirstSundayConductor?.date ? parseDateAsUTC(nextFirstSundayConductor.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' }) : 'N/A'}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="bg-slate-50 dark:bg-black/20 rounded-2xl p-4 border border-slate-100 dark:border-transparent">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">DIRIGENTE</p>
-                                    <p className="text-lg font-bold text-slate-900 dark:text-white">{nextFirstSundayConductor?.conductorName || 'Não definido'}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Cleaning Card */}
-                <section>
-                    <div className="bg-white dark:bg-[#111827] border-l-4 border-amber-500 rounded-3xl p-8 space-y-8 shadow-xl shadow-slate-200/50 dark:shadow-2xl border-y border-r border-slate-100 dark:border-transparent">
-                        <div className="flex items-center gap-6">
-                            <div className="h-18 w-18 rounded-[28px] bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-500 border border-amber-100 dark:border-amber-500/20">
-                                <Droplets className="h-10 w-10" />
-                            </div>
-                            <div className="space-y-1">
-                                <p className="text-[11px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest leading-none">LIMPEZA DO SALÃO</p>
-                                <h4 className="text-2xl font-bold text-slate-900 dark:text-white">{nextCleaning?.group || 'Grupo não definido'}</h4>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                                    {nextCleaning ? `${CLEANING_GROUPS[nextCleaning.group] || 'Responsáveis'} • ${parseDateAsUTC(nextCleaning.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })} a ${parseDateAsUTC(nextCleaning.endDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}` : '--'}
+                                <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                                    {nextPublicTalk?.speakerName || 'N/A'} • <span className="opacity-50 uppercase text-[10px]">{nextPublicTalk?.congregation || 'LOCAL'}</span>
                                 </p>
                             </div>
                         </div>
 
-                        {/* Future Cleaning Groups */}
-                        <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-white/5">
-                            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em]">PRÓXIMOS GRUPOS</p>
-                            {nextCleaningGroups.length > 0 ? (
-                                nextCleaningGroups.map((group, idx) => (
-                                    <div key={idx} className="flex items-center justify-between py-1">
-                                        <p className="text-base font-bold text-slate-700 dark:text-slate-300">{group.group}</p>
-                                        <p className="text-sm font-bold text-slate-400 dark:text-slate-500">{parseDateAsUTC(group.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}</p>
-                                    </div>
-                                ))
-                            ) : (
-                                <p className="text-sm italic text-slate-400 dark:text-slate-600">Nenhum grupo futuro</p>
-                            )}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">PRESIDENTE</p>
+                                <p className="text-base font-bold text-slate-900 dark:text-white">{nextWeekendAssignment?.president || 'Não definido'}</p>
+                            </div>
+                            <div className="space-y-1 text-right">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">LEITOR SENTINELA</p>
+                                <p className="text-base font-bold text-slate-900 dark:text-white">{nextWeekendAssignment?.reader || 'Não definido'}</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-6">
+                            <AssignmentBullet label="INDICADORES" value={nextWeekendAssignment ? `${nextWeekendAssignment.indicator1 || 'N/A'}${nextWeekendAssignment.indicator2 ? ` / ${nextWeekendAssignment.indicator2}` : ''}` : 'N/A'} color="bg-cyan-500" />
+                            <AssignmentBullet label="ÁUDIO E VÍDEO" value={nextWeekendAssignment ? `${nextWeekendAssignment.audio || 'N/A'}${nextWeekendAssignment.video ? ` / ${nextWeekendAssignment.video}` : ''}` : 'N/A'} color="bg-indigo-500" />
+                            <AssignmentBullet label="MICROFONE" value={nextWeekendAssignment ? `${nextWeekendAssignment.mic1 || 'N/A'}${nextWeekendAssignment.mic2 ? ` / ${nextWeekendAssignment.mic2}` : ''}` : 'N/A'} color="bg-blue-500" />
                         </div>
                     </div>
                 </section>
 
+                <div className="h-px bg-slate-100 dark:bg-white/5 w-full"></div>
+
+                {/* Service Conductors Section */}
+                <section className="space-y-8">
+                    <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                            <Users className="h-6 w-6" />
+                        </div>
+                        <h4 className="text-2xl font-bold text-slate-900 dark:text-white">Saídas de Campo</h4>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-12">
+                        {/* Saturday */}
+                        <div className="flex items-center justify-between py-2 group cursor-pointer">
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                    <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em]">SÁBADO</p>
+                                    <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-700"></span>
+                                    <p className="text-[10px] font-bold text-slate-400">
+                                        {nextFieldService?.date ? parseDateAsUTC(nextFieldService.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' }) : '--'}
+                                    </p>
+                                </div>
+                                <p className="text-2xl font-bold text-slate-900 dark:text-white">{nextFieldService?.conductorName || 'Não definido'}</p>
+                            </div>
+                            <div className="h-10 w-10 border border-slate-100 dark:border-white/10 rounded-full flex items-center justify-center text-slate-300 dark:text-slate-700 group-hover:text-indigo-500 transition-colors">
+                                <ChevronRight className="h-5 w-5" />
+                            </div>
+                        </div>
+
+                        {/* 1st Sunday */}
+                        <div className="flex items-center justify-between py-2 group cursor-pointer bottom-divider">
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">1º DOMINGO</p>
+                                    <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-700"></span>
+                                    <p className="text-[10px] font-bold text-slate-400">
+                                        {nextFirstSundayConductor?.date ? parseDateAsUTC(nextFirstSundayConductor.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' }) : '--'}
+                                    </p>
+                                </div>
+                                <p className="text-2xl font-bold text-slate-900 dark:text-white">{nextFirstSundayConductor?.conductorName || 'Não definido'}</p>
+                            </div>
+                            <div className="h-10 w-10 border border-slate-100 dark:border-white/10 rounded-full flex items-center justify-center text-slate-300 dark:text-slate-700 group-hover:text-emerald-500 transition-colors">
+                                <ChevronRight className="h-5 w-5" />
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <div className="h-px bg-slate-100 dark:bg-white/5 w-full"></div>
+
+                {/* Cleaning Section */}
+                <section className="space-y-8">
+                    <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 bg-amber-50 dark:bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 dark:text-amber-500">
+                            <Droplets className="h-6 w-6" />
+                        </div>
+                        <h4 className="text-2xl font-bold text-slate-900 dark:text-white">Limpeza</h4>
+                    </div>
+
+                    <div className="space-y-8">
+                        <div className="py-2 space-y-1">
+                            <p className="text-[10px] font-black text-amber-600 opacity-60 uppercase tracking-widest">GRUPO ATUAL</p>
+                            <h4 className="text-2xl font-bold text-slate-900 dark:text-white">{nextCleaning?.group || 'Grupo não definido'}</h4>
+                            <p className="text-sm text-slate-500 font-medium pt-1">
+                                {nextCleaning ? `${CLEANING_GROUPS[nextCleaning.group] || 'Responsáveis'} • Período: ${parseDateAsUTC(nextCleaning.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })} a ${parseDateAsUTC(nextCleaning.endDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}` : '--'}
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-6 pt-6 border-t border-slate-100 dark:border-white/5">
+                            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em]">PRÓXIMOS GRUPOS</p>
+                            <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+                                {nextCleaningGroups.length > 0 ? (
+                                    nextCleaningGroups.map((group, idx) => (
+                                        <div key={idx} className="flex-shrink-0 w-40 p-5 bg-slate-50 dark:bg-white/[0.03] rounded-2xl space-y-2">
+                                            <p className="text-lg font-bold text-slate-900 dark:text-white">{group.group}</p>
+                                            <p className="text-xs font-bold text-slate-400 uppercase">{parseDateAsUTC(group.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}</p>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-sm italic text-slate-400 dark:text-slate-600">Nenhum grupo futuro</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <div className="h-px bg-slate-100 dark:bg-white/5 w-full"></div>
+
                 {/* Announcements Section */}
-                <section className="pb-12 space-y-6">
+                <section className="pb-12 space-y-8">
                     <div className="flex items-center justify-between">
                         <h3 className="text-3xl font-bold text-slate-900 dark:text-white">Anúncios</h3>
-                        <Link to="/announcements" className="text-sm font-black text-slate-500 uppercase tracking-widest hover:text-indigo-600 dark:hover:text-white transition-colors">VER TODAS</Link>
+                        <Link to="/announcements" className="text-xs font-black text-slate-400 uppercase tracking-widest hover:text-indigo-600 dark:hover:text-white transition-colors">VER TODOS</Link>
                     </div>
-                    <div className="space-y-4">
+                    <div className="space-y-1">
                         {announcements.slice(0, 3).map((ann) => {
                             const isExpanded = expandedAnnouncement === ann.id;
                             return (
                                 <motion.div 
                                     key={ann.id}
                                     layout
-                                    className="bg-white dark:bg-[#111827] border border-slate-100 dark:border-white/5 p-6 rounded-3xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all shadow-md dark:shadow-none overflow-hidden"
+                                    className="py-8 border-b border-slate-100 dark:border-white/5 cursor-pointer active:opacity-70 transition-opacity overflow-hidden"
                                     onClick={() => setExpandedAnnouncement(isExpanded ? null : ann.id)}
                                 >
-                                    <div className="flex items-start justify-between gap-4">
-                                        <div className="flex items-start gap-6">
-                                            <div className="h-16 w-16 bg-slate-50 dark:bg-[#1f2937] rounded-[24px] flex-shrink-0 flex items-center justify-center text-slate-400 dark:text-slate-300">
-                                                <Megaphone className="h-7 w-7" />
+                                    <div className="flex items-start justify-between gap-6">
+                                        <div className="flex-1 space-y-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="h-6 w-6 bg-indigo-50 dark:bg-indigo-500/10 rounded-md flex items-center justify-center text-indigo-500">
+                                                    <Megaphone className="h-3 w-3" />
+                                                </div>
+                                                <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
+                                                    {parseDateAsUTC(ann.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                                                </p>
                                             </div>
-                                            <div className="space-y-2 pt-1">
-                                                <h4 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight leading-tight">{ann.title}</h4>
-                                                <p className={`text-sm text-slate-500 font-medium ${isExpanded ? '' : 'line-clamp-1'}`}>{ann.body}</p>
-                                                {isExpanded && ann.images && ann.images.length > 0 && (
-                                                    <div className="grid grid-cols-1 gap-4 mt-4">
-                                                        {ann.images.map((img, i) => (
-                                                            <img key={i} src={img} alt="" className="rounded-2xl w-full object-cover max-h-60" referrerPolicy="no-referrer" />
-                                                        ))}
-                                                    </div>
-                                                )}
+                                            <h4 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight uppercase">{ann.title}</h4>
+                                            <p className={`text-base text-slate-500 dark:text-slate-400 font-medium leading-relaxed ${isExpanded ? '' : 'line-clamp-2'}`}>{ann.body}</p>
+                                            
+                                            <AnimatePresence>
                                                 {isExpanded && (
-                                                    <p className="text-[10px] font-bold text-slate-400 pt-2 uppercase tracking-widest">
-                                                        Publicado em {parseDateAsUTC(ann.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                                                    </p>
+                                                    <motion.div
+                                                        initial={{ height: 0, opacity: 0 }}
+                                                        animate={{ height: 'auto', opacity: 1 }}
+                                                        exit={{ height: 0, opacity: 0 }}
+                                                        className="overflow-hidden"
+                                                    >
+                                                        {ann.images && ann.images.length > 0 && (
+                                                            <div className="grid grid-cols-1 gap-4 mt-6">
+                                                                {ann.images.map((img, i) => (
+                                                                    <img key={i} src={img} alt="" className="rounded-[32px] w-full object-cover max-h-[500px]" referrerPolicy="no-referrer" />
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                        <p className="text-[10px] font-black text-slate-400 pt-6 uppercase tracking-[0.2em]">
+                                                            Publicado em {parseDateAsUTC(ann.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                                                        </p>
+                                                    </motion.div>
                                                 )}
-                                            </div>
+                                            </AnimatePresence>
                                         </div>
-                                        <div className={`mt-5 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`}>
-                                            <ChevronRight className="h-6 w-6 text-slate-300 dark:text-slate-700" />
+                                        <div className={`mt-2 transition-transform duration-500 ${isExpanded ? 'rotate-90 text-indigo-500' : 'text-slate-300 dark:text-slate-800'}`}>
+                                            <ChevronRight className="h-6 w-6" />
                                         </div>
                                     </div>
                                 </motion.div>
@@ -1016,9 +993,9 @@ const Dashboard: React.FC = () => {
             </main>
 
             {/* Fixed Bottom Tab Bar */}
-            <nav className="fixed bottom-0 left-0 right-0 h-24 bg-white/80 dark:bg-[#070b14]/90 backdrop-blur-2xl border-t border-slate-200 dark:border-white/5 z-50 px-6 flex items-center justify-between shadow-[0_-10px_20px_rgba(0,0,0,0.05)] dark:shadow-[0_-10px_20px_rgba(0,0,0,0.5)] transition-colors">
+            <nav className="fixed bottom-0 left-0 right-0 h-24 bg-white/70 dark:bg-[#07060b]/80 backdrop-blur-3xl border-t border-slate-100 dark:border-white/5 z-50 px-8 flex items-center justify-between pb-4 transition-colors">
                 <BottomNavItem icon={<Home />} label="Início" active theme={theme} />
-                <BottomNavItem icon={<Book />} label="Pioneiro" theme={theme} />
+                <BottomNavItem icon={<Star />} label="Designações" theme={theme} />
                 <BottomNavItem icon={<Users />} label="Assistência" theme={theme} />
                 <BottomNavItem icon={<LayoutGrid />} label="Menu" theme={theme} />
             </nav>
@@ -1104,24 +1081,24 @@ const SearchOverlay: React.FC<{
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: i * 0.05 }}
-                                        className="bg-white dark:bg-slate-800/50 p-6 rounded-[32px] border border-slate-100 dark:border-white/5 shadow-lg"
+                                        className="py-8 border-b border-white/5 active:opacity-70 transition-opacity"
                                     >
-                                        <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center justify-between mb-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl text-indigo-600 dark:text-indigo-400">
+                                                <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-400">
                                                     {res.type === 'Vida e Ministério' ? <BookOpen className="h-5 w-5" /> : 
                                                      res.type === 'Designações' ? <Users className="h-5 w-5" /> :
-                                                     res.type === 'Limpeza' ? <Droplets className="h-5 w-5" /> :
-                                                     <Calendar className="h-5 w-5" />}
+                                                      res.type === 'Limpeza' ? <Droplets className="h-5 w-5" /> :
+                                                      <Calendar className="h-5 w-5" />}
                                                 </div>
-                                                <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">{res.type}</span>
+                                                <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{res.type}</span>
                                             </div>
-                                            <span className="text-xs font-bold text-slate-400">
+                                            <span className="text-xs font-bold text-slate-500">
                                                 {res.date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'UTC' })}
                                             </span>
                                         </div>
-                                        <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-1">{res.title}</h4>
-                                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{res.description}</p>
+                                        <h4 className="text-2xl font-bold text-white mb-2">{res.title}</h4>
+                                        <p className="text-base text-slate-400 font-medium">{res.description}</p>
                                     </motion.div>
                                 ))
                             ) : (
@@ -1140,35 +1117,35 @@ const SearchOverlay: React.FC<{
 
 const MiniAssignmentItem: React.FC<{ icon: React.ReactNode, label: string, value: string }> = ({ icon, label, value }) => (
     <div className="flex items-center gap-4">
-        <div className="h-10 w-10 bg-slate-100 dark:bg-[#1f2937] border border-slate-200 dark:border-white/5 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400 transition-colors">
+        <div className="h-10 w-10 bg-slate-50 dark:bg-white/5 rounded-xl flex items-center justify-center text-slate-400 dark:text-slate-600 transition-colors">
             {React.cloneElement(icon as React.ReactElement, { className: "h-5 w-5" })}
         </div>
         <div className="min-w-0">
-            <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1 transition-colors">{label}</p>
-            <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate transition-colors">{value}</p>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1 transition-colors">{label}</p>
+            <p className="text-sm font-bold text-slate-900 dark:text-white truncate transition-colors">{value}</p>
         </div>
     </div>
 );
 
 const PartListItem: React.FC<{ icon: React.ReactNode, label: string, value: string }> = ({ icon, label, value }) => (
-    <div className="flex items-center justify-between group cursor-pointer hover:bg-indigo-50 dark:hover:bg-white/[0.03] p-2 -mx-2 rounded-xl transition-all">
+    <div className="flex items-center justify-between group cursor-pointer active:opacity-70 py-4 border-b border-slate-50 dark:border-white/[0.02] last:border-0 transition-all">
         <div className="flex items-center gap-4">
-            <div className="p-2 bg-slate-100 dark:bg-slate-800/30 rounded-lg text-indigo-600 dark:text-indigo-400 group-hover:scale-110 group-hover:bg-indigo-500/10 transition-all">
+            <div className="p-2.5 bg-slate-50 dark:bg-white/[0.03] rounded-xl text-slate-400 dark:text-slate-600 group-hover:text-indigo-500 transition-all">
                 {icon}
             </div>
-            <p className="text-base font-bold text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">{label}</p>
+            <p className="text-base font-bold text-slate-600 dark:text-slate-400 transition-colors">{label}</p>
         </div>
-        <p className="text-sm font-bold text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{value}</p>
+        <p className="text-base font-bold text-slate-900 dark:text-white transition-colors">{value}</p>
     </div>
 );
 
 const AssignmentBullet: React.FC<{ label: string, value: string, color: string }> = ({ label, value, color }) => (
-    <div className="flex items-center justify-between px-1">
+    <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-            <div className={`h-2 w-2 rounded-full ${color}`}></div>
-            <p className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{label}</p>
+            <div className={`h-1.5 w-1.5 rounded-full ${color}`}></div>
+            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{label}</p>
         </div>
-        <p className="text-sm font-bold text-slate-900 dark:text-white text-right max-w-[150px] leading-tight">{value}</p>
+        <p className="text-base font-bold text-slate-900 dark:text-white text-right leading-tight">{value}</p>
     </div>
 );
 
