@@ -504,10 +504,10 @@ const Dashboard: React.FC = () => {
             
         setNextCleaningGroups(nextGroups);
         
-        // Show both local and visiting talks for the dashboard card this week
+        // Only show local talks for the dashboard card this week
         const weekPublicTalks = mergedPublicTalks.filter(t => {
             const d = parseDateAsUTC(t.date);
-            return d.getTime() >= weekStart.getTime() && d.getTime() < weekEnd.getTime();
+            return d.getTime() >= weekStart.getTime() && d.getTime() < weekEnd.getTime() && t.type === 'local';
         }).sort((a, b) => parseDateAsUTC(a.date).getTime() - parseDateAsUTC(b.date).getTime());
         
         setNextPublicTalk(findCurrentInWeek(weekPublicTalks, weekStart, weekEnd) || null);
@@ -607,7 +607,7 @@ const Dashboard: React.FC = () => {
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-slate-100 font-sans selection:bg-indigo-500/30 overflow-x-hidden transition-colors duration-300 pb-32">
             {/* New Header */}
-            <header className="px-6 pt-10 pb-6 flex items-center justify-between sticky top-0 bg-slate-50/90 dark:bg-[#070b14]/90 backdrop-blur-lg z-50 transition-colors">
+            <header className="px-6 pt-10 pb-6 flex items-center justify-between fixed top-0 left-0 right-0 bg-slate-50/95 dark:bg-[#070b14]/95 backdrop-blur-xl z-50 transition-colors border-b border-slate-200/10 dark:border-white/5">
                 <div className="flex items-center gap-2">
                     <span className="text-xl font-bold tracking-tight text-indigo-600 dark:text-white uppercase">CONGREGAÇÃO</span>
                 </div>
@@ -756,7 +756,7 @@ const Dashboard: React.FC = () => {
                 </div>
             </header>
 
-            <main className="px-6 space-y-10">
+            <main className="px-6 space-y-10 pt-32">
                 {/* Hero / Greeting */}
                 <section className="pt-4 space-y-4">
                     <div className="space-y-1">
