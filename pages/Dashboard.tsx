@@ -607,11 +607,11 @@ const Dashboard: React.FC = () => {
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-slate-100 font-sans selection:bg-indigo-500/30 overflow-x-hidden transition-colors duration-300 pb-32">
             {/* New Header */}
-            <header className="px-6 pt-10 pb-6 flex items-center justify-between sticky top-0 bg-slate-50/80 dark:bg-[#070b14]/80 backdrop-blur-lg z-40">
+            <header className="px-6 pt-10 pb-6 flex items-center justify-between sticky top-0 bg-slate-50/90 dark:bg-[#070b14]/90 backdrop-blur-lg z-50 transition-colors">
                 <div className="flex items-center gap-2">
                     <span className="text-xl font-bold tracking-tight text-indigo-600 dark:text-white uppercase">CONGREGAÇÃO</span>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                     <button 
                         onClick={toggleTheme} 
                         className="p-2 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white transition-colors"
@@ -637,12 +637,20 @@ const Dashboard: React.FC = () => {
                         )}
                     </button>
 
+                    <button 
+                        onClick={logout} 
+                        className="p-2 text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors ml-1"
+                        title="Sair"
+                    >
+                        <LogOut className="h-6 w-6" />
+                    </button>
+
                     {/* Notifications Popover */}
                     <AnimatePresence>
                         {isNotificationOpen && (
                             <div 
                                 ref={notificationRef}
-                                className="absolute right-6 top-24 z-50"
+                                className="absolute right-6 top-24 z-[60]"
                             >
                                 <motion.div 
                                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
