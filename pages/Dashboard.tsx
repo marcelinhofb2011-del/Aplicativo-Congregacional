@@ -881,18 +881,53 @@ const Dashboard: React.FC = () => {
                     </div>
                 </section>
 
-                {/* Service Card */}
+                {/* Service Card (Field Service Conductors) */}
                 <section>
-                    <div className="bg-white dark:bg-[#111827] border border-slate-100 dark:border-white/5 rounded-3xl p-7 flex items-center justify-between group cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all shadow-lg shadow-slate-200/30 dark:shadow-none">
-                        <div className="flex flex-col gap-2">
-                            <h4 className="text-lg font-bold text-slate-700 dark:text-slate-100 flex items-center gap-3 uppercase tracking-wider">
-                                DIRIGENTE SÁBADO
-                                <ChevronRight className="h-5 w-5 text-slate-400 dark:text-slate-600 group-hover:translate-x-1 transition-transform" />
+                    <div className="bg-white dark:bg-[#111827] border border-slate-100 dark:border-white/5 rounded-3xl p-8 space-y-8 shadow-xl shadow-slate-200/50 dark:shadow-2xl transition-all hover:bg-slate-50 dark:hover:bg-[#131a29]">
+                        <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-4">
+                            <h4 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-3">
+                                <Users className="h-6 w-6 text-indigo-500" />
+                                Saídas de Campo
                             </h4>
-                            <p className="text-xl font-bold text-slate-900 dark:text-white">{nextFieldService?.conductorName || 'N/A'}</p>
-                            <div className="flex items-center gap-2 text-slate-500 mt-1">
-                                <Calendar className="h-4 w-4" />
-                                <span className="text-xs font-bold uppercase tracking-widest">SÁB., {nextFieldService?.date ? parseDateAsUTC(nextFieldService.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' }) : 'N/A'}</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Saturday Conductor */}
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                                        <Calendar className="h-5 w-5" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">SÁBADO</p>
+                                        <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
+                                            {nextFieldService?.date ? parseDateAsUTC(nextFieldService.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' }) : 'N/A'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="bg-slate-50 dark:bg-black/20 rounded-2xl p-4 border border-slate-100 dark:border-transparent">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">DIRIGENTE</p>
+                                    <p className="text-lg font-bold text-slate-900 dark:text-white">{nextFieldService?.conductorName || 'Não definido'}</p>
+                                </div>
+                            </div>
+
+                            {/* 1st Sunday Conductor */}
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-600 dark:text-emerald-500">
+                                        <Calendar className="h-5 w-5" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">1º DOMINGO</p>
+                                        <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
+                                            {nextFirstSundayConductor?.date ? parseDateAsUTC(nextFirstSundayConductor.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' }) : 'N/A'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="bg-slate-50 dark:bg-black/20 rounded-2xl p-4 border border-slate-100 dark:border-transparent">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">DIRIGENTE</p>
+                                    <p className="text-lg font-bold text-slate-900 dark:text-white">{nextFirstSundayConductor?.conductorName || 'Não definido'}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
