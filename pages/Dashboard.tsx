@@ -585,7 +585,7 @@ const Dashboard: React.FC = () => {
     return (
         <div className="min-h-screen bg-white dark:bg-[#07060b] text-slate-900 dark:text-slate-100 font-sans selection:bg-indigo-500/30 overflow-x-hidden transition-colors duration-300 pb-40">
             {/* New Header */}
-            <header className="px-6 pt-12 pb-6 flex items-center justify-between fixed top-0 left-0 right-0 bg-white/80 dark:bg-[#07060b]/80 backdrop-blur-2xl z-50 transition-all border-b-2 border-slate-900 dark:border-white/20">
+            <header className="px-6 pt-12 pb-6 flex items-center justify-between fixed top-0 left-0 right-0 bg-white/80 dark:bg-[#07060b]/80 backdrop-blur-2xl z-50 transition-all">
                 <div className="flex items-center gap-2">
                     <span className="text-xl font-black tracking-tight text-indigo-600 dark:text-white uppercase transition-opacity">APP</span>
                 </div>

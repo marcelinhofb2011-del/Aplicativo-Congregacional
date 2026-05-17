@@ -9,6 +9,7 @@ import {
     where,
     orderBy,
     getDocs,
+    onSnapshot,
     addDoc,
     setDoc,
     updateDoc,
@@ -47,6 +48,33 @@ const getCollection = async <T>(collectionName: string, sortField?: keyof T, ord
     const q = sortField ? query(collRef, orderBy(sortField as string, order)) : query(collRef);
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => fromFirestore<T>(doc));
+};
+
+export const subscribeCollection = <T>(
+    collectionName: string, 
+    onUpdate: (data: T[]) => void, 
+    sortField?: keyof T, 
+    order: 'asc' | 'desc' = 'desc'
+) => {
+    const db = getDbInstance();
+    const collRef = collection(db, collectionName);
+    const q = sortField ? query(collRef, orderBy(sortField as string, order)) : query(collRef);
+    
+    return onSnapshot(q, (snapshot) => {
+        const data = snapshot.docs.map(doc => fromFirestore<T>(doc));
+        onUpdate(data);
+    });
+};
+
+export const subscribeActiveCollection = <T extends BaseRecord>(
+    collectionName: string,
+    onUpdate: (data: T[]) => void,
+    sortField: keyof T = 'createdAt' as keyof T,
+    order: 'asc' | 'desc' = 'desc'
+) => {
+    return subscribeCollection<T>(collectionName, (allItems) => {
+        onUpdate(allItems.filter(item => item.isActive !== false));
+    }, sortField, order);
 };
 
 const getActiveCollection = async <T extends BaseRecord>(collectionName: string, sortField: keyof T = 'createdAt' as keyof T, order: 'asc' | 'desc' = 'desc'): Promise<T[]> => {
@@ -95,6 +123,7 @@ const deleteBaseRecord = async (collectionName: string, id: string): Promise<voi
 
 // Life & Ministry
 export const getSchedules = () => getCollection<LifeMinistrySchedule>('programacao', 'date', 'asc');
+export const subscribeSchedules = (callback: (data: LifeMinistrySchedule[]) => void) => subscribeCollection<LifeMinistrySchedule>('programacao', callback, 'date', 'asc');
 export const addSchedule = (data: any, userUid: string) => addBaseRecord('programacao', data, userUid);
 export const updateSchedule = (id: string, data: any, userUid: string) => updateBaseRecord('programacao', id, data, userUid);
 export const archiveSchedule = (id: string, userUid: string) => archiveBaseRecord('programacao', id, userUid);
@@ -154,6 +183,7 @@ export const deleteBusTicket = (id: string) => {
 
 // Assignments
 export const getAssignments = () => getCollection<Assignment>('designacoes', 'date', 'asc');
+export const subscribeAssignments = (callback: (data: Assignment[]) => void) => subscribeCollection<Assignment>('designacoes', callback, 'date', 'asc');
 export const addAssignment = (data: any, userUid: string) => addBaseRecord('designacoes', data, userUid);
 export const updateAssignment = (id: string, data: any, userUid: string) => updateBaseRecord('designacoes', id, data, userUid);
 export const archiveAssignment = (id: string, userUid: string) => archiveBaseRecord('designacoes', id, userUid);
@@ -161,6 +191,7 @@ export const deleteAssignment = (id: string) => deleteBaseRecord('designacoes', 
 
 // Cleaning
 export const getCleaningSchedules = () => getCollection<CleaningSchedule>('limpeza', 'date', 'asc');
+export const subscribeCleaningSchedules = (callback: (data: CleaningSchedule[]) => void) => subscribeCollection<CleaningSchedule>('limpeza', callback, 'date', 'asc');
 export const addCleaningSchedule = (data: any, userUid: string) => addBaseRecord('limpeza', data, userUid);
 export const updateCleaningSchedule = (id: string, data: any, userUid: string) => updateBaseRecord('limpeza', id, data, userUid);
 export const archiveCleaningSchedule = (id: string, userUid: string) => archiveBaseRecord('limpeza', id, userUid);
@@ -175,6 +206,7 @@ export const deleteFieldServiceMeeting = (id: string) => deleteBaseRecord('dirig
 
 // Conductors
 export const getConductorMeetings = () => getCollection<ConductorMeeting>('dirigentes', 'date', 'asc');
+export const subscribeConductorMeetings = (callback: (data: ConductorMeeting[]) => void) => subscribeCollection<ConductorMeeting>('dirigentes', callback, 'date', 'asc');
 export const addConductorMeeting = (data: any, userUid: string) => addBaseRecord('dirigentes', data, userUid);
 export const updateConductorMeeting = (id: string, data: any, userUid: string) => updateBaseRecord('dirigentes', id, data, userUid);
 export const archiveConductorMeeting = (id: string, userUid: string) => archiveBaseRecord('dirigentes', id, userUid);
@@ -182,6 +214,7 @@ export const deleteConductorMeeting = (id: string) => deleteBaseRecord('dirigent
 
 // First Sunday Conductors
 export const getFirstSundayConductors = () => getCollection<FirstSundayConductor>('dirigentes_primeiro_domingo', 'date', 'asc');
+export const subscribeFirstSundayConductors = (callback: (data: FirstSundayConductor[]) => void) => subscribeCollection<FirstSundayConductor>('dirigentes_primeiro_domingo', callback, 'date', 'asc');
 export const addFirstSundayConductor = (data: any, userUid: string) => addBaseRecord('dirigentes_primeiro_domingo', data, userUid);
 export const updateFirstSundayConductor = (id: string, data: any, userUid: string) => updateBaseRecord('dirigentes_primeiro_domingo', id, data, userUid);
 export const archiveFirstSundayConductor = (id: string, userUid: string) => archiveBaseRecord('dirigentes_primeiro_domingo', id, userUid);
@@ -189,6 +222,7 @@ export const deleteFirstSundayConductor = (id: string) => deleteBaseRecord('diri
 
 // Shepherding
 export const getShepherdingVisits = () => getCollection<ShepherdingVisit>('pastoreio', 'date', 'desc');
+export const subscribeShepherdingVisits = (callback: (data: ShepherdingVisit[]) => void) => subscribeCollection<ShepherdingVisit>('pastoreio', callback, 'date', 'desc');
 export const addShepherdingVisit = (data: any, userUid: string) => addBaseRecord('pastoreio', data, userUid);
 export const updateShepherdingVisit = (id: string, data: any, userUid: string) => updateBaseRecord('pastoreio', id, data, userUid);
 export const archiveShepherdingVisit = (id: string, userUid: string) => archiveBaseRecord('pastoreio', id, userUid);
@@ -196,6 +230,7 @@ export const deleteShepherdingVisit = (id: string) => deleteBaseRecord('pastorei
 
 // Public Talks
 export const getPublicTalks = () => getCollection<PublicTalkSchedule>('discursos_publicos', 'date', 'asc');
+export const subscribePublicTalks = (callback: (data: PublicTalkSchedule[]) => void) => subscribeCollection<PublicTalkSchedule>('discursos_publicos', callback, 'date', 'asc');
 export const addPublicTalk = (data: any, userUid: string) => addBaseRecord('discursos_publicos', data, userUid);
 export const updatePublicTalk = (id: string, data: any, userUid: string) => updateBaseRecord('discursos_publicos', id, data, userUid);
 export const archivePublicTalk = (id: string, userUid: string) => archiveBaseRecord('discursos_publicos', id, userUid);
@@ -230,6 +265,7 @@ export const deleteAnnouncement = (id: string) => deleteBaseRecord('anuncios', i
 
 // Meeting Schedules (Programações)
 export const getMeetingSchedules = () => getActiveCollection<MeetingSchedule>('programacoes_reuniao', 'date', 'asc');
+export const subscribeMeetingSchedules = (callback: (data: MeetingSchedule[]) => void) => subscribeActiveCollection<MeetingSchedule>('programacoes_reuniao', callback, 'date', 'asc');
 export const addMeetingSchedule = (data: any, userUid: string) => addBaseRecord<MeetingSchedule>('programacoes_reuniao', data, userUid);
 export const updateMeetingSchedule = (id: string, data: any, userUid: string) => updateBaseRecord<MeetingSchedule>('programacoes_reuniao', id, data, userUid);
 export const archiveMeetingSchedule = (id: string, userUid: string) => archiveBaseRecord('programacoes_reuniao', id, userUid);
