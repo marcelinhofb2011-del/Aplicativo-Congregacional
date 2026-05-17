@@ -462,7 +462,12 @@ const Calendar: React.FC = () => {
             {/* Delete Confirmation Modal */}
             <AnimatePresence>
                 {deleteConfirmId && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                    >
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
@@ -489,7 +494,7 @@ const Calendar: React.FC = () => {
                                 </button>
                             </div>
                         </motion.div>
-                    </div>
+                    </motion.div>
                 )}
             </AnimatePresence>
 
@@ -519,7 +524,12 @@ const Calendar: React.FC = () => {
             {/* Modal */}
             <AnimatePresence>
                 {isModalOpen && (
-                    <div className={`fixed inset-0 z-[100] flex justify-center p-4 transition-all duration-300 ${isInputFocused ? 'items-start pt-10' : 'items-end sm:items-center'}`}>
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className={`fixed inset-0 z-[100] flex justify-center p-4 transition-all duration-300 ${isInputFocused ? 'items-start pt-10' : 'items-end sm:items-center'}`}
+                    >
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -618,7 +628,7 @@ const Calendar: React.FC = () => {
                                 </button>
                             </div>
                         </motion.div>
-                    </div>
+                    </motion.div>
                 )}
             </AnimatePresence>
         </div>

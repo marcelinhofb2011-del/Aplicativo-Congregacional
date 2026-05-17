@@ -47,13 +47,31 @@ const RoleProtectedRoute: React.FC<{ roles: UserRole[] }> = ({ roles }) => {
 
 
 const AppContent: React.FC = () => {
-    const { user, loading: authLoading } = useAuth();
+    const { user, loading: authLoading, forceStopLoading } = useAuth();
 
     if (authLoading) {
         return (
             <div className="flex flex-col items-center justify-center h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
                 <div className="h-12 w-12 rounded-2xl bg-indigo-500 animate-bounce mb-4"></div>
-                <div className="text-xl font-bold font-outfit text-slate-900 dark:text-white">Carregando...</div>
+                <div className="text-xl font-bold font-outfit text-slate-900 dark:text-white mb-2">Carregando...</div>
+                <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs text-center px-4">Iniciando sistema e verificando credenciais.</p>
+                <div className="mt-8 flex flex-col gap-2">
+                   <button 
+                      onClick={() => window.location.reload()}
+                      className="text-xs text-indigo-500 font-bold uppercase tracking-widest hover:underline"
+                   >
+                     Recarregar Página
+                   </button>
+                   <button 
+                      onClick={() => {
+                          console.log("Forcing load completion from UI");
+                          forceStopLoading();
+                      }}
+                      className="text-[10px] text-slate-400 dark:text-slate-600 font-bold uppercase tracking-widest hover:text-slate-900 mt-4"
+                   >
+                     Entrar manual (se travado)
+                   </button>
+                </div>
             </div>
         );
     }

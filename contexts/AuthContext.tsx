@@ -9,6 +9,7 @@ interface AuthContextType {
     error: string | null;
     login: (email: string, pass: string) => Promise<void>;
     logout: () => Promise<void>;
+    forceStopLoading: () => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,24 +23,46 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const auth = getAuthInstance();
-        ensurePersistence();
-        const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
-            if (firebaseUser) {
-                const isPublicadorAccount = firebaseUser.email === PUBLISHER_EMAIL;
-                setUser({
-                    uid: firebaseUser.uid,
-                    email: firebaseUser.email,
-                    displayName: firebaseUser.displayName,
-                    role: isPublicadorAccount ? UserRole.PUBLISHER : UserRole.SERVANT,
-                });
-            } else {
-                setUser(null);
-            }
+        let unsubscribe: (() => void) | undefined;
+        
+        try {
+            const auth = getAuthInstance();
+            ensurePersistence().catch(err => console.error("Persistence error:", err));
+            
+            unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+                if (firebaseUser) {
+                    const isPublicadorAccount = firebaseUser.email === PUBLISHER_EMAIL;
+                    setUser({
+                        uid: firebaseUser.uid,
+                        email: firebaseUser.email,
+                        displayName: firebaseUser.displayName,
+                        role: isPublicadorAccount ? UserRole.PUBLISHER : UserRole.SERVANT,
+                    });
+                } else {
+                    setUser(null);
+                }
+                setLoading(false);
+            }, (err) => {
+                console.error("Auth state change error:", err);
+                setLoading(false);
+            });
+        } catch (e) {
+            console.error("Firebase Auth initialization failed:", e);
             setLoading(false);
-        });
+        }
 
-        return () => unsubscribe();
+        // Safety fallback: allow the app to load even if auth hangs
+        const timeoutCode = setTimeout(() => {
+            if (loading) {
+                console.warn("Auth state didn't change in 5 seconds, forcing load state.");
+                setLoading(false);
+            }
+        }, 5000);
+
+        return () => {
+            if (unsubscribe) unsubscribe();
+            clearTimeout(timeoutCode);
+        };
     }, []);
 
     const login = useCallback(async (email: string, pass: string) => {
@@ -86,12 +109,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     }, []);
     
+    const forceStopLoading = useCallback(() => {
+        setLoading(false);
+    }, []);
+    
     const contextValue = {
         user,
         loading,
         error,
         login,
         logout,
+        forceStopLoading
     };
     
     return (

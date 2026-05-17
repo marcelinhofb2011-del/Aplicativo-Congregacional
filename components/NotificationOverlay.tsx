@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
     X, 
     Bell, 
-    CheckCheck, 
     Trash2, 
     Pin, 
     PinOff, 
@@ -13,7 +13,6 @@ import {
     Info, 
     User, 
     Users,
-    Clock,
     ChevronRight,
     Search
 } from 'lucide-react';
@@ -88,33 +87,43 @@ const NotificationOverlay: React.FC<NotificationOverlayProps> = ({ isOpen, onClo
 
         if (isOpen) {
             document.addEventListener('mousedown', handleClickOutside);
+            document.body.style.overflow = 'hidden';
         } else {
             document.removeEventListener('mousedown', handleClickOutside);
+            document.body.style.overflow = '';
         }
 
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.body.style.overflow = '';
+        };
     }, [isOpen, onClose]);
 
-    return (
+    const content = (
         <AnimatePresence>
             {isOpen && (
-                <>
+                <div id="notification-portal-root" className="fixed inset-0 z-[100] flex justify-end overflow-hidden">
                     {/* Backdrop */}
                     <motion.div
+                        id="notification-backdrop"
+                        key="notification-backdrop"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[60]"
+                        className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[-1]"
+                        onClick={onClose}
                     />
-
+                    
                     {/* Drawer */}
                     <motion.div
+                        id="notification-drawer"
+                        key="notification-drawer"
                         ref={drawerRef}
                         initial={{ x: '100%' }}
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed top-0 right-0 h-full w-full max-w-md bg-white dark:bg-[#07060b] shadow-2xl z-[70] flex flex-col"
+                        className="h-full w-full max-w-md bg-white dark:bg-[#07060b] shadow-2xl flex flex-col relative z-10"
                     >
                         {/* Header */}
                         <div className="p-8 pb-6">
@@ -124,6 +133,7 @@ const NotificationOverlay: React.FC<NotificationOverlayProps> = ({ isOpen, onClo
                                     <p className="text-[10px] text-indigo-500 font-bold uppercase tracking-[0.2em]">Fluxo de Notificações</p>
                                 </div>
                                 <button
+                                    id="close-notifications"
                                     onClick={onClose}
                                     className="h-12 w-12 flex items-center justify-center bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-2xl transition-all"
                                 >
@@ -134,6 +144,7 @@ const NotificationOverlay: React.FC<NotificationOverlayProps> = ({ isOpen, onClo
                             <div className="relative group">
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                                 <input
+                                    id="notification-search"
                                     type="text"
                                     placeholder="Buscar..."
                                     value={searchTerm}
@@ -238,6 +249,7 @@ const NotificationOverlay: React.FC<NotificationOverlayProps> = ({ isOpen, onClo
                         {/* Footer */}
                         <div className="p-8 space-y-4">
                             <button
+                                id="mark-all-read"
                                 onClick={handleMarkAllRead}
                                 className="w-full py-4 bg-indigo-500 text-white rounded-[20px] text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:grayscale"
                                 disabled={unreadCount === 0}
@@ -249,10 +261,12 @@ const NotificationOverlay: React.FC<NotificationOverlayProps> = ({ isOpen, onClo
                             </p>
                         </div>
                     </motion.div>
-                </>
+                </div>
             )}
         </AnimatePresence>
     );
+
+    return createPortal(content, document.body);
 };
 
 export default NotificationOverlay;

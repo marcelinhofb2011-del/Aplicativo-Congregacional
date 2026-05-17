@@ -49,7 +49,8 @@ import {
     Layout,
     Play,
     Droplets,
-    Tv
+    Tv,
+    Pencil
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from '../contexts/ThemeContext';
@@ -145,8 +146,6 @@ const Dashboard: React.FC = () => {
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const [unreadAnnouncementsCount, setUnreadAnnouncementsCount] = useState(0);
-    const [unreadSchedulesCount, setUnreadSchedulesCount] = useState(0);
-    const notificationRef = useRef<HTMLDivElement>(null);
     const [expandedAnnouncement, setExpandedAnnouncement] = useState<string | null>(null);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -226,36 +225,17 @@ const Dashboard: React.FC = () => {
         }
     }, [user]);
 
-    const unreadCount = notifications.filter(n => !n.isRead).length + unreadAnnouncementsCount + unreadSchedulesCount;
+    const unreadCount = notifications.filter(n => !n.isRead).length + unreadAnnouncementsCount;
 
     useEffect(() => {
         const lastCheckAnn = localStorage.getItem(`lastCheck_announcements_${user?.uid}`) || '0';
-        const lastCheckSched = localStorage.getItem(`lastCheck_schedules_${user?.uid}`) || '0';
         
         const lastCheckAnnDate = new Date(lastCheckAnn);
-        const lastCheckSchedDate = new Date(lastCheckSched);
 
         const newAnns = announcements.filter(ann => new Date(ann.createdAt).getTime() > lastCheckAnnDate.getTime());
-        const newScheds = schedules.filter(s => new Date(s.createdAt).getTime() > lastCheckSchedDate.getTime());
 
         setUnreadAnnouncementsCount(newAnns.length);
-        setUnreadSchedulesCount(newScheds.length);
     }, [announcements, schedules, user]);
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
-                setIsNotificationOpen(false);
-            }
-        };
-
-        if (isNotificationOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [isNotificationOpen]);
 
     const handleOpenNotifications = () => {
         setIsNotificationOpen(!isNotificationOpen);
@@ -263,9 +243,7 @@ const Dashboard: React.FC = () => {
             // Mark items as "seen" local-only
             const now = new Date().toISOString();
             localStorage.setItem(`lastCheck_announcements_${user?.uid}`, now);
-            localStorage.setItem(`lastCheck_schedules_${user?.uid}`, now);
             setUnreadAnnouncementsCount(0);
-            setUnreadSchedulesCount(0);
         }
     };
 
@@ -607,9 +585,9 @@ const Dashboard: React.FC = () => {
     return (
         <div className="min-h-screen bg-white dark:bg-[#07060b] text-slate-900 dark:text-slate-100 font-sans selection:bg-indigo-500/30 overflow-x-hidden transition-colors duration-300 pb-40">
             {/* New Header */}
-            <header className="px-6 pt-12 pb-6 flex items-center justify-between fixed top-0 left-0 right-0 bg-white/80 dark:bg-[#07060b]/80 backdrop-blur-2xl z-50 transition-all border-b border-slate-100 dark:border-white/5">
+            <header className="px-6 pt-12 pb-6 flex items-center justify-between fixed top-0 left-0 right-0 bg-white/80 dark:bg-[#07060b]/80 backdrop-blur-2xl z-50 transition-all border-b-2 border-slate-900 dark:border-white/20">
                 <div className="flex items-center gap-2">
-                    <span className="text-xl font-bold tracking-tight text-indigo-600 dark:text-white uppercase">CONGREGAÇÃO</span>
+                    <span className="text-xl font-black tracking-tight text-indigo-600 dark:text-white uppercase transition-opacity">APP</span>
                 </div>
                 <div className="flex items-center gap-3">
                     <button 
@@ -625,6 +603,7 @@ const Dashboard: React.FC = () => {
                     >
                         <Search className="h-6 w-6" />
                     </button>
+                    {/* Notifications Button */}
                     <button 
                         onClick={handleOpenNotifications}
                         className={`p-2 relative transition-all duration-300 ${unreadCount > 0 ? 'text-amber-500 dark:text-amber-400 scale-110' : 'text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white'}`}
@@ -644,91 +623,6 @@ const Dashboard: React.FC = () => {
                     >
                         <LogOut className="h-6 w-6" />
                     </button>
-
-                    {/* Notifications Popover */}
-                    <AnimatePresence>
-                        {isNotificationOpen && (
-                            <div 
-                                ref={notificationRef}
-                                className="absolute right-6 top-24 z-[60]"
-                            >
-                                <motion.div 
-                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                    className="w-80 max-h-[80vh] bg-white/90 dark:bg-[#07060b]/90 backdrop-blur-3xl border border-slate-100 dark:border-white/5 rounded-[32px] shadow-2xl overflow-hidden flex flex-col"
-                                >
-                                    <div className="p-6 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
-                                        <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-400">Atividade</h3>
-                                        {notifications.some(n => !n.isRead) && (
-                                            <button 
-                                                onClick={() => user && notificationService.markAllAsRead(user.uid)}
-                                                className="text-[9px] font-black text-indigo-500 hover:text-indigo-600 uppercase tracking-widest"
-                                            >
-                                                Limpar tudo
-                                            </button>
-                                        )}
-                                    </div>
-                                    
-                                    <div className="overflow-y-auto no-scrollbar">
-                                        {(notifications.length === 0 && announcements.length === 0 && schedules.length === 0) ? (
-                                            <div className="p-12 text-center space-y-4">
-                                                <div className="h-12 w-12 bg-slate-50 dark:bg-white/5 rounded-2xl flex items-center justify-center mx-auto text-slate-300 dark:text-slate-700">
-                                                    <Bell className="h-6 w-6" />
-                                                </div>
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sem novidades</p>
-                                            </div>
-                                        ) : (
-                                            <div className="divide-y divide-slate-50 dark:divide-white/[0.03]">
-                                                {/* Announcements */}
-                                                {announcements.slice(0, 3).map(ann => (
-                                                    <div key={`ann-${ann.id}`} className="p-5 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors relative">
-                                                        <div className="flex gap-4">
-                                                            <div className="h-10 w-10 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-500 flex-shrink-0">
-                                                                <Megaphone className="h-5 w-5" />
-                                                            </div>
-                                                            <div className="space-y-1">
-                                                                <p className="text-xs font-bold text-slate-900 dark:text-white uppercase line-clamp-1">{ann.title}</p>
-                                                                <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">{ann.body}</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-
-                                                {/* User Notifications */}
-                                                {notifications.map(notif => (
-                                                    <div 
-                                                        key={notif.id} 
-                                                        onClick={() => handleNotificationClick(notif)}
-                                                        className={`p-5 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer relative ${!notif.isRead ? 'bg-indigo-50/20' : ''}`}
-                                                    >
-                                                        <div className="flex gap-4">
-                                                            <div className="h-10 w-10 bg-slate-50 dark:bg-white/10 rounded-xl flex items-center justify-center text-slate-400 dark:text-slate-600 flex-shrink-0">
-                                                                <Calendar className="h-5 w-5" />
-                                                            </div>
-                                                            <div className="space-y-1">
-                                                                <p className="text-xs font-bold text-slate-900 dark:text-white uppercase line-clamp-1">{notif.title}</p>
-                                                                <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">{notif.description}</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="p-6 border-t border-slate-100 dark:border-white/5">
-                                        <Link 
-                                            to="/announcements" 
-                                            onClick={() => setIsNotificationOpen(false)}
-                                            className="block text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] hover:text-indigo-600 transition-colors"
-                                        >
-                                            Ver Histórico
-                                        </Link>
-                                    </div>
-                                </motion.div>
-                            </div>
-                        )}
-                    </AnimatePresence>
                 </div>
             </header>
 
@@ -742,7 +636,7 @@ const Dashboard: React.FC = () => {
                 </section>
 
                 {/* Date Splitter */}
-                <section className="pt-4">
+                <section className="py-10 border-b-2 border-slate-900 dark:border-white/20">
                     <h3 className="text-sm font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.4em] mb-4">
                         ESTA SEMANA
                     </h3>
@@ -761,19 +655,19 @@ const Dashboard: React.FC = () => {
                 </section>
 
                 {/* Midweek Meeting Section */}
-                <section className="space-y-8">
+                <section className="space-y-8 py-10 transition-all duration-300 border-b-2 border-slate-900 dark:border-white/20">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                            <div className="h-12 w-12 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                            <div className="h-12 w-12 bg-indigo-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
                                 <BookOpen className="h-6 w-6" />
                             </div>
-                            <h4 className="text-2xl font-bold text-slate-900 dark:text-white">Meio de Semana</h4>
+                            <h4 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Meio de Semana</h4>
                         </div>
                     </div>
 
                     <div className="space-y-1">
                         {/* Integrated Block */}
-                        <div className="py-6 border-b border-slate-100 dark:border-white/5 flex items-center justify-between group cursor-pointer active:opacity-70 transition-opacity">
+                        <div className="py-6 border-b border-slate-900 dark:border-white/10 flex items-center justify-between group cursor-pointer active:opacity-70 transition-opacity">
                             <div className="space-y-1">
                                 <p className="text-[10px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest">PRESIDENTE</p>
                                 <p className="text-xl font-bold text-slate-900 dark:text-white">{nextMidweekAssignment?.president || nextLifeMinistry?.president || 'Não definido'}</p>
@@ -788,7 +682,7 @@ const Dashboard: React.FC = () => {
                         </div>
 
                         {/* Assignments Integrated */}
-                        <div className="mt-8 pt-8 border-t border-slate-100 dark:border-white/5 grid grid-cols-1 gap-6">
+                        <div className="mt-8 pt-8 border-t border-slate-200 dark:border-white/5 grid grid-cols-1 gap-6">
                             <AssignmentBullet label="INDICADORES" value={nextMidweekAssignment ? `${nextMidweekAssignment.indicator1 || 'N/A'}${nextMidweekAssignment.indicator2 ? ` / ${nextMidweekAssignment.indicator2}` : ''}` : 'N/A'} color="bg-purple-500" />
                             <AssignmentBullet label="ÁUDIO E VÍDEO" value={nextMidweekAssignment ? `${nextMidweekAssignment.audio || 'N/A'}${nextMidweekAssignment.video ? ` / ${nextMidweekAssignment.video}` : ''}` : 'N/A'} color="bg-cyan-500" />
                             <AssignmentBullet label="MICROFONE" value={nextMidweekAssignment ? `${nextMidweekAssignment.mic1 || 'N/A'}${nextMidweekAssignment.mic2 ? ` / ${nextMidweekAssignment.mic2}` : ''}` : 'N/A'} color="bg-orange-500" />
@@ -796,20 +690,46 @@ const Dashboard: React.FC = () => {
                     </div>
                 </section>
 
-                <div className="h-px bg-slate-100 dark:bg-white/5 w-full"></div>
+
 
                 {/* Weekend Meeting Section */}
-                <section className="space-y-8">
+                <section className="space-y-8 py-10 transition-all duration-300 border-b-2 border-slate-900 dark:border-white/20">
                     <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 bg-cyan-50 dark:bg-cyan-500/10 rounded-2xl flex items-center justify-center text-cyan-600 dark:text-cyan-400">
+                        <div className="h-12 w-12 bg-cyan-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-cyan-500/20">
                             <Home className="h-6 w-6" />
                         </div>
-                        <h4 className="text-2xl font-bold text-slate-900 dark:text-white">Fim de Semana</h4>
+                        <h4 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Fim de Semana</h4>
                     </div>
 
                     <div className="space-y-8">
-                        <div className="py-6 border-b border-slate-100 dark:border-white/5 group cursor-pointer active:opacity-70 transition-opacity">
+                        <div className="py-6 border-b border-slate-200 dark:border-white/5 group cursor-pointer active:opacity-70 transition-opacity">
                             <p className="text-[10px] font-black text-cyan-600 dark:text-cyan-400 uppercase tracking-widest mb-2">DISCURSO PÚBLICO</p>
+                            
+                            {(nextPublicTalk?.notes || nextPublicTalk?.song) && (
+                                <div className="my-6 space-y-4">
+                                    {nextPublicTalk?.song && (
+                                        <div className="flex items-start gap-2">
+                                            <Mic className="h-3.5 w-3.5 text-indigo-500 mt-0.5" />
+                                            <div>
+                                                <p className="text-[9px] font-black text-indigo-500/60 uppercase tracking-widest leading-none mb-1">Cântico Inicial</p>
+                                                <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{nextPublicTalk.song}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {nextPublicTalk?.notes && (
+                                        <div className="flex items-start gap-2">
+                                            <Pencil className="h-3.5 w-3.5 text-amber-500 mt-0.5" />
+                                            <div>
+                                                <p className="text-[9px] font-black text-amber-500/60 uppercase tracking-widest leading-none mb-1">Observações / Textos</p>
+                                                <p className="text-xs font-medium text-slate-600 dark:text-slate-400 italic">
+                                                    {nextPublicTalk.notes}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                             <h5 className="text-2xl font-bold text-slate-900 dark:text-white leading-tight mb-4">
                                 {nextPublicTalk?.theme || 'Tema não definido'}
                             </h5>
@@ -842,10 +762,8 @@ const Dashboard: React.FC = () => {
                     </div>
                 </section>
 
-                <div className="h-px bg-slate-100 dark:bg-white/5 w-full"></div>
-
                 {/* Service Conductors Section */}
-                <section className="space-y-8">
+                <section className="space-y-8 py-10 border-b-2 border-slate-900 dark:border-white/20">
                     <div className="flex items-center gap-4">
                         <div className="h-12 w-12 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                             <Users className="h-6 w-6" />
@@ -866,13 +784,13 @@ const Dashboard: React.FC = () => {
                                 </div>
                                 <p className="text-2xl font-bold text-slate-900 dark:text-white">{nextFieldService?.conductorName || 'Não definido'}</p>
                             </div>
-                            <div className="h-10 w-10 border border-slate-100 dark:border-white/10 rounded-full flex items-center justify-center text-slate-300 dark:text-slate-700 group-hover:text-indigo-500 transition-colors">
+                            <div className="h-10 w-10 border border-slate-200 dark:border-white/10 rounded-full flex items-center justify-center text-slate-300 dark:text-slate-700 group-hover:text-indigo-500 transition-colors">
                                 <ChevronRight className="h-5 w-5" />
                             </div>
                         </div>
 
                         {/* 1st Sunday */}
-                        <div className="flex items-center justify-between py-2 group cursor-pointer bottom-divider">
+                        <div className="flex items-center justify-between py-2 group cursor-pointer border-b border-slate-200 dark:border-white/10">
                             <div className="space-y-1">
                                 <div className="flex items-center gap-2">
                                     <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">1º DOMINGO</p>
@@ -883,17 +801,15 @@ const Dashboard: React.FC = () => {
                                 </div>
                                 <p className="text-2xl font-bold text-slate-900 dark:text-white">{nextFirstSundayConductor?.conductorName || 'Não definido'}</p>
                             </div>
-                            <div className="h-10 w-10 border border-slate-100 dark:border-white/10 rounded-full flex items-center justify-center text-slate-300 dark:text-slate-700 group-hover:text-emerald-500 transition-colors">
+                            <div className="h-10 w-10 border border-slate-200 dark:border-white/10 rounded-full flex items-center justify-center text-slate-300 dark:text-slate-700 group-hover:text-emerald-500 transition-colors">
                                 <ChevronRight className="h-5 w-5" />
                             </div>
                         </div>
                     </div>
                 </section>
 
-                <div className="h-px bg-slate-100 dark:bg-white/5 w-full"></div>
-
                 {/* Cleaning Section */}
-                <section className="space-y-8">
+                <section className="space-y-8 py-10 border-b-2 border-slate-900 dark:border-white/20">
                     <div className="flex items-center gap-4">
                         <div className="h-12 w-12 bg-amber-50 dark:bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 dark:text-amber-500">
                             <Droplets className="h-6 w-6" />
@@ -910,7 +826,7 @@ const Dashboard: React.FC = () => {
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-6 pt-6 border-t border-slate-100 dark:border-white/5">
+                        <div className="grid grid-cols-1 gap-6 pt-6 border-t border-slate-200 dark:border-white/5">
                             <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em]">PRÓXIMOS GRUPOS</p>
                             <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
                                 {nextCleaningGroups.length > 0 ? (
@@ -928,7 +844,7 @@ const Dashboard: React.FC = () => {
                     </div>
                 </section>
 
-                <div className="h-px bg-slate-100 dark:bg-white/5 w-full"></div>
+
 
                 {/* Announcements Section */}
                 <section className="pb-12 space-y-8">
@@ -943,7 +859,7 @@ const Dashboard: React.FC = () => {
                                 <motion.div 
                                     key={ann.id}
                                     layout
-                                    className="py-8 border-b border-slate-100 dark:border-white/5 cursor-pointer active:opacity-70 transition-opacity overflow-hidden"
+                                    className="py-8 border-b-2 border-slate-900 dark:border-white/20 cursor-pointer active:opacity-70 transition-opacity overflow-hidden"
                                     onClick={() => setExpandedAnnouncement(isExpanded ? null : ann.id)}
                                 >
                                     <div className="flex items-start justify-between gap-6">
