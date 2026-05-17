@@ -636,7 +636,7 @@ const Dashboard: React.FC = () => {
                 </section>
 
                 {/* Date Splitter */}
-                <section className="py-10 border-b-2 border-slate-900 dark:border-white/20">
+                <section className="py-10 border-b-4 border-slate-900 dark:border-white/20">
                     <h3 className="text-sm font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.4em] mb-4">
                         ESTA SEMANA
                     </h3>
@@ -655,7 +655,7 @@ const Dashboard: React.FC = () => {
                 </section>
 
                 {/* Midweek Meeting Section */}
-                <section className="space-y-8 py-10 transition-all duration-300 border-b-2 border-slate-900 dark:border-white/20">
+                <section className="space-y-8 py-12 border-b-4 border-slate-900 dark:border-white/20 transition-all duration-300">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <div className="h-12 w-12 bg-indigo-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
@@ -693,7 +693,7 @@ const Dashboard: React.FC = () => {
 
 
                 {/* Weekend Meeting Section */}
-                <section className="space-y-8 py-10 transition-all duration-300 border-b-2 border-slate-900 dark:border-white/20">
+                <section className="space-y-8 py-12 border-b-4 border-slate-900 dark:border-white/20 transition-all duration-300">
                     <div className="flex items-center gap-4">
                         <div className="h-12 w-12 bg-cyan-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-cyan-500/20">
                             <Home className="h-6 w-6" />
@@ -705,9 +705,9 @@ const Dashboard: React.FC = () => {
                         <div className="py-6 border-b border-slate-200 dark:border-white/5 group cursor-pointer active:opacity-70 transition-opacity">
                             <p className="text-[10px] font-black text-cyan-600 dark:text-cyan-400 uppercase tracking-widest mb-2">DISCURSO PÚBLICO</p>
                             
-                            {(nextPublicTalk?.notes || nextPublicTalk?.song) && (
+                            {(nextPublicTalk?.notes?.trim() || nextPublicTalk?.song?.trim()) && (
                                 <div className="my-6 space-y-4">
-                                    {nextPublicTalk?.song && (
+                                    {nextPublicTalk?.song?.trim() && (
                                         <div className="flex items-start gap-2">
                                             <Mic className="h-3.5 w-3.5 text-indigo-500 mt-0.5" />
                                             <div>
@@ -716,7 +716,7 @@ const Dashboard: React.FC = () => {
                                             </div>
                                         </div>
                                     )}
-                                    {nextPublicTalk?.notes && (
+                                    {nextPublicTalk?.notes?.trim() && (
                                         <div className="flex items-start gap-2">
                                             <Pencil className="h-3.5 w-3.5 text-amber-500 mt-0.5" />
                                             <div>
@@ -763,7 +763,7 @@ const Dashboard: React.FC = () => {
                 </section>
 
                 {/* Service Conductors Section */}
-                <section className="space-y-8 py-10 border-b-2 border-slate-900 dark:border-white/20">
+                <section className="space-y-8 py-12 border-b-4 border-slate-900 dark:border-white/20">
                     <div className="flex items-center gap-4">
                         <div className="h-12 w-12 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                             <Users className="h-6 w-6" />
@@ -809,7 +809,7 @@ const Dashboard: React.FC = () => {
                 </section>
 
                 {/* Cleaning Section */}
-                <section className="space-y-8 py-10 border-b-2 border-slate-900 dark:border-white/20">
+                <section className="space-y-8 py-12 border-b-4 border-slate-900 dark:border-white/20">
                     <div className="flex items-center gap-4">
                         <div className="h-12 w-12 bg-amber-50 dark:bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 dark:text-amber-500">
                             <Droplets className="h-6 w-6" />
@@ -847,9 +847,14 @@ const Dashboard: React.FC = () => {
 
 
                 {/* Announcements Section */}
-                <section className="pb-12 space-y-8">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-3xl font-bold text-slate-900 dark:text-white">Anúncios</h3>
+                <section className="py-12 border-b-4 border-slate-900 dark:border-white/20">
+                    <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center gap-4">
+                            <div className="h-12 w-12 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                                <Megaphone className="h-6 w-6" />
+                            </div>
+                            <h4 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Anúncios</h4>
+                        </div>
                         <Link to="/announcements" className="text-xs font-black text-slate-400 uppercase tracking-widest hover:text-indigo-600 dark:hover:text-white transition-colors">VER TODOS</Link>
                     </div>
                     <div className="space-y-1">

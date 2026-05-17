@@ -5,6 +5,7 @@ import { PhoneIcon, PencilIcon, SaveIcon } from '../icons/Icons';
 import { REVERSE_PUBLIC_TALK_THEMES } from '../../utils/publicTalksHelper';
 import { useAuth } from '../../hooks/useAuth';
 import { updatePublicTalk } from '../../services/firestoreService';
+import { useSchedules } from '../../contexts/ScheduleContext';
 
 interface PublicTalkDetailProps {
     schedule: PublicTalkSchedule;
@@ -19,6 +20,7 @@ const DetailItem: React.FC<{ label: string, value: React.ReactNode, fullWidth?: 
 
 const PublicTalkDetail: React.FC<PublicTalkDetailProps> = ({ schedule }) => {
     const { user } = useAuth();
+    const { forceUpdate } = useSchedules();
     const isServant = user?.role === UserRole.SERVANT;
     
     const [isEditingNotes, setIsEditingNotes] = useState(false);
@@ -40,6 +42,7 @@ const PublicTalkDetail: React.FC<PublicTalkDetailProps> = ({ schedule }) => {
                 song 
             }, user.uid);
             setIsEditingNotes(false);
+            forceUpdate();
         } catch (error) {
             console.error("Error saving quick notes:", error);
             alert("Erro ao salvar anotações.");
