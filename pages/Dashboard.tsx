@@ -649,7 +649,7 @@ const Dashboard: React.FC = () => {
                             )}
                         </h3>
                         <span className="text-2xl font-bold text-slate-400 dark:text-slate-600 pb-[6px]">
-                            {activeWeekRange?.end.toLocaleDateString('pt-BR', { month: 'long', timeZone: 'UTC' })}
+                            {activeWeekRange ? new Date(activeWeekRange.end.getTime() - 86400000).toLocaleDateString('pt-BR', { month: 'long', timeZone: 'UTC' }) : ''}
                         </span>
                     </div>
                 </section>
