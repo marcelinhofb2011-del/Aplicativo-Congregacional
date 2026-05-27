@@ -26,7 +26,7 @@ const BottomNav: React.FC = () => {
     const itemsToShow = BOTTOM_NAV_ITEMS;
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-50 h-20 bg-white/90 dark:bg-slate-950 border-t border-slate-200 dark:border-white/5 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_-10px_30px_rgba(0,0,0,0.3)] backdrop-blur-md">
+        <div className="fixed bottom-0 left-0 right-0 z-50 h-20 bg-white/95 dark:bg-slate-950/95 border-t border-slate-200 dark:border-white/5 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_-10px_30px_rgba(0,0,0,0.3)] transform-gpu">
             <nav className="max-w-2xl mx-auto h-full flex justify-around items-center px-4">
                 {itemsToShow.map((item) => (
                     <NavLink key={item.path} to={item.path} className={navLinkClass}>

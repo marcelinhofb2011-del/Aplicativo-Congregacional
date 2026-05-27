@@ -585,7 +585,7 @@ const Dashboard: React.FC = () => {
     return (
         <div className="min-h-screen bg-white dark:bg-[#07060b] text-slate-900 dark:text-slate-100 font-sans selection:bg-indigo-500/30 overflow-x-hidden transition-colors duration-300 pb-40">
             {/* New Header */}
-            <header className="px-6 pt-12 pb-6 flex items-center justify-between fixed top-0 left-0 right-0 bg-white/80 dark:bg-[#07060b]/80 backdrop-blur-2xl z-50 transition-all">
+            <header className="px-6 pt-12 pb-6 flex items-center justify-between fixed top-0 left-0 right-0 bg-white/95 dark:bg-[#07060b]/95 border-b border-slate-100 dark:border-white/5 z-50 transform-gpu transition-all">
                 <div className="flex items-center gap-2">
                     <span className="text-xl font-black tracking-tight text-indigo-600 dark:text-white uppercase transition-opacity">APP</span>
                 </div>
@@ -863,7 +863,6 @@ const Dashboard: React.FC = () => {
                             return (
                                 <motion.div 
                                     key={ann.id}
-                                    layout
                                     className="py-8 border-b-2 border-slate-900 dark:border-white/20 cursor-pointer active:opacity-70 transition-opacity overflow-hidden"
                                     onClick={() => setExpandedAnnouncement(isExpanded ? null : ann.id)}
                                 >
@@ -914,7 +913,7 @@ const Dashboard: React.FC = () => {
             </main>
 
             {/* Fixed Bottom Tab Bar */}
-            <nav className="fixed bottom-0 left-0 right-0 h-24 bg-white/70 dark:bg-[#07060b]/80 backdrop-blur-3xl border-t border-slate-100 dark:border-white/5 z-50 px-8 flex items-center justify-between pb-4 transition-colors">
+            <nav className="fixed bottom-0 left-0 right-0 h-24 bg-white/95 dark:bg-[#07060b]/95 border-t border-slate-100 dark:border-white/5 z-50 px-8 flex items-center justify-between pb-4 transform-gpu transition-colors">
                 <BottomNavItem icon={<Home />} label="Início" active theme={theme} />
                 <BottomNavItem icon={<Star />} label="Designações" theme={theme} />
                 <BottomNavItem icon={<Users />} label="Assistência" theme={theme} />
