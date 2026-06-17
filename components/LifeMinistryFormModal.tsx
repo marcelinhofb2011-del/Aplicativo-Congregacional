@@ -258,7 +258,7 @@ const LifeMinistryFormModal: React.FC<LifeMinistryFormModalProps> = ({ isOpen, o
                             <p className="text-md font-semibold text-slate-800 dark:text-slate-200 mt-2 text-center bg-slate-100 dark:bg-slate-700/50 p-2 rounded-md">{formData.week}</p>
                         </div>
                         <FormRow>
-                             <FormField name="initialSong" label="Cântico Inicial (Nº)" value={formData.initialSong} onChange={handleInputChange} required />
+                             <FormField name="initialSong" label="Cântico Inicial (Nº)" value={formData.initialSong} onChange={handleInputChange} />
                              <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Presidente</label>
                                 <PublisherAutocomplete 
@@ -365,7 +365,7 @@ const LifeMinistryFormModal: React.FC<LifeMinistryFormModalProps> = ({ isOpen, o
                     </Section>
 
                     <Section title="Nossa Vida Cristã">
-                        <FormField name="intermediateSong" label="Cântico Intermediário (Nº)" value={formData.intermediateSong} onChange={handleInputChange} required />
+                        <FormField name="intermediateSong" label="Cântico Intermediário (Nº)" value={formData.intermediateSong} onChange={handleInputChange} />
                         {formData.christianLifeParts.map((part, index) => (
                             <div key={part.id} className="p-3 border-t border-slate-200 dark:border-slate-700">
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Tema {index + 1}</label>
@@ -413,7 +413,7 @@ const LifeMinistryFormModal: React.FC<LifeMinistryFormModalProps> = ({ isOpen, o
                              </div>
                         </div>
                         <FormRow>
-                            <FormField name="finalSong" label="Cântico Final (Nº)" value={formData.finalSong} onChange={handleInputChange} required />
+                            <FormField name="finalSong" label="Cântico Final (Nº)" value={formData.finalSong} onChange={handleInputChange} />
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Oração Final</label>
                                 <PublisherAutocomplete 

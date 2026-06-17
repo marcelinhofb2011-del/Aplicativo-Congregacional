@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef, useMemo } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { 
     subscribeSchedules,
@@ -25,7 +25,6 @@ const ScheduleContext = createContext<ScheduleContextType | undefined>(undefined
 
 export const ScheduleProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { user } = useAuth();
-    const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [updateTrigger, setUpdateTrigger] = useState(0);
@@ -55,9 +54,22 @@ export const ScheduleProvider: React.FC<{ children: ReactNode }> = ({ children }
         setUpdateTrigger(prev => prev + 1);
     }, []);
 
+    const queueUpdate = useCallback((key: keyof typeof collData, data: any) => {
+        setCollData(prev => ({ ...prev, [key]: data }));
+    }, []);
+
     useEffect(() => {
         if (!user) {
-            setSchedules([]);
+            setCollData({
+                programacao: [],
+                designacoes: [],
+                limpeza: [],
+                dirigentes: [],
+                discursos: [],
+                pastoreio: [],
+                dirigentesPrimeiro: [],
+                programacoesReuniao: []
+            });
             setIsLoading(false);
             return;
         }
@@ -67,18 +79,17 @@ export const ScheduleProvider: React.FC<{ children: ReactNode }> = ({ children }
         const unsubscribes: (() => void)[] = [];
 
         try {
-            unsubscribes.push(subscribeSchedules(data => setCollData(prev => ({ ...prev, programacao: data }))));
-            unsubscribes.push(subscribeAssignments(data => setCollData(prev => ({ ...prev, designacoes: data }))));
-            unsubscribes.push(subscribeCleaningSchedules(data => setCollData(prev => ({ ...prev, limpeza: data }))));
-            unsubscribes.push(subscribeConductorMeetings(data => setCollData(prev => ({ ...prev, dirigentes: data }))));
-            unsubscribes.push(subscribePublicTalks(data => setCollData(prev => ({ ...prev, discursos: data }))));
-            unsubscribes.push(subscribeShepherdingVisits(data => setCollData(prev => ({ ...prev, pastoreio: data }))));
-            unsubscribes.push(subscribeFirstSundayConductors(data => setCollData(prev => ({ ...prev, dirigentesPrimeiro: data }))));
-            unsubscribes.push(subscribeMeetingSchedules(data => setCollData(prev => ({ ...prev, programacoesReuniao: data }))));
+            unsubscribes.push(subscribeSchedules(data => queueUpdate('programacao', data)));
+            unsubscribes.push(subscribeAssignments(data => queueUpdate('designacoes', data)));
+            unsubscribes.push(subscribeCleaningSchedules(data => queueUpdate('limpeza', data)));
+            unsubscribes.push(subscribeConductorMeetings(data => queueUpdate('dirigentes', data)));
+            unsubscribes.push(subscribePublicTalks(data => queueUpdate('discursos', data)));
+            unsubscribes.push(subscribeShepherdingVisits(data => queueUpdate('pastoreio', data)));
+            unsubscribes.push(subscribeFirstSundayConductors(data => queueUpdate('dirigentesPrimeiro', data)));
+            unsubscribes.push(subscribeMeetingSchedules(data => queueUpdate('programacoesReuniao', data)));
 
-            // Set loading to false once we have initial data from all (or at least some)
-            // For simplicity, we'll just set it to false after a short delay or when the first update comes in
-            const timeout = setTimeout(() => setIsLoading(false), 1000);
+            // Set loading to false once we have initial data
+            const timeout = setTimeout(() => setIsLoading(false), 800);
             return () => {
                 unsubscribes.forEach(unsub => unsub());
                 clearTimeout(timeout);
@@ -88,11 +99,11 @@ export const ScheduleProvider: React.FC<{ children: ReactNode }> = ({ children }
             setError("Não foi possível carregar as programações em tempo real.");
             setIsLoading(false);
         }
-    }, [user, updateTrigger]);
+    }, [user, updateTrigger, queueUpdate]);
 
-    // Combine all data whenever any collection updates
-    useEffect(() => {
-        const allSchedules: ScheduleItem[] = [
+    // Compute schedules array via useMemo directly, eliminating an extra state commit loop
+    const schedules = useMemo(() => {
+        return [
             ...collData.programacao,
             ...collData.designacoes,
             ...collData.limpeza,
@@ -102,8 +113,16 @@ export const ScheduleProvider: React.FC<{ children: ReactNode }> = ({ children }
             ...collData.dirigentesPrimeiro,
             ...collData.programacoesReuniao
         ];
-        setSchedules(allSchedules);
-    }, [collData]);
+    }, [
+        collData.programacao,
+        collData.designacoes,
+        collData.limpeza,
+        collData.dirigentes,
+        collData.discursos,
+        collData.pastoreio,
+        collData.dirigentesPrimeiro,
+        collData.programacoesReuniao
+    ]);
 
     return (
         <ScheduleContext.Provider value={{ schedules, isLoading, error, forceUpdate }}>

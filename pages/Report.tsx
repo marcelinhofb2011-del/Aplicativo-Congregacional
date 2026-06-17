@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { PublisherProfile, FieldServiceReport } from '../types';
-import { addReport, getPublisherProfiles } from '../services/firestoreService';
+import { addReport, getPublisherProfiles, getReports } from '../services/firestoreService';
 import PublisherSearchModal from '../components/PublisherSearchModal';
 import Toast from '../components/Toast';
 import { MagnifyingGlassIcon, CalendarDaysIcon, DocumentTextIcon } from '../components/icons/Icons';
@@ -17,6 +17,7 @@ const Report: React.FC = () => {
     // Form state
     const [allPublishers, setAllPublishers] = useState<PublisherProfile[]>([]);
     const [selectedPublisher, setSelectedPublisher] = useState<PublisherProfile | null>(null);
+    const [publisherName, setPublisherName] = useState('');
     const [group, setGroup] = useState<'1' | '2' | '3' | ''>('');
     const [date, setDate] = useState(() => {
         const today = new Date();
@@ -49,6 +50,7 @@ const Report: React.FC = () => {
     
     const resetForm = () => {
         setSelectedPublisher(null);
+        setPublisherName('');
         setGroup('');
         setDate(() => {
             const today = new Date();
@@ -67,23 +69,29 @@ const Report: React.FC = () => {
 
     const handleSelectPublisher = (publisher: PublisherProfile) => {
         setSelectedPublisher(publisher);
+        setPublisherName(publisher.name);
         setGroup(publisher.group);
         setPublisherModalOpen(false);
     };
     
     const handleSubmitReport = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user || !selectedPublisher || !group) {
-            alert("Por favor, selecione um publicador e um grupo.");
+        const trimmedName = publisherName.trim();
+        if (!user || !trimmedName || !group) {
+            alert("Por favor, preencha o nome do publicador e selecione um grupo.");
             return;
         }
 
         const [year, month] = date.split('-').map(Number);
         const reportDate = new Date(Date.UTC(year, month - 1, 1));
 
+        const matched = allPublishers.find(p => p.name.trim().toLowerCase() === trimmedName.toLowerCase());
+        const finalPublisherId = matched ? matched.id : 'custom-' + Math.random().toString(36).substr(2, 9);
+        const finalPublisherName = matched ? matched.name : trimmedName;
+
         const reportData: Omit<FieldServiceReport, 'id' | 'submittedAt'> = {
-            publisherId: selectedPublisher.id,
-            publisherName: selectedPublisher.name,
+            publisherId: finalPublisherId,
+            publisherName: finalPublisherName,
             group: group,
             date: reportDate.toISOString(),
             privilege,
@@ -95,6 +103,28 @@ const Report: React.FC = () => {
         };
 
         try {
+            // Verificar duplicidade de relatório para o mesmo publicador e mês/ano
+            const existingReports = await getReports();
+            const isDuplicate = existingReports.some(r => {
+                if (r.isActive === false) return false;
+                const rName = r.publisherName ? r.publisherName.trim().toLowerCase() : '';
+                const currentSearchName = finalPublisherName.trim().toLowerCase();
+                if (rName !== currentSearchName) return false;
+
+                if (r.date) {
+                    const rDate = new Date(r.date);
+                    const rYear = rDate.getUTCFullYear();
+                    const rMonth = rDate.getUTCMonth() + 1;
+                    return rYear === year && rMonth === month;
+                }
+                return false;
+            });
+
+            if (isDuplicate) {
+                alert(`Atenção: Já existe um relatório ativo enviado para o publicador "${finalPublisherName}" referente a este mês (${month}/${year}). Para evitar duplicidade, o envio foi bloqueado.`);
+                return;
+            }
+
             await addReport(reportData, user.uid);
             setToastMessage('Relatório enviado com sucesso!');
             resetForm();
@@ -108,8 +138,8 @@ const Report: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#F8F9FB] dark:bg-slate-950 font-sans pb-12">
-            <main className="px-6 space-y-8 max-w-2xl mx-auto pt-8">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans pb-36">
+            <main className="px-6 space-y-8 max-w-4xl mx-auto pt-8">
                 {/* Page Title Section */}
                 <motion.section 
                     initial={{ opacity: 0, x: -20 }}
@@ -133,13 +163,8 @@ const Report: React.FC = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="bg-white dark:bg-slate-900 rounded-[40px] p-8 sm:p-10 shadow-xl shadow-sky-100/50 dark:shadow-none border border-sky-50 dark:border-slate-800 relative overflow-hidden"
+                    className="space-y-8 relative"
                 >
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-sky-500/5 rounded-full -mr-16 -mt-16"></div>
-                    <div className="absolute top-8 right-8 h-12 w-12 bg-sky-100 dark:bg-sky-900/40 rounded-full flex items-center justify-center text-sky-600 dark:text-sky-400 shadow-sm">
-                        <DocumentTextIcon className="h-6 w-6" />
-                    </div>
-
                     <form onSubmit={handleSubmitReport} className="space-y-8 relative z-10">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
@@ -147,15 +172,24 @@ const Report: React.FC = () => {
                                 <div className="relative">
                                     <input 
                                         type="text" 
-                                        readOnly 
-                                        value={selectedPublisher?.name || ''} 
-                                        onClick={() => setPublisherModalOpen(true)} 
-                                        placeholder="Clique para buscar" 
-                                        className="w-full bg-slate-50 dark:bg-slate-800/50 border-none rounded-2xl px-5 py-4 text-slate-800 dark:text-white font-medium focus:ring-2 focus:ring-sky-500/20 transition-all font-sans pr-12 cursor-pointer" 
+                                        value={publisherName} 
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            setPublisherName(val);
+                                            const matched = allPublishers.find(p => p.name.trim().toLowerCase() === val.trim().toLowerCase());
+                                            if (matched) {
+                                                setSelectedPublisher(matched);
+                                                setGroup(matched.group);
+                                            } else {
+                                                setSelectedPublisher(null);
+                                            }
+                                        }}
+                                        placeholder="Digite o nome ou busque ao lado" 
+                                        className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl px-5 py-4 text-slate-800 dark:text-white font-medium focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all font-sans pr-12" 
                                         required 
                                     />
-                                    <button type="button" onClick={() => setPublisherModalOpen(true)} className="absolute top-1/2 right-4 -translate-y-1/2">
-                                        <MagnifyingGlassIcon className="h-5 w-5 text-sky-500" />
+                                    <button type="button" onClick={() => setPublisherModalOpen(true)} className="absolute top-1/2 right-4 -translate-y-1/2" title="Buscar na lista de publicadores">
+                                        <MagnifyingGlassIcon className="h-5 w-5 text-sky-500 hover:text-sky-600 transition-colors" />
                                     </button>
                                 </div>
                             </div>
@@ -165,7 +199,7 @@ const Report: React.FC = () => {
                                     value={group}
                                     onChange={e => setGroup(e.target.value as '1' | '2' | '3' | '')}
                                     required
-                                    className="w-full bg-slate-50 dark:bg-slate-800/50 border-none rounded-2xl px-5 py-4 text-slate-800 dark:text-white font-medium focus:ring-2 focus:ring-sky-500/20 transition-all font-sans appearance-none"
+                                    className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl px-5 py-4 text-slate-800 dark:text-white font-medium focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all font-sans appearance-none"
                                 >
                                     <option value="" disabled>Selecione o grupo</option>
                                     <option value="1">Grupo 1</option>
@@ -184,14 +218,14 @@ const Report: React.FC = () => {
                                         value={date} 
                                         onChange={e => setDate(e.target.value)} 
                                         required 
-                                        className="w-full bg-slate-50 dark:bg-slate-800/50 border-none rounded-2xl px-5 py-4 text-slate-800 dark:text-white font-medium focus:ring-2 focus:ring-sky-500/20 transition-all font-sans pr-12" 
+                                        className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl px-5 py-4 text-slate-800 dark:text-white font-medium focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all font-sans pr-12" 
                                     />
                                     <CalendarDaysIcon className="h-5 w-5 text-sky-500 absolute top-1/2 right-4 -translate-y-1/2 pointer-events-none" />
                                 </div>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase font-sans ml-1">Privilégio</label>
-                                <div className="flex gap-4 p-1 bg-slate-50 dark:bg-slate-800/50 rounded-2xl">
+                                <div className="flex gap-4 p-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl">
                                     <button 
                                         type="button"
                                         onClick={() => setPrivilege('PUBLISHER')}
@@ -214,26 +248,26 @@ const Report: React.FC = () => {
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-slate-400 uppercase font-sans ml-1">Horas</label>
-                                    <input type="number" min="0" value={hours} onChange={e => setHours(e.target.value === '' ? '' : parseInt(e.target.value))} className="w-full bg-slate-50 dark:bg-slate-800/50 border-none rounded-2xl px-4 py-3 text-slate-800 dark:text-white font-medium focus:ring-2 focus:ring-sky-500/20 transition-all font-sans" />
+                                    <input type="number" min="0" value={hours} onChange={e => setHours(e.target.value === '' ? '' : parseInt(e.target.value))} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl px-4 py-3 text-slate-800 dark:text-white font-medium focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all font-sans" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-slate-400 uppercase font-sans ml-1">Minutos</label>
-                                    <input type="number" min="0" max="59" value={minutes} onChange={e => setMinutes(e.target.value === '' ? '' : parseInt(e.target.value))} className="w-full bg-slate-50 dark:bg-slate-800/50 border-none rounded-2xl px-4 py-3 text-slate-800 dark:text-white font-medium focus:ring-2 focus:ring-sky-500/20 transition-all font-sans" />
+                                    <input type="number" min="0" max="59" value={minutes} onChange={e => setMinutes(e.target.value === '' ? '' : parseInt(e.target.value))} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl px-4 py-3 text-slate-800 dark:text-white font-medium focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all font-sans" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-slate-400 uppercase font-sans ml-1">Revisitas</label>
-                                    <input type="number" min="0" value={revisits} onChange={e => setRevisits(e.target.value === '' ? '' : parseInt(e.target.value))} className="w-full bg-slate-50 dark:bg-slate-800/50 border-none rounded-2xl px-4 py-3 text-slate-800 dark:text-white font-medium focus:ring-2 focus:ring-sky-500/20 transition-all font-sans" />
+                                    <input type="number" min="0" value={revisits} onChange={e => setRevisits(e.target.value === '' ? '' : parseInt(e.target.value))} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl px-4 py-3 text-slate-800 dark:text-white font-medium focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all font-sans" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-slate-400 uppercase font-sans ml-1">Estudos</label>
-                                    <input type="number" min="0" value={studies} onChange={e => setStudies(e.target.value === '' ? '' : parseInt(e.target.value))} className="w-full bg-slate-50 dark:bg-slate-800/50 border-none rounded-2xl px-4 py-3 text-slate-800 dark:text-white font-medium focus:ring-2 focus:ring-sky-500/20 transition-all font-sans" />
+                                    <input type="number" min="0" value={studies} onChange={e => setStudies(e.target.value === '' ? '' : parseInt(e.target.value))} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl px-4 py-3 text-slate-800 dark:text-white font-medium focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all font-sans" />
                                 </div>
                             </div>
                         ) : (
                             <div className="space-y-6">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase font-sans ml-1">Participou no ministério?</label>
-                                    <div className="flex gap-4 p-1 bg-slate-50 dark:bg-slate-800/50 rounded-2xl w-fit">
+                                    <div className="flex gap-4 p-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl w-fit">
                                         <button 
                                             type="button"
                                             onClick={() => setHasParticipated(true)}
@@ -254,11 +288,11 @@ const Report: React.FC = () => {
                                      <div className="grid grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-400 uppercase font-sans ml-1">Revisitas</label>
-                                            <input type="number" min="0" value={revisits} onChange={e => setRevisits(e.target.value === '' ? '' : parseInt(e.target.value))} className="w-full bg-slate-50 dark:bg-slate-800/50 border-none rounded-2xl px-5 py-4 text-slate-800 dark:text-white font-medium focus:ring-2 focus:ring-sky-500/20 transition-all font-sans" />
+                                            <input type="number" min="0" value={revisits} onChange={e => setRevisits(e.target.value === '' ? '' : parseInt(e.target.value))} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl px-5 py-4 text-slate-800 dark:text-white font-medium focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all font-sans" />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-400 uppercase font-sans ml-1">Estudos</label>
-                                            <input type="number" min="0" value={studies} onChange={e => setStudies(e.target.value === '' ? '' : parseInt(e.target.value))} className="w-full bg-slate-50 dark:bg-slate-800/50 border-none rounded-2xl px-5 py-4 text-slate-800 dark:text-white font-medium focus:ring-2 focus:ring-sky-500/20 transition-all font-sans" />
+                                            <input type="number" min="0" value={studies} onChange={e => setStudies(e.target.value === '' ? '' : parseInt(e.target.value))} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl px-5 py-4 text-slate-800 dark:text-white font-medium focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all font-sans" />
                                         </div>
                                     </div>
                                 )}
@@ -272,7 +306,7 @@ const Report: React.FC = () => {
                                 onChange={e => setNotes(e.target.value)} 
                                 rows={3} 
                                 placeholder="Alguma observação importante..."
-                                className="w-full bg-slate-50 dark:bg-slate-800/50 border-none rounded-2xl px-5 py-4 text-slate-800 dark:text-white font-medium focus:ring-2 focus:ring-sky-500/20 transition-all font-sans resize-none"
+                                className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl px-5 py-4 text-slate-800 dark:text-white font-medium focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all font-sans resize-none"
                             ></textarea>
                         </div>
 

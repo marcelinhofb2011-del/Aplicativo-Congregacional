@@ -22,6 +22,7 @@ import { Link } from 'react-router-dom';
 import { getBrazilToday, parseDateAsUTC } from '../utils/dateUtils';
 import { 
     ChevronRight, 
+    ChevronLeft,
     Megaphone,
     BookOpen,
     Home,
@@ -147,6 +148,7 @@ const Dashboard: React.FC = () => {
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const [unreadAnnouncementsCount, setUnreadAnnouncementsCount] = useState(0);
     const [expandedAnnouncement, setExpandedAnnouncement] = useState<string | null>(null);
+    const [selectedAnnouncementModal, setSelectedAnnouncementModal] = useState<Announcement | null>(null);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<UpcomingEvent[]>([]);
@@ -583,34 +585,34 @@ const Dashboard: React.FC = () => {
         : '';
 
     return (
-        <div className="min-h-screen bg-white dark:bg-[#07060b] text-slate-900 dark:text-slate-100 font-sans selection:bg-indigo-500/30 overflow-x-hidden transition-colors duration-300 pb-40">
+        <div className="min-h-screen bg-white dark:bg-[#07060b] text-slate-900 dark:text-slate-100 font-sans selection:bg-indigo-500/30 overflow-x-hidden transition-colors duration-300 pb-24">
             {/* New Header */}
-            <header className="px-6 pt-12 pb-6 flex items-center justify-between fixed top-0 left-0 right-0 bg-white/95 dark:bg-[#07060b]/95 border-b border-slate-100 dark:border-white/5 z-50 transform-gpu transition-all">
+            <header className="px-6 h-16 flex items-center justify-between fixed top-0 left-0 right-0 bg-primary border-b border-primary-dark z-50 transform-gpu transition-all shadow-md">
                 <div className="flex items-center gap-2">
-                    <span className="text-xl font-black tracking-tight text-indigo-600 dark:text-white uppercase transition-opacity">APP</span>
+                    <span className="text-xl font-black tracking-tight text-white uppercase transition-opacity">APP</span>
                 </div>
                 <div className="flex items-center gap-3">
                     <button 
                         onClick={toggleTheme} 
-                        className="p-2 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white transition-colors"
+                        className="p-2 text-amber-100 hover:text-white hover:bg-white/10 rounded-full transition-colors"
                         title={theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
                     >
                         {theme === 'dark' ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
                     </button>
                     <button 
                         onClick={() => setIsSearchOpen(true)}
-                        className="p-2 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white transition-colors"
+                        className="p-2 text-amber-100 hover:text-white hover:bg-white/10 rounded-full transition-colors"
                     >
                         <Search className="h-6 w-6" />
                     </button>
                     {/* Notifications Button */}
                     <button 
                         onClick={handleOpenNotifications}
-                        className={`p-2 relative transition-all duration-300 ${unreadCount > 0 ? 'text-amber-500 dark:text-amber-400 scale-110' : 'text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white'}`}
+                        className={`p-2 relative transition-all duration-300 rounded-full hover:bg-white/10 ${unreadCount > 0 ? 'text-amber-300 scale-110' : 'text-amber-100 hover:text-white'}`}
                     >
                         <Bell className={`h-6 w-6 ${unreadCount > 0 ? 'animate-bounce' : ''}`} />
                         {unreadCount > 0 && (
-                            <span className="absolute top-0 right-0 h-5 w-5 bg-amber-500 text-white text-[10px] font-black rounded-full border-2 border-slate-50 dark:border-[#070b14] flex items-center justify-center shadow-lg">
+                            <span className="absolute top-0 right-0 h-5 w-5 bg-amber-500 text-white text-[10px] font-black rounded-full border-2 border-primary flex items-center justify-center shadow-lg">
                                 {unreadCount > 9 ? '9+' : unreadCount}
                             </span>
                         )}
@@ -618,7 +620,7 @@ const Dashboard: React.FC = () => {
 
                     <button 
                         onClick={logout} 
-                        className="p-2 text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors ml-1"
+                        className="p-2 text-amber-100 hover:text-red-300 hover:bg-white/10 rounded-full transition-colors ml-1"
                         title="Sair"
                     >
                         <LogOut className="h-6 w-6" />
@@ -626,14 +628,111 @@ const Dashboard: React.FC = () => {
                 </div>
             </header>
 
-            <main className="px-6 space-y-12 pt-36">
+            <main className="px-6 space-y-12 pt-24">
                 {/* Hero / Greeting */}
                 <section className="space-y-2">
-                    <h2 className="text-5xl font-bold tracking-tight text-slate-900 dark:text-white leading-[1.1]">Olá, <span className="text-indigo-600 dark:text-indigo-400">{user?.displayName?.split(' ')[0] || 'Irmão'}</span></h2>
+                    <h2 className="text-5xl font-bold tracking-tight text-slate-900 dark:text-white leading-[1.1]">Olá, <span className="text-primary dark:text-amber-500">{user?.displayName?.split(' ')[0] || 'Irmão'}</span></h2>
                     <p className="text-slate-500 dark:text-slate-400 text-lg font-medium leading-snug max-w-sm">
                         Sua programação semanal e designações em um só lugar.
                     </p>
                 </section>
+
+                {/* Announcements Section */}
+                {announcements.length > 0 && (
+                    <section className="py-6 border-b border-slate-200 dark:border-white/10 transition-all duration-300">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 bg-primary/10 dark:bg-primary/20 rounded-xl flex items-center justify-center text-primary shadow-sm shadow-primary/5">
+                                    <Megaphone className="h-5 w-5" />
+                                </div>
+                                <h4 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">Anúncios Importantes</h4>
+                            </div>
+                            <Link to="/announcements" className="text-xs font-bold text-primary dark:text-amber-500 uppercase tracking-wider hover:underline transition-all">VER TODOS</Link>
+                        </div>
+                        
+                        {/* Carousel with slide indicators / swipe help */}
+                        <div className="relative group">
+                            {/* Horizontal scroll container */}
+                            <div 
+                                id="announcements-carousel"
+                                className="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-3 no-scrollbar -mx-6 px-6"
+                            >
+                                {announcements.slice(0, 5).map((ann) => {
+                                    const isNew = (Date.now() - new Date(ann.createdAt).getTime()) < 5 * 24 * 60 * 60 * 1000;
+                                    return (
+                                        <motion.div 
+                                            key={ann.id}
+                                            whileHover={{ y: -3 }}
+                                            className="min-w-[75%] sm:min-w-[280px] md:min-w-[300px] max-w-[320px] snap-start p-4 bg-white dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/60 rounded-2xl cursor-pointer hover:border-primary/20 dark:hover:border-primary/15 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden flex flex-col justify-between h-[142px]"
+                                            onClick={() => setSelectedAnnouncementModal(ann)}
+                                        >
+                                            {/* Accent bar on the left */}
+                                            <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-primary" />
+                                            
+                                            <div className="space-y-1.5 pl-1.5">
+                                                <div className="flex flex-wrap items-center gap-1.5">
+                                                    <div className="bg-primary/10 dark:bg-primary/20 text-primary dark:text-amber-400 text-[8px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
+                                                        <Megaphone className="h-2 w-2" />
+                                                        <span>Anúncio</span>
+                                                    </div>
+                                                    <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                                                        {parseDateAsUTC(ann.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                                                    </p>
+                                                    {isNew && (
+                                                        <span className="bg-rose-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider animate-pulse">
+                                                            Novo
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                
+                                                <h4 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight uppercase line-clamp-1">
+                                                    {ann.title}
+                                                </h4>
+                                                
+                                                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed line-clamp-2">
+                                                    {ann.body}
+                                                </p>
+                                            </div>
+
+                                            <div className="flex items-center justify-between text-[9px] font-extrabold text-primary dark:text-amber-500 uppercase tracking-widest pl-1.5 mt-1 hover:underline">
+                                                <span>Acessar conteúdo</span>
+                                                <ChevronRight className="h-3 w-3" />
+                                            </div>
+                                        </motion.div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Left Scroll Button - Desktop only */}
+                            <button 
+                                onClick={() => {
+                                    const carousel = document.getElementById('announcements-carousel');
+                                    if (carousel) {
+                                        carousel.scrollBy({ left: -260, behavior: 'smooth' });
+                                    }
+                                }}
+                                className="absolute -left-3 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 shadow-md hover:bg-slate-50 dark:hover:bg-slate-900 transition-all opacity-0 group-hover:opacity-100 sm:flex hidden focus:outline-none focus:ring-2 focus:ring-primary/20 z-10"
+                                aria-label="Anúncio anterior"
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                            </button>
+
+                            {/* Right Scroll Button - Desktop only */}
+                            <button 
+                                onClick={() => {
+                                    const carousel = document.getElementById('announcements-carousel');
+                                    if (carousel) {
+                                        carousel.scrollBy({ left: 260, behavior: 'smooth' });
+                                    }
+                                }}
+                                className="absolute -right-3 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 shadow-md hover:bg-slate-50 dark:hover:bg-slate-900 transition-all opacity-0 group-hover:opacity-100 sm:flex hidden focus:outline-none focus:ring-2 focus:ring-primary/20 z-10"
+                                aria-label="Próximo anúncio"
+                            >
+                                <ChevronRight className="h-4 w-4" />
+                            </button>
+                        </div>
+                    </section>
+                )}
 
                 {/* Date Splitter */}
                 <section className="py-10 border-b-4 border-slate-900 dark:border-white/20">
@@ -658,7 +757,7 @@ const Dashboard: React.FC = () => {
                 <section className="space-y-8 py-12 border-b-4 border-slate-900 dark:border-white/20 transition-all duration-300">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                            <div className="h-12 w-12 bg-indigo-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+                            <div className="h-12 w-12 bg-primary rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
                                 <BookOpen className="h-6 w-6" />
                             </div>
                             <h4 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Meio de Semana</h4>
@@ -669,7 +768,7 @@ const Dashboard: React.FC = () => {
                         {/* Integrated Block */}
                         <div className="py-6 border-b border-slate-900 dark:border-white/10 flex items-center justify-between group cursor-pointer active:opacity-70 transition-opacity">
                             <div className="space-y-1">
-                                <p className="text-[10px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest">PRESIDENTE</p>
+                                <p className="text-[10px] font-black text-primary dark:text-amber-500 uppercase tracking-widest">PRESIDENTE</p>
                                 <p className="text-xl font-bold text-slate-900 dark:text-white">{nextMidweekAssignment?.president || nextLifeMinistry?.president || 'Não definido'}</p>
                             </div>
                             <ChevronRight className="h-5 w-5 text-slate-300 dark:text-slate-700" />
@@ -683,9 +782,9 @@ const Dashboard: React.FC = () => {
 
                         {/* Assignments Integrated */}
                         <div className="mt-8 pt-8 border-t border-slate-200 dark:border-white/5 grid grid-cols-1 gap-6">
-                            <AssignmentBullet label="INDICADORES" value={nextMidweekAssignment ? `${nextMidweekAssignment.indicator1 || 'N/A'}${nextMidweekAssignment.indicator2 ? ` / ${nextMidweekAssignment.indicator2}` : ''}` : 'N/A'} color="bg-purple-500" />
-                            <AssignmentBullet label="ÁUDIO E VÍDEO" value={nextMidweekAssignment ? `${nextMidweekAssignment.audio || 'N/A'}${nextMidweekAssignment.video ? ` / ${nextMidweekAssignment.video}` : ''}` : 'N/A'} color="bg-cyan-500" />
-                            <AssignmentBullet label="MICROFONE" value={nextMidweekAssignment ? `${nextMidweekAssignment.mic1 || 'N/A'}${nextMidweekAssignment.mic2 ? ` / ${nextMidweekAssignment.mic2}` : ''}` : 'N/A'} color="bg-orange-500" />
+                            <AssignmentBullet label="INDICADORES" value={nextMidweekAssignment ? `${nextMidweekAssignment.indicator1 || 'N/A'}${nextMidweekAssignment.indicator2 ? ` / ${nextMidweekAssignment.indicator2}` : ''}` : 'N/A'} color="bg-primary" />
+                            <AssignmentBullet label="ÁUDIO E VÍDEO" value={nextMidweekAssignment ? `${nextMidweekAssignment.audio || 'N/A'}${nextMidweekAssignment.video ? ` / ${nextMidweekAssignment.video}` : ''}` : 'N/A'} color="bg-amber-800" />
+                            <AssignmentBullet label="MICROFONE" value={nextMidweekAssignment ? `${nextMidweekAssignment.mic1 || 'N/A'}${nextMidweekAssignment.mic2 ? ` / ${nextMidweekAssignment.mic2}` : ''}` : 'N/A'} color="bg-amber-600" />
                         </div>
                     </div>
                 </section>
@@ -695,7 +794,7 @@ const Dashboard: React.FC = () => {
                 {/* Weekend Meeting Section */}
                 <section className="space-y-8 py-12 border-b-4 border-slate-900 dark:border-white/20 transition-all duration-300">
                     <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 bg-cyan-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-cyan-500/20">
+                        <div className="h-12 w-12 bg-primary rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
                             <Home className="h-6 w-6" />
                         </div>
                         <h4 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Fim de Semana</h4>
@@ -703,15 +802,15 @@ const Dashboard: React.FC = () => {
 
                     <div className="space-y-8">
                         <div className="py-6 border-b border-slate-200 dark:border-white/5 group cursor-pointer active:opacity-70 transition-opacity">
-                            <p className="text-[10px] font-black text-cyan-600 dark:text-cyan-400 uppercase tracking-widest mb-2">DISCURSO PÚBLICO</p>
+                            <p className="text-[10px] font-black text-primary dark:text-amber-500 uppercase tracking-widest mb-2">DISCURSO PÚBLICO</p>
                             
                             {(nextPublicTalk?.notes?.trim() || nextPublicTalk?.song?.trim()) && (
                                 <div className="my-6 space-y-4">
                                     {nextPublicTalk?.song?.trim() && (
                                         <div className="flex items-start gap-2">
-                                            <Mic className="h-3.5 w-3.5 text-indigo-500 mt-0.5" />
+                                            <Mic className="h-3.5 w-3.5 text-primary mt-0.5" />
                                             <div>
-                                                <p className="text-[9px] font-black text-indigo-500/60 uppercase tracking-widest leading-none mb-1">Cântico Inicial</p>
+                                                <p className="text-[9px] font-black text-primary/60 dark:text-amber-500/60 uppercase tracking-widest leading-none mb-1">Cântico Inicial</p>
                                                 <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{nextPublicTalk.song}</p>
                                             </div>
                                         </div>
@@ -755,9 +854,9 @@ const Dashboard: React.FC = () => {
                         </div>
 
                         <div className="grid grid-cols-1 gap-6">
-                            <AssignmentBullet label="INDICADORES" value={nextWeekendAssignment ? `${nextWeekendAssignment.indicator1 || 'N/A'}${nextWeekendAssignment.indicator2 ? ` / ${nextWeekendAssignment.indicator2}` : ''}` : 'N/A'} color="bg-cyan-500" />
-                            <AssignmentBullet label="ÁUDIO E VÍDEO" value={nextWeekendAssignment ? `${nextWeekendAssignment.audio || 'N/A'}${nextWeekendAssignment.video ? ` / ${nextWeekendAssignment.video}` : ''}` : 'N/A'} color="bg-indigo-500" />
-                            <AssignmentBullet label="MICROFONE" value={nextWeekendAssignment ? `${nextWeekendAssignment.mic1 || 'N/A'}${nextWeekendAssignment.mic2 ? ` / ${nextWeekendAssignment.mic2}` : ''}` : 'N/A'} color="bg-blue-500" />
+                            <AssignmentBullet label="INDICADORES" value={nextWeekendAssignment ? `${nextWeekendAssignment.indicator1 || 'N/A'}${nextWeekendAssignment.indicator2 ? ` / ${nextWeekendAssignment.indicator2}` : ''}` : 'N/A'} color="bg-primary" />
+                            <AssignmentBullet label="ÁUDIO E VÍDEO" value={nextWeekendAssignment ? `${nextWeekendAssignment.audio || 'N/A'}${nextWeekendAssignment.video ? ` / ${nextWeekendAssignment.video}` : ''}` : 'N/A'} color="bg-amber-800" />
+                            <AssignmentBullet label="MICROFONE" value={nextWeekendAssignment ? `${nextWeekendAssignment.mic1 || 'N/A'}${nextWeekendAssignment.mic2 ? ` / ${nextWeekendAssignment.mic2}` : ''}` : 'N/A'} color="bg-amber-600" />
                         </div>
                     </div>
                 </section>
@@ -765,7 +864,7 @@ const Dashboard: React.FC = () => {
                 {/* Service Conductors Section */}
                 <section className="space-y-8 py-12 border-b-4 border-slate-900 dark:border-white/20">
                     <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                        <div className="h-12 w-12 bg-primary/10 dark:bg-primary/20 rounded-2xl flex items-center justify-center text-primary dark:text-amber-500">
                             <Users className="h-6 w-6" />
                         </div>
                         <h4 className="text-2xl font-bold text-slate-900 dark:text-white">Saídas de Campo</h4>
@@ -776,7 +875,7 @@ const Dashboard: React.FC = () => {
                         <div className="flex items-center justify-between py-2 group cursor-pointer">
                             <div className="space-y-1">
                                 <div className="flex items-center gap-2">
-                                    <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em]">SÁBADO</p>
+                                    <p className="text-[10px] font-black text-primary dark:text-amber-500 uppercase tracking-[0.2em]">SÁBADO</p>
                                     <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-700"></span>
                                     <p className="text-[10px] font-bold text-slate-400">
                                         {nextFieldService?.date ? parseDateAsUTC(nextFieldService.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' }) : '--'}
@@ -784,7 +883,7 @@ const Dashboard: React.FC = () => {
                                 </div>
                                 <p className="text-2xl font-bold text-slate-900 dark:text-white">{nextFieldService?.conductorName || 'Não definido'}</p>
                             </div>
-                            <div className="h-10 w-10 border border-slate-200 dark:border-white/10 rounded-full flex items-center justify-center text-slate-300 dark:text-slate-700 group-hover:text-indigo-500 transition-colors">
+                            <div className="h-10 w-10 border border-slate-200 dark:border-white/10 rounded-full flex items-center justify-center text-slate-300 dark:text-slate-700 group-hover:text-primary transition-colors">
                                 <ChevronRight className="h-5 w-5" />
                             </div>
                         </div>
@@ -793,7 +892,7 @@ const Dashboard: React.FC = () => {
                         <div className="flex items-center justify-between py-2 group cursor-pointer border-b border-slate-200 dark:border-white/10">
                             <div className="space-y-1">
                                 <div className="flex items-center gap-2">
-                                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">1º DOMINGO</p>
+                                    <p className="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-[0.2em]">1º DOMINGO</p>
                                     <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-700"></span>
                                     <p className="text-[10px] font-bold text-slate-400">
                                         {nextFirstSundayConductor?.date ? parseDateAsUTC(nextFirstSundayConductor.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' }) : '--'}
@@ -801,7 +900,7 @@ const Dashboard: React.FC = () => {
                                 </div>
                                 <p className="text-2xl font-bold text-slate-900 dark:text-white">{nextFirstSundayConductor?.conductorName || 'Não definido'}</p>
                             </div>
-                            <div className="h-10 w-10 border border-slate-200 dark:border-white/10 rounded-full flex items-center justify-center text-slate-300 dark:text-slate-700 group-hover:text-emerald-500 transition-colors">
+                            <div className="h-10 w-10 border border-slate-200 dark:border-white/10 rounded-full flex items-center justify-center text-slate-300 dark:text-slate-700 group-hover:text-primary transition-colors">
                                 <ChevronRight className="h-5 w-5" />
                             </div>
                         </div>
@@ -811,7 +910,7 @@ const Dashboard: React.FC = () => {
                 {/* Cleaning Section */}
                 <section className="space-y-8 py-12 border-b-4 border-slate-900 dark:border-white/20">
                     <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 bg-amber-50 dark:bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 dark:text-amber-500">
+                        <div className="h-12 w-12 bg-primary/10 dark:bg-primary/20 rounded-2xl flex items-center justify-center text-primary dark:text-amber-500">
                             <Droplets className="h-6 w-6" />
                         </div>
                         <h4 className="text-2xl font-bold text-slate-900 dark:text-white">Limpeza</h4>
@@ -819,7 +918,7 @@ const Dashboard: React.FC = () => {
 
                     <div className="space-y-8">
                         <div className="py-2 space-y-1">
-                            <p className="text-[10px] font-black text-amber-600 opacity-60 uppercase tracking-widest">GRUPO ATUAL</p>
+                            <p className="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest">GRUPO ATUAL</p>
                             <h4 className="text-2xl font-bold text-slate-900 dark:text-white">{nextCleaning?.group || 'Grupo não definido'}</h4>
                             <p className="text-sm text-slate-500 font-medium pt-1">
                                 {nextCleaning ? `${CLEANING_GROUPS[nextCleaning.group] || 'Responsáveis'} • Período: ${parseDateAsUTC(nextCleaning.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })} a ${parseDateAsUTC(nextCleaning.endDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}` : '--'}
@@ -843,82 +942,7 @@ const Dashboard: React.FC = () => {
                         </div>
                     </div>
                 </section>
-
-
-
-                {/* Announcements Section */}
-                <section className="py-12 border-b-4 border-slate-900 dark:border-white/20">
-                    <div className="flex items-center justify-between mb-8">
-                        <div className="flex items-center gap-4">
-                            <div className="h-12 w-12 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                                <Megaphone className="h-6 w-6" />
-                            </div>
-                            <h4 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Anúncios</h4>
-                        </div>
-                        <Link to="/announcements" className="text-xs font-black text-slate-400 uppercase tracking-widest hover:text-indigo-600 dark:hover:text-white transition-colors">VER TODOS</Link>
-                    </div>
-                    <div className="space-y-1">
-                        {announcements.slice(0, 3).map((ann) => {
-                            const isExpanded = expandedAnnouncement === ann.id;
-                            return (
-                                <motion.div 
-                                    key={ann.id}
-                                    className="py-8 border-b-2 border-slate-900 dark:border-white/20 cursor-pointer active:opacity-70 transition-opacity overflow-hidden"
-                                    onClick={() => setExpandedAnnouncement(isExpanded ? null : ann.id)}
-                                >
-                                    <div className="flex items-start justify-between gap-6">
-                                        <div className="flex-1 space-y-3">
-                                            <div className="flex items-center gap-3">
-                                                <div className="h-6 w-6 bg-indigo-50 dark:bg-indigo-500/10 rounded-md flex items-center justify-center text-indigo-500">
-                                                    <Megaphone className="h-3 w-3" />
-                                                </div>
-                                                <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
-                                                    {parseDateAsUTC(ann.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-                                                </p>
-                                            </div>
-                                            <h4 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight uppercase">{ann.title}</h4>
-                                            <p className={`text-base text-slate-500 dark:text-slate-400 font-medium leading-relaxed ${isExpanded ? '' : 'line-clamp-2'}`}>{ann.body}</p>
-                                            
-                                            <AnimatePresence>
-                                                {isExpanded && (
-                                                    <motion.div
-                                                        initial={{ height: 0, opacity: 0 }}
-                                                        animate={{ height: 'auto', opacity: 1 }}
-                                                        exit={{ height: 0, opacity: 0 }}
-                                                        className="overflow-hidden"
-                                                    >
-                                                        {ann.images && ann.images.length > 0 && (
-                                                            <div className="grid grid-cols-1 gap-4 mt-6">
-                                                                {ann.images.map((img, i) => (
-                                                                    <img key={i} src={img} alt="" className="rounded-[32px] w-full object-cover max-h-[500px]" referrerPolicy="no-referrer" />
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                        <p className="text-[10px] font-black text-slate-400 pt-6 uppercase tracking-[0.2em]">
-                                                            Publicado em {parseDateAsUTC(ann.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
-                                                        </p>
-                                                    </motion.div>
-                                                )}
-                                            </AnimatePresence>
-                                        </div>
-                                        <div className={`mt-2 transition-transform duration-500 ${isExpanded ? 'rotate-90 text-indigo-500' : 'text-slate-300 dark:text-slate-800'}`}>
-                                            <ChevronRight className="h-6 w-6" />
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            );
-                        })}
-                    </div>
-                </section>
             </main>
-
-            {/* Fixed Bottom Tab Bar */}
-            <nav className="fixed bottom-0 left-0 right-0 h-24 bg-white/95 dark:bg-[#07060b]/95 border-t border-slate-100 dark:border-white/5 z-50 px-8 flex items-center justify-between pb-4 transform-gpu transition-colors">
-                <BottomNavItem icon={<Home />} label="Início" active theme={theme} />
-                <BottomNavItem icon={<Star />} label="Designações" theme={theme} />
-                <BottomNavItem icon={<Users />} label="Assistência" theme={theme} />
-                <BottomNavItem icon={<LayoutGrid />} label="Menu" theme={theme} />
-            </nav>
 
             {/* Search Overlay */}
             <SearchOverlay 
@@ -943,6 +967,98 @@ const Dashboard: React.FC = () => {
                 schedule={viewingSchedule}
                 onClose={() => setViewingSchedule(null)}
             />
+
+            {/* Selected Announcement Modal Overlay */}
+            <AnimatePresence>
+                {selectedAnnouncementModal && (
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4"
+                        onClick={() => setSelectedAnnouncementModal(null)}
+                    >
+                        <motion.div 
+                            initial={{ scale: 0.95, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.95, y: 20 }}
+                            transition={{ type: "spring", duration: 0.5 }}
+                            className="bg-white dark:bg-slate-900 rounded-[32px] w-full max-w-lg overflow-hidden border border-slate-100 dark:border-slate-800 shadow-2xl flex flex-col max-h-[85vh]"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Header image / Banner if available */}
+                            {selectedAnnouncementModal.images && selectedAnnouncementModal.images.length > 0 ? (
+                                <div className="relative h-48 sm:h-56 overflow-hidden">
+                                    <img 
+                                        src={selectedAnnouncementModal.images[0]} 
+                                        alt="" 
+                                        className="w-full h-full object-cover"
+                                        referrerPolicy="no-referrer"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent" />
+                                    <button 
+                                        onClick={() => setSelectedAnnouncementModal(null)}
+                                        className="absolute top-4 right-4 h-10 w-10 rounded-full bg-black/40 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/60 transition-colors"
+                                    >
+                                        ✕
+                                    </button>
+                                    <div className="absolute bottom-4 left-6 right-6">
+                                        <span className="bg-primary text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
+                                            Anúncio
+                                        </span>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="p-6 pb-2 flex items-center justify-between border-b border-slate-50 dark:border-slate-800/50">
+                                    <span className="bg-primary/10 text-primary text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
+                                        Anúncio
+                                    </span>
+                                    <button 
+                                        onClick={() => setSelectedAnnouncementModal(null)}
+                                        className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center hover:opacity-80 transition-opacity"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Content area */}
+                            <div className="p-6 sm:p-8 overflow-y-auto space-y-4 no-scrollbar">
+                                <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block font-sans">
+                                    Publicado em {parseDateAsUTC(selectedAnnouncementModal.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                                </span>
+                                <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-tight font-sans">
+                                    {selectedAnnouncementModal.title}
+                                </h3>
+                                <p className="text-base text-slate-600 dark:text-slate-300 font-medium leading-relaxed whitespace-pre-wrap font-sans">
+                                    {selectedAnnouncementModal.body}
+                                </p>
+
+                                {/* Inline photos if there are multiple */}
+                                {selectedAnnouncementModal.images && selectedAnnouncementModal.images.length > 1 && (
+                                    <div className="grid grid-cols-2 gap-2 pt-4">
+                                        {selectedAnnouncementModal.images.slice(1).map((img, i) => (
+                                            <img 
+                                                key={i} 
+                                                src={img} 
+                                                alt="" 
+                                                className="rounded-2xl w-full object-cover h-28 border border-slate-100 dark:border-slate-800/50" 
+                                                referrerPolicy="no-referrer" 
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Footer info */}
+                            <div className="p-6 bg-slate-50 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-800/40 text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] flex justify-between font-sans">
+                                <span>Publicador Oficial</span>
+                                <span className="text-primary font-sans font-bold">Ativo</span>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
@@ -1079,15 +1195,6 @@ const PartIcon: React.FC<{ icon: React.ReactNode; label: string; active?: boolea
         </div>
         <span className={`text-[8px] font-bold uppercase tracking-widest ${active ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-600'}`}>{label}</span>
     </button>
-);
-
-const BottomNavItem: React.FC<{ icon: React.ReactNode; label: string; active?: boolean; theme?: string }> = ({ icon, label, active, theme }) => (
-  <button className={`flex flex-col items-center gap-1.5 transition-all outline-none ${active ? (theme === 'dark' ? 'text-white' : 'text-indigo-600') : 'text-slate-400 dark:text-slate-500'}`}>
-    <div className={`transition-all ${active ? 'scale-110' : ''}`}>
-      {React.cloneElement(icon as React.ReactElement, { className: "h-7 w-7" })}
-    </div>
-    <span className="text-[10px] font-bold tracking-wider">{label}</span>
-  </button>
 );
 
 export default Dashboard;

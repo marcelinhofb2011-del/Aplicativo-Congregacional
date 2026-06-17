@@ -63,8 +63,8 @@ const Attendance: React.FC = () => {
     };
     
     return (
-        <div className="min-h-screen bg-[#F8F9FB] dark:bg-slate-950 font-sans pb-12">
-            <main className="px-6 space-y-8 max-w-2xl mx-auto pt-8">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans pb-36">
+            <main className="px-6 space-y-8 max-w-4xl mx-auto pt-8">
                 {/* Page Title Section */}
                 <motion.section 
                     initial={{ opacity: 0, x: -20 }}
@@ -88,13 +88,8 @@ const Attendance: React.FC = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="bg-white dark:bg-slate-900 rounded-[40px] p-8 sm:p-10 shadow-xl shadow-emerald-100/50 dark:shadow-none border border-emerald-50 dark:border-slate-800 relative overflow-hidden"
+                    className="space-y-8 relative"
                 >
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full -mr-16 -mt-16"></div>
-                    <div className="absolute top-8 right-8 h-12 w-12 bg-emerald-100 dark:bg-emerald-900/40 rounded-full flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-sm">
-                        <UsersSolidIcon className="h-6 w-6" />
-                    </div>
-
                     <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
@@ -105,7 +100,7 @@ const Attendance: React.FC = () => {
                                         value={date} 
                                         onChange={e => setDate(e.target.value)} 
                                         required 
-                                        className="w-full bg-slate-50 dark:bg-slate-800/50 border-none rounded-2xl px-5 py-4 text-slate-800 dark:text-white font-medium focus:ring-2 focus:ring-emerald-500/20 transition-all font-sans pr-12" 
+                                        className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-2xl px-5 py-4 text-slate-800 dark:text-white font-medium focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all font-sans pr-12" 
                                     />
                                     <CalendarDaysIcon className="h-5 w-5 text-emerald-500 absolute top-1/2 right-4 -translate-y-1/2" />
                                 </div>
@@ -118,7 +113,7 @@ const Attendance: React.FC = () => {
                                     onChange={e => setSubmitterName(e.target.value)} 
                                     required 
                                     placeholder="Ex: João Silva"
-                                    className="w-full bg-slate-50 dark:bg-slate-800/50 border-none rounded-2xl px-5 py-4 text-slate-800 dark:text-white font-medium focus:ring-2 focus:ring-emerald-500/20 transition-all font-sans" 
+                                    className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-2xl px-5 py-4 text-slate-800 dark:text-white font-medium focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all font-sans" 
                                 />
                             </div>
                         </div>
@@ -133,7 +128,7 @@ const Attendance: React.FC = () => {
                                     required 
                                     min="0" 
                                     placeholder="0"
-                                    className="w-full bg-slate-50 dark:bg-slate-800/50 border-none rounded-2xl px-5 py-4 text-slate-800 dark:text-white font-medium focus:ring-2 focus:ring-emerald-500/20 transition-all font-sans" 
+                                    className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-2xl px-5 py-4 text-slate-800 dark:text-white font-medium focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all font-sans" 
                                 />
                             </div>
                             <div className="space-y-2">
@@ -145,7 +140,7 @@ const Attendance: React.FC = () => {
                                     required 
                                     min="0" 
                                     placeholder="0"
-                                    className="w-full bg-slate-50 dark:bg-slate-800/50 border-none rounded-2xl px-5 py-4 text-slate-800 dark:text-white font-medium focus:ring-2 focus:ring-emerald-500/20 transition-all font-sans" 
+                                    className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-2xl px-5 py-4 text-slate-800 dark:text-white font-medium focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all font-sans" 
                                 />
                             </div>
                         </div>

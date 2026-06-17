@@ -14,7 +14,7 @@ export interface NavItem {
 // For Bottom Navigation
 export const BOTTOM_NAV_ITEMS: NavItem[] = [
     { path: '/dashboard', label: 'Página inicial', icon: DashboardIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-blue-500' },
-    { path: '/pioneiro', label: 'Pioneiro', icon: BookOpenIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-amber-500' },
+    { path: '/pioneiro', label: 'Relatório', icon: BookOpenIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-amber-500' },
     { path: '/assistencia', label: 'Assistência', icon: UsersSolidIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-teal-500' },
 ];
 
@@ -23,7 +23,7 @@ export const SECONDARY_NAV_ITEMS: NavItem[] = [
     { path: '/vida-e-ministerio', label: 'Vida e Ministério', icon: LifeMinistryIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-green-500' },
     { path: '/designacoes', label: 'Designações', icon: AssignmentsIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-orange-500' },
     { path: '/limpeza', label: 'Limpeza', icon: CleaningIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-purple-500' },
-    { path: '/secretario', label: 'Secretário', icon: DocumentTextIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-emerald-600' },
+    { path: '/secretario', label: 'Secretário', icon: DocumentTextIcon, roles: [UserRole.SERVANT], color: 'text-emerald-600' },
     { path: '/dirigentes', label: 'Serviço de Campo', icon: ConductorIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-cyan-500' },
     { path: '/discurso-publico', label: 'Discurso Público', icon: PublicTalkIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-indigo-600' },
     { path: '/territorios', label: 'Territórios', icon: TerritoriesIcon, roles: [UserRole.PUBLISHER, UserRole.SERVANT], color: 'text-lime-500' },

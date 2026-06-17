@@ -192,6 +192,10 @@ const PublicTalkFormModal: React.FC<PublicTalkFormModalProps> = ({ isOpen, onClo
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Congregação</label>
                                 <input type="text" name="congregation" value={formData.congregation} onChange={handleInputChange} required className="input-style" />
                             </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Cântico Inicial (Nº)</label>
+                                <input type="text" name="song" value={formData.song || ''} onChange={handleInputChange} className="input-style" placeholder="Ex: Cântico 54" />
+                            </div>
                              {formData.type === 'away' && (
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Local (Endereço)</label>

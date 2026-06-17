@@ -7,9 +7,9 @@ import { AttendanceIcon, ChevronRightIcon, ReportIcon, CalendarDaysIcon } from '
 const Secretario: React.FC = () => {
     
     const menuItems = [
+        { path: '/secretario/relatorios', label: 'Pasta de Relatórios', icon: ReportIcon, color: 'text-amber-500' },
         { path: '/secretario/assistencia', label: 'Registros de Assistência', icon: AttendanceIcon, color: 'text-emerald-500' },
         { path: '/secretario/registro-discurso', label: 'Registro de Discursos', icon: ReportIcon, color: 'text-sky-500' },
-        
     ];
         
     return (

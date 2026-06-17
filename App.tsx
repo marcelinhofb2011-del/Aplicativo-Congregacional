@@ -38,8 +38,12 @@ import Calendar from './pages/Calendar';
 const RoleProtectedRoute: React.FC<{ roles: UserRole[] }> = ({ roles }) => {
   const { user } = useAuth();
   
-  if (!user || (roles.length > 0 && !roles.includes(user.role))) {
-    return <Navigate to="/not-found" replace />;
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (roles.length > 0 && !roles.includes(user.role)) {
+    return <Navigate to="/" replace />;
   }
 
   return <Outlet />;
@@ -66,7 +70,7 @@ const AppContent: React.FC = () => {
                       onClick={() => {
                           console.log("Forcing load completion from UI");
                           forceStopLoading();
-                      }}
+                       }}
                       className="text-[10px] text-slate-400 dark:text-slate-600 font-bold uppercase tracking-widest hover:text-slate-900 mt-4"
                    >
                      Entrar manual (se travado)
@@ -100,11 +104,6 @@ const AppContent: React.FC = () => {
                             <Route path="vida-e-ministerio" element={<LifeMinistry />} />
                             <Route path="designacoes" element={<Assignments />} />
                             <Route path="limpeza" element={<Cleaning />} />
-                            <Route path="secretario" element={<Secretario />} />
-                            <Route path="secretario/relatorios" element={<ReportList />} />
-                            <Route path="secretario/assistencia" element={<AttendanceList />} />
-                                                        <Route path="secretario/registro-discurso" element={<SpeechRecord />} />
-                            
                             
                             <Route path="dirigentes" element={<Conductors />} />
                             <Route path="discurso-publico" element={<PublicTalk />} />
@@ -115,6 +114,10 @@ const AppContent: React.FC = () => {
                         </Route>
                         
                         <Route element={<RoleProtectedRoute roles={[UserRole.SERVANT]} />}>
+                            <Route path="secretario" element={<Secretario />} />
+                            <Route path="secretario/relatorios" element={<ReportList />} />
+                            <Route path="secretario/assistencia" element={<AttendanceList />} />
+                            <Route path="secretario/registro-discurso" element={<SpeechRecord />} />
                             <Route path="publicadores" element={<Publishers />} />
                         </Route>
                     </Route>
@@ -125,7 +128,7 @@ const AppContent: React.FC = () => {
             )}
         </Routes>
     );
-};
+};;
 
 
 const App: React.FC = () => {

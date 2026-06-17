@@ -26,7 +26,7 @@ const Login: React.FC = () => {
                 <div className="absolute bottom-[20%] right-[-20%] top-[-10%] h-[400px] w-[500px] rounded-full bg-[radial-gradient(circle_farthest-side,rgba(59,130,246,0.1),rgba(255,255,255,0))]"></div>
             </div>
 
-            <div className="relative w-full max-w-md space-y-6 bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 overflow-hidden animate-fade-in">
+            <div className="relative w-full max-w-md space-y-6 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-705 overflow-hidden animate-fade-in">
                 <div className="p-8 sm:p-10">
                     <div className="text-center mb-8">
                         {/* Reusing the Publisher Dashboard logo style */}
@@ -49,7 +49,7 @@ const Login: React.FC = () => {
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="input-style bg-white/50 dark:bg-slate-900/50 border-slate-300 dark:border-slate-600 placeholder-slate-500 dark:placeholder-slate-400 focus:border-primary focus:ring-primary"
+                                className="input-style bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 placeholder-slate-500 dark:placeholder-slate-400 focus:border-primary focus:ring-primary"
                                 placeholder="Email"
                             />
                         </div>
@@ -63,7 +63,7 @@ const Login: React.FC = () => {
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="input-style bg-white/50 dark:bg-slate-900/50 border-slate-300 dark:border-slate-600 placeholder-slate-500 dark:placeholder-slate-400 focus:border-primary focus:ring-primary pr-10"
+                                className="input-style bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 placeholder-slate-500 dark:placeholder-slate-400 focus:border-primary focus:ring-primary pr-10"
                                 placeholder="Senha"
                             />
                              <button

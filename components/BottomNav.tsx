@@ -26,30 +26,36 @@ const BottomNav: React.FC = () => {
     const itemsToShow = BOTTOM_NAV_ITEMS;
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-50 h-20 bg-white/95 dark:bg-slate-950/95 border-t border-slate-200 dark:border-white/5 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_-10px_30px_rgba(0,0,0,0.3)] transform-gpu">
+        <div className="fixed bottom-0 left-0 right-0 z-50 h-16 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-white/10 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_-10px_30px_rgba(0,0,0,0.3)] transform-gpu">
             <nav className="max-w-2xl mx-auto h-full flex justify-around items-center px-4">
-                {itemsToShow.map((item) => (
-                    <NavLink key={item.path} to={item.path} className={navLinkClass}>
-                        {({ isActive }) => (
-                            <div className="flex flex-col items-center gap-1.5">
-                                <div className={`p-2 rounded-xl transition-all duration-500 ${isActive ? 'bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-500 hover:text-indigo-500 dark:hover:text-slate-300'}`}>
-                                    <item.icon className="h-6 w-6" />
+                {itemsToShow.map((item) => {
+                    const targetPath = (item.path === '/pioneiro' && user.role === UserRole.PUBLISHER)
+                        ? '/relatorio'
+                        : item.path;
+
+                    return (
+                        <NavLink key={item.path} to={targetPath} className={navLinkClass}>
+                            {({ isActive }) => (
+                                <div className="flex flex-col items-center gap-0.5">
+                                    <div className={`p-1.5 rounded-xl transition-all duration-500 ${isActive ? 'bg-primary/10 dark:bg-primary/20 text-primary dark:text-amber-500' : 'text-slate-500 dark:text-slate-400 hover:text-primary'}`}>
+                                        <item.icon className="h-5 w-5" />
+                                    </div>
+                                    <span className={`text-[9px] font-extrabold uppercase tracking-wider transition-all duration-500 ${isActive ? 'text-primary dark:text-amber-500' : 'text-slate-600 dark:text-slate-400'}`}>
+                                        {item.label}
+                                    </span>
                                 </div>
-                                <span className={`text-[10px] font-bold uppercase tracking-[0.1em] transition-all duration-500 ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-500'}`}>
-                                    {item.label}
-                                </span>
-                            </div>
-                        )}
-                    </NavLink>
-                ))}
+                            )}
+                        </NavLink>
+                    );
+                })}
                 {user.role === UserRole.SERVANT && (
                     <NavLink to="/menu" className={navLinkClass}>
                         {({ isActive }) => (
-                            <div className="flex flex-col items-center gap-1.5">
-                                <div className={`p-2 rounded-xl transition-all duration-500 ${isActive ? 'bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-500 hover:text-indigo-500 dark:hover:text-slate-300'}`}>
-                                    <Squares2X2Icon className="h-6 w-6" />
+                            <div className="flex flex-col items-center gap-0.5">
+                                <div className={`p-1.5 rounded-xl transition-all duration-500 ${isActive ? 'bg-primary/10 dark:bg-primary/20 text-primary dark:text-amber-500' : 'text-slate-500 dark:text-slate-400 hover:text-primary'}`}>
+                                    <Squares2X2Icon className="h-5 w-5" />
                                 </div>
-                                <span className={`text-[10px] font-bold uppercase tracking-[0.1em] transition-all duration-500 ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-500'}`}>
+                                <span className={`text-[9px] font-extrabold uppercase tracking-wider transition-all duration-500 ${isActive ? 'text-primary dark:text-amber-500' : 'text-slate-600 dark:text-slate-400'}`}>
                                     Menu
                                 </span>
                             </div>

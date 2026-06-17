@@ -69,7 +69,7 @@ const Register: React.FC = () => {
 
             <div className="absolute inset-0 bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 dark:from-slate-800 dark:via-slate-900 dark:to-black"></div>
 
-            <div className="relative w-full max-w-md space-y-6 bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 p-8 sm:p-10">
+            <div className="relative w-full max-w-md space-y-6 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-705 p-8 sm:p-10">
                 <div className="text-center mb-6">
                     <div className="mx-auto mb-4 w-20 h-20 bg-primary rounded-full flex items-center justify-center shadow-lg">
                         <span className="text-white font-bold text-3xl tracking-wider">VC</span>
