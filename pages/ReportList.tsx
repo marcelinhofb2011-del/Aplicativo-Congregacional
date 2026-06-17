@@ -78,7 +78,7 @@ const ReportList: React.FC = () => {
             
             // Regra: Soma as horas APENAS de relatórios com privilégio de 'PIONEER'.
             // Relatórios de publicadores não contribuem para este total de horas.
-            if (report.privilege === 'PIONEER') {
+            if (report.privilege === 'PIONEER' || report.privilege === 'PIONEER_REGULAR' || report.privilege === 'PIONEER_AUXILIARY') {
                 const hours = (report.hours || 0) + ((report.minutes || 0) / 60);
                 statsByGroup[report.group].pioneerHours += hours;
                 statsByGroup[report.group].pioneerCount.add(report.publisherId);

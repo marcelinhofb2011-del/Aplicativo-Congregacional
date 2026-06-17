@@ -19,7 +19,13 @@ const DetailItem: React.FC<{ label: string, value: any }> = ({ label, value }) =
 const ReportDetailModal: React.FC<ReportDetailModalProps> = ({ report, onClose }) => {
     if (!report) return null;
 
-    const privilegeText = report.privilege === 'PIONEER' ? 'Pioneiro(a)' : 'Publicador';
+    const privilegeText = report.privilege === 'PIONEER_REGULAR' 
+        ? 'Pioneiro Regular'
+        : report.privilege === 'PIONEER_AUXILIARY'
+        ? 'Pioneiro Auxiliar'
+        : report.privilege === 'PIONEER'
+        ? 'Pioneiro(a)'
+        : 'Publicador';
     const submittedAtDate = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(report.submittedAt));
 
     return (
@@ -38,7 +44,7 @@ const ReportDetailModal: React.FC<ReportDetailModalProps> = ({ report, onClose }
                     </div>
 
                     <div className="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-md">
-                        {report.privilege === 'PIONEER' ? (
+                        {report.privilege !== 'PUBLISHER' ? (
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <DetailItem label="Horas" value={report.hours || 0} />
                                 <DetailItem label="Minutos" value={report.minutes || 0} />

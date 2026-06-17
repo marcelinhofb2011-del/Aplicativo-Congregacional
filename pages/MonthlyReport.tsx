@@ -70,7 +70,7 @@ const MonthlyReport: React.FC = () => {
                 // Check uniqueness
                 const exists = reports.find(r => r.month === data.month && r.year === data.year);
                 if (exists) {
-                    alert("Você já enviou o relatório deste mês.");
+                    setToastMessage("Você já enviou o relatório deste mês.");
                     return;
                 }
                 await addMonthlyReport({

@@ -16,7 +16,7 @@ const Layout: React.FC = () => {
         <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
             {showHeader && <Header />}
             
-            <main className={`flex-1 overflow-x-hidden animate-fade-in ${showHeader ? 'pt-16' : 'pt-0'}`}>
+            <main className={`flex-1 overflow-x-hidden animate-fade-in pb-24 ${showHeader ? 'pt-16' : 'pt-0'}`}>
                 <Outlet />
             </main>
             

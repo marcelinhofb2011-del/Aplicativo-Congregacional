@@ -18,7 +18,7 @@ const ReportFormModal: React.FC<ReportFormModalProps> = ({ isOpen, onClose, onSa
     const [selectedPublisher, setSelectedPublisher] = useState<PublisherProfile | null>(null);
     const [group, setGroup] = useState<'1' | '2' | '3' | ''>('');
     const [date, setDate] = useState('');
-    const [privilege, setPrivilege] = useState<'PIONEER' | 'PUBLISHER'>('PUBLISHER');
+    const [privilege, setPrivilege] = useState<'PIONEER' | 'PIONEER_REGULAR' | 'PIONEER_AUXILIARY' | 'PUBLISHER'>('PUBLISHER');
     const [hasParticipated, setHasParticipated] = useState<boolean>(false);
     const [hours, setHours] = useState<number | ''>('');
     const [minutes, setMinutes] = useState<number | ''>('');
@@ -27,6 +27,7 @@ const ReportFormModal: React.FC<ReportFormModalProps> = ({ isOpen, onClose, onSa
     const [notes, setNotes] = useState('');
     
     const [isPublisherModalOpen, setPublisherModalOpen] = useState(false);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         const fetchPublishers = async () => {
@@ -61,13 +62,21 @@ const ReportFormModal: React.FC<ReportFormModalProps> = ({ isOpen, onClose, onSa
     const handleSelectPublisher = (publisher: PublisherProfile) => {
         setSelectedPublisher(publisher);
         setGroup(publisher.group);
+        if (publisher.isRegularPioneer) {
+            setPrivilege('PIONEER_REGULAR');
+        } else if (publisher.isAuxiliaryPioneer) {
+            setPrivilege('PIONEER_AUXILIARY');
+        } else {
+            setPrivilege('PUBLISHER');
+        }
         setPublisherModalOpen(false);
     };
     
     const handleSubmitReport = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError("");
         if (!selectedPublisher || !group) {
-            alert("Por favor, selecione um publicador e um grupo.");
+            setError("Por favor, selecione um publicador e um grupo.");
             return;
         }
 
@@ -81,7 +90,7 @@ const ReportFormModal: React.FC<ReportFormModalProps> = ({ isOpen, onClose, onSa
             date: reportDate.toISOString(),
             privilege,
             notes,
-            ...(privilege === 'PIONEER' 
+            ...(privilege !== 'PUBLISHER' 
                 ? { hasParticipated: undefined, hours: Number(hours) || 0, minutes: Number(minutes) || 0, revisits: Number(revisits) || 0, studies: Number(studies) || 0 }
                 : { hasParticipated, hours: undefined, minutes: undefined, revisits: hasParticipated ? Number(revisits) || 0 : 0, studies: hasParticipated ? Number(studies) || 0 : 0 }
             ),
@@ -104,6 +113,13 @@ const ReportFormModal: React.FC<ReportFormModalProps> = ({ isOpen, onClose, onSa
                             <XIcon className="h-6 w-6" />
                         </button>
                     </div>
+
+                    {error && (
+                        <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl text-sm font-semibold mb-6 flex items-center gap-2 border border-red-100 dark:border-red-900/30">
+                            <span className="w-1.5 h-1.5 bg-red-600 dark:bg-red-400 rounded-full animate-ping"></span>
+                            {error}
+                        </div>
+                    )}
 
                     <div className="bg-white dark:bg-slate-800 shadow rounded-lg p-6 space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -137,13 +153,14 @@ const ReportFormModal: React.FC<ReportFormModalProps> = ({ isOpen, onClose, onSa
 
                         <div>
                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Privilégio</label>
-                            <div className="flex gap-4">
-                                <label className="flex items-center"><input type="radio" name="privilege" value="PUBLISHER" checked={privilege === 'PUBLISHER'} onChange={() => setPrivilege('PUBLISHER')} className="h-4 w-4 text-primary" /> <span className="ml-2">Publicador</span></label>
-                                <label className="flex items-center"><input type="radio" name="privilege" value="PIONEER" checked={privilege === 'PIONEER'} onChange={() => setPrivilege('PIONEER')} className="h-4 w-4 text-primary" /> <span className="ml-2">Pioneiro(a)</span></label>
+                            <div className="flex flex-wrap gap-4">
+                                <label className="flex items-center"><input type="radio" name="privilege" value="PUBLISHER" checked={privilege === 'PUBLISHER'} onChange={() => setPrivilege('PUBLISHER')} className="h-4 w-4 text-primary" /> <span className="ml-2 text-slate-700 dark:text-slate-300">Publicador</span></label>
+                                <label className="flex items-center"><input type="radio" name="privilege" value="PIONEER_AUXILIARY" checked={privilege === 'PIONEER_AUXILIARY'} onChange={() => setPrivilege('PIONEER_AUXILIARY')} className="h-4 w-4 text-primary" /> <span className="ml-2 text-slate-700 dark:text-slate-300">Pioneiro Auxiliar</span></label>
+                                <label className="flex items-center"><input type="radio" name="privilege" value="PIONEER_REGULAR" checked={privilege === 'PIONEER_REGULAR' || privilege === 'PIONEER'} onChange={() => setPrivilege('PIONEER_REGULAR')} className="h-4 w-4 text-primary" /> <span className="ml-2 text-slate-700 dark:text-slate-300">Pioneiro Regular</span></label>
                             </div>
                         </div>
                         
-                        {privilege === 'PIONEER' ? (
+                        {privilege !== 'PUBLISHER' ? (
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <div><label className="block text-sm font-medium">Horas</label><input type="number" min="0" value={hours} onChange={e => setHours(e.target.value === '' ? '' : parseInt(e.target.value))} className="input-style mt-1" /></div>
                                 <div><label className="block text-sm font-medium">Minutos</label><input type="number" min="0" max="59" value={minutes} onChange={e => setMinutes(e.target.value === '' ? '' : parseInt(e.target.value))} className="input-style mt-1" /></div>

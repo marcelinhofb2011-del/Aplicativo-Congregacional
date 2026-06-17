@@ -44,7 +44,7 @@ const Resumo: React.FC = () => {
                 const groupHours: { [key: string]: number } = { '1': 0, '2': 0, '3': 0 };
                 reportRecords.forEach(report => {
                     if (report.group && groupHours[report.group] !== undefined) {
-                         if (report.privilege === 'PIONEER') {
+                         if (report.privilege === 'PIONEER' || report.privilege === 'PIONEER_REGULAR' || report.privilege === 'PIONEER_AUXILIARY') {
                              groupHours[report.group] += (report.hours || 0) + ((report.minutes || 0) / 60);
                          } else if (report.hasParticipated) {
                              groupHours[report.group] += 1; // 1 hour per participation

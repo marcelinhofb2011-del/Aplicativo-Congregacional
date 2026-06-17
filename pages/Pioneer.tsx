@@ -441,7 +441,7 @@ const Pioneer: React.FC = () => {
                 publisherName: targetProfile.name || user.displayName || 'Publicador',
                 group: targetProfile.group || '1',
                 date: reportDateISO,
-                privilege: isPioneer ? 'PIONEER' : 'PUBLISHER',
+                privilege: isPioneer ? (currentRole === 'Pioneiro Regular' ? 'PIONEER_REGULAR' : 'PIONEER_AUXILIARY') : 'PUBLISHER',
                 hours: isPioneer ? reportHours : (participated ? reportHours || 0 : 0),
                 minutes: 0,
                 revisits: reportRevisits || 0,

@@ -137,7 +137,7 @@ export interface FieldServiceReport {
     publisherName: string;
     date: string; // ISO format (Timestamp in Firestore)
     group: '1' | '2' | '3' | '';
-    privilege: 'PIONEER' | 'PUBLISHER';
+    privilege: 'PIONEER' | 'PIONEER_REGULAR' | 'PIONEER_AUXILIARY' | 'PUBLISHER';
     hours?: number;
     minutes?: number;
     revisits?: number;
