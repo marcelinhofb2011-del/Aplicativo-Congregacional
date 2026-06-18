@@ -152,6 +152,24 @@ const Dashboard: React.FC = () => {
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<UpcomingEvent[]>([]);
+    const [isReportReminderOpen, setIsReportReminderOpen] = useState(false);
+
+    const getPreviousMonthName = () => {
+        const today = new Date();
+        const prevMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        const name = prevMonthDate.toLocaleDateString('pt-BR', { month: 'long' });
+        return name.charAt(0).toUpperCase() + name.slice(1);
+    };
+
+    const getPreviousMonthYear = () => {
+        const today = new Date();
+        const prevMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        return prevMonthDate.getFullYear();
+    };
+
+    const todayDateObj = new Date();
+    const currentDay = todayDateObj.getDate();
+    const shouldShowReportAlert = currentDay >= 1 && currentDay <= 12;
 
     useEffect(() => {
         if (!searchQuery.trim()) {
@@ -588,8 +606,18 @@ const Dashboard: React.FC = () => {
         <div className="min-h-screen bg-white dark:bg-[#07060b] text-slate-900 dark:text-slate-100 font-sans selection:bg-indigo-500/30 overflow-x-hidden transition-colors duration-300 pb-24">
             {/* New Header */}
             <header className="px-6 h-16 flex items-center justify-between fixed top-0 left-0 right-0 bg-primary border-b border-primary-dark z-50 transform-gpu transition-all shadow-md">
-                <div className="flex items-center gap-2">
-                    <span className="text-xl font-black tracking-tight text-white uppercase transition-opacity">APP</span>
+                <div 
+                    className="flex items-center gap-2 cursor-pointer select-none active:opacity-80 transition-opacity"
+                    onClick={() => setIsReportReminderOpen(true)}
+                    title={shouldShowReportAlert ? "Lembrete: Enviar Relatório de Serviço" : "Vila Cisper"}
+                >
+                    <span className="text-lg font-extrabold tracking-tight text-white font-outfit uppercase transition-opacity">Vila Cisper</span>
+                    {shouldShowReportAlert && (
+                        <div className="relative flex h-3.5 w-3.5 items-center justify-center ml-1">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                        </div>
+                    )}
                 </div>
                 <div className="flex items-center gap-3">
                     <button 
@@ -1057,6 +1085,61 @@ const Dashboard: React.FC = () => {
                             </div>
                         </motion.div>
                     </motion.div>
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {isReportReminderOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl border border-slate-100 dark:border-slate-800 text-center space-y-5 animate-in fade-in zoom-in-95 duration-150"
+                        >
+                            <div className="mx-auto w-16 h-16 rounded-[22px] bg-amber-500/10 dark:bg-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400 relative">
+                                <span className={`absolute inset-0 bg-amber-500/10 rounded-[22px] ${shouldShowReportAlert ? 'animate-pulse' : ''}`}></span>
+                                <Bell className={`w-8 h-8 relative ${shouldShowReportAlert ? 'animate-bounce' : ''}`} />
+                            </div>
+                            <div className="space-y-2">
+                                <h3 className="text-xl font-extrabold text-slate-900 dark:text-white font-outfit tracking-tight">
+                                    {shouldShowReportAlert ? `Relatório de ${getPreviousMonthName()}!` : "Enviar Relatório"}
+                                </h3>
+                                <div className="text-sm text-slate-500 dark:text-slate-400 font-sans leading-relaxed space-y-1">
+                                    <p>
+                                        {shouldShowReportAlert ? (
+                                            <span>
+                                                Olá, irmão! Estamos no período de coleta do relatório de serviço de campo referente ao mês de <strong className="text-slate-800 dark:text-slate-200 uppercase">{getPreviousMonthName()}/2026</strong>.
+                                            </span>
+                                        ) : (
+                                            <span>
+                                                Olá, irmão! Deseja registrar ou enviar sua atividade de serviço de campo?
+                                            </span>
+                                        )}
+                                    </p>
+                                    <p>
+                                        O envio pontual ajuda o secretário no processamento das informações congregacionais.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex flex-col gap-2 pt-2">
+                                <Link 
+                                    to="/relatorio"
+                                    onClick={() => setIsReportReminderOpen(false)}
+                                    className="w-full py-4 px-4 bg-primary text-white font-bold rounded-2xl hover:bg-primary-dark transition-all shadow-lg shadow-primary/20 active:scale-95 text-sm font-sans flex items-center justify-center gap-2"
+                                >
+                                    Enviar Relatório Agora
+                                </Link>
+                                <button 
+                                    type="button"
+                                    onClick={() => setIsReportReminderOpen(false)}
+                                    className="w-full py-3 px-4 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-xs font-sans cursor-pointer"
+                                >
+                                    Fechar
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
                 )}
             </AnimatePresence>
         </div>

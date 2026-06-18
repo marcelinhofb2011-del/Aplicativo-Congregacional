@@ -1,7 +1,7 @@
 {
   "id": "vl-cisper-gestor-v1",
-  "name": "VL Cisper - Gestor Congregacional",
-  "short_name": "VL Cisper",
+  "name": "Vila Cisper",
+  "short_name": "Vila Cisper",
   "description": "Gerenciamento teocrático de designações e atividades da congregação VL Cisper.",
   "lang": "pt-BR",
   "start_url": "/",
