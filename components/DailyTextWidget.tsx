@@ -25,12 +25,12 @@ const DailyTextWidget: React.FC<DailyTextWidgetProps> = ({ dailyText, isLoading 
         return (
             <div className="relative block p-6 bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl shadow-lg border border-white/50 dark:border-slate-700/50 min-h-[224px] flex flex-col justify-center">
                 <div className="flex items-center gap-4">
-                    <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-xl bg-indigo-500">
+                    <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-xl bg-primary">
                         <BookOpenIcon className="h-7 w-7 text-white" />
                     </div>
                     <div>
                         <h3 className="text-xl font-bold text-slate-900 dark:text-white">Texto Diário</h3>
-                        <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">{formattedDate}</p>
+                        <p className="text-sm font-semibold text-primary dark:text-amber-500">{formattedDate}</p>
                     </div>
                 </div>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-4">
@@ -43,12 +43,12 @@ const DailyTextWidget: React.FC<DailyTextWidgetProps> = ({ dailyText, isLoading 
     return (
         <div className="relative block p-6 bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl shadow-lg border border-white/50 dark:border-slate-700/50 min-h-[224px]">
              <div className="flex justify-between items-start mb-4">
-                <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-xl bg-indigo-500">
+                <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-xl bg-primary">
                     <BookOpenIcon className="h-7 w-7 text-white" />
                 </div>
                 <div className="text-right">
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white">Texto Diário</h3>
-                    <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">{formattedDate}</p>
+                    <p className="text-sm font-semibold text-primary dark:text-amber-500">{formattedDate}</p>
                 </div>
             </div>
             <div className="space-y-3">

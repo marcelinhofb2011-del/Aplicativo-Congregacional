@@ -131,7 +131,7 @@ const PublicTalkDetail: React.FC<PublicTalkDetailProps> = ({ schedule }) => {
                 </section>
 
                 <section className="bg-slate-50 dark:bg-white/[0.02] p-6 rounded-3xl border border-slate-100 dark:border-white/5">
-                    <h3 className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-4">ORADOR E TEMA</h3>
+                    <h3 className="text-[10px] font-black text-primary dark:text-amber-500 uppercase tracking-widest mb-4">ORADOR E TEMA</h3>
                     <div className="space-y-4">
                         <div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Orador</p>
@@ -140,7 +140,7 @@ const PublicTalkDetail: React.FC<PublicTalkDetailProps> = ({ schedule }) => {
                         <div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tema</p>
                             <p className="text-xl font-bold text-slate-900 dark:text-white leading-tight">{schedule.theme}</p>
-                            <p className="text-indigo-500 dark:text-indigo-400 mt-1 font-black text-[10px] uppercase tracking-widest">Esboço Nº {REVERSE_PUBLIC_TALK_THEMES[schedule.theme] || 'N/A'}</p>
+                            <p className="text-primary dark:text-amber-500 mt-1 font-black text-[10px] uppercase tracking-widest">Esboço Nº {REVERSE_PUBLIC_TALK_THEMES[schedule.theme] || 'N/A'}</p>
                         </div>
                     </div>
                 </section>
@@ -160,7 +160,7 @@ const PublicTalkDetail: React.FC<PublicTalkDetailProps> = ({ schedule }) => {
                             <DetailItem
                                 label="Telefone (Contato)"
                                 value={
-                                    <a href={`tel:${schedule.phone}`} className="inline-flex items-center gap-2 group text-indigo-600 dark:text-indigo-400 hover:underline">
+                                    <a href={`tel:${schedule.phone}`} className="inline-flex items-center gap-2 group text-primary dark:text-amber-500 hover:underline">
                                         <span>{schedule.phone}</span>
                                         <PhoneIcon className="h-4 w-4" />
                                     </a>
@@ -175,7 +175,7 @@ const PublicTalkDetail: React.FC<PublicTalkDetailProps> = ({ schedule }) => {
             <footer className="text-center pt-8 mt-12 border-t border-slate-100 dark:border-white/5">
                 <p className="text-[10px] font-black text-slate-300 dark:text-slate-700 uppercase tracking-widest leading-loose">
                     Sistema de Apoio Congregacional<br/>
-                    <span className="text-indigo-500/50 italic dark:text-indigo-400/30">Gerado automaticamente pelo aplicativo VL Cisper</span>
+                    <span className="text-primary/50 italic dark:text-amber-500/30">Gerado automaticamente pelo aplicativo VL Cisper</span>
                 </p>
             </footer>
         </div>

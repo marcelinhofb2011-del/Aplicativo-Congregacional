@@ -904,7 +904,7 @@ const Pioneer: React.FC = () => {
                                     <div className="relative">
                                         <div className="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                                             <div 
-                                                className="h-full bg-indigo-500 rounded-full transition-all duration-500"
+                                                className="h-full bg-primary rounded-full transition-all duration-500"
                                                 style={{ width: `${pioneerMetrics.percent}%` }}
                                             />
                                         </div>
@@ -936,7 +936,7 @@ const Pioneer: React.FC = () => {
                                     onClick={() => setActiveTab('tracker')}
                                     className={`py-3 text-sm font-black border-b-2 transition-all relative ${
                                         activeTab === 'tracker'
-                                        ? 'border-indigo-500 text-slate-900 dark:text-white'
+                                        ? 'border-primary text-slate-900 dark:text-white'
                                         : 'border-transparent text-slate-400'
                                     }`}
                                 >
@@ -946,7 +946,7 @@ const Pioneer: React.FC = () => {
                                     onClick={() => setActiveTab('reports')}
                                     className={`py-3 text-sm font-black border-b-2 transition-all relative ${
                                         activeTab === 'reports'
-                                        ? 'border-indigo-500 text-slate-900 dark:text-white'
+                                        ? 'border-primary text-slate-900 dark:text-white'
                                         : 'border-transparent text-slate-400'
                                     }`}
                                 >
@@ -964,7 +964,7 @@ const Pioneer: React.FC = () => {
                                                 setEditingActivity(null);
                                                 setIsActivityModalOpen(true);
                                             }}
-                                            className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 transition-colors text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-md shadow-indigo-500/10"
+                                            className="px-4 py-2 bg-primary hover:bg-primary-dark transition-colors text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-md shadow-primary/10"
                                         >
                                             <PlusIcon className="h-4 w-4" /> Novo Registro
                                         </button>
@@ -994,7 +994,7 @@ const Pioneer: React.FC = () => {
                                                                         setEditingActivity(act);
                                                                         setIsActivityModalOpen(true);
                                                                     }}
-                                                                    className="p-2 text-slate-400 hover:text-indigo-500 transition-colors"
+                                                                    className="p-2 text-slate-400 hover:text-primary transition-colors"
                                                                 >
                                                                     <PencilIcon className="h-4 w-4" />
                                                                 </button>
@@ -1331,7 +1331,7 @@ const Pioneer: React.FC = () => {
                             exit={{ opacity: 0, scale: 0.95, y: 20 }}
                             className="bg-white dark:bg-slate-900 rounded-[32px] p-6 w-full max-w-sm shadow-2xl relative z-10 border border-slate-100 dark:border-white/5 overflow-hidden"
                         >
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full -mr-8 -mt-8 font-sans"></div>
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-8 -mt-8 font-sans"></div>
                             
                             <h3 className="text-xl font-black text-slate-800 dark:text-white mb-2 font-outfit">Definir Alvo de Horas</h3>
                             <p className="text-slate-500 dark:text-slate-400 text-xs mb-6 font-sans">
@@ -1359,7 +1359,7 @@ const Pioneer: React.FC = () => {
                                         value={tempGoalHours || ''}
                                         onChange={(e) => setTempGoalHours(Number(e.target.value))}
                                         placeholder="Ex: 50"
-                                        className="w-full bg-slate-50 dark:bg-slate-800/80 border-none rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-white font-medium focus:ring-2 focus:ring-indigo-500/30 transition-all font-sans"
+                                        className="w-full bg-slate-50 dark:bg-slate-800/80 border-none rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-white font-medium focus:ring-2 focus:ring-primary/30 transition-all font-sans"
                                     />
                                 </div>
                                 
@@ -1373,7 +1373,7 @@ const Pioneer: React.FC = () => {
                                     </button>
                                     <button 
                                         type="submit"
-                                        className="flex-1 py-3 text-xs font-bold bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-500/20 transition-all font-sans"
+                                        className="flex-1 py-3 text-xs font-bold bg-primary hover:bg-primary-dark text-white rounded-xl shadow-lg shadow-primary/20 transition-all font-sans"
                                     >
                                         Salvar Alvo
                                     </button>
@@ -1463,8 +1463,8 @@ const ActivityModal: React.FC<{
                                     onClick={() => setCategory(cat)}
                                     className={`py-2 px-1 rounded-xl text-xs font-bold border transition-all ${
                                         category === cat 
-                                        ? 'bg-indigo-500 border-indigo-500 text-white shadow-md' 
-                                        : 'bg-slate-50 dark:bg-slate-850 border-slate-100 dark:border-white/5 text-slate-600 dark:text-slate-400'
+                                        ? 'bg-primary border-primary text-white shadow-md' 
+                                        : 'bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-white/5 text-slate-600 dark:text-slate-400'
                                     }`}
                                 >
                                     {cat}
@@ -1535,7 +1535,7 @@ const ActivityModal: React.FC<{
                             revisits, 
                             studies 
                         })} 
-                        className="flex-1 py-3 bg-indigo-500 hover:bg-indigo-650 text-white rounded-xl font-extrabold text-xs shadow-md shadow-indigo-500/10 transition-all"
+                        className="flex-1 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-extrabold text-xs shadow-md shadow-primary/10 transition-all"
                     >
                         Salvar
                     </button>

@@ -26,8 +26,8 @@ const DetailedScheduleModal: React.FC<DetailedScheduleModalProps> = ({ schedule,
             const data = fullData as any;
             return (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="bg-indigo-500/10 border border-indigo-500/20 p-8 rounded-[32px] text-center">
-                        <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-4">Irmão Designado</p>
+                    <div className="bg-primary/10 border border-primary/20 p-8 rounded-[32px] text-center">
+                        <p className="text-[10px] font-black text-primary dark:text-amber-500 uppercase tracking-[0.3em] mb-4">Irmão Designado</p>
                         <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{data.speaker || data.student || 'Não definido'}</h2>
                         <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{schedule.title}</p>
                     </div>
@@ -99,7 +99,7 @@ const DetailedScheduleModal: React.FC<DetailedScheduleModalProps> = ({ schedule,
         <div className="fixed inset-0 bg-slate-50 dark:bg-[#020617] z-50 overflow-y-auto animate-fade-in transition-colors duration-300">
             <header className="sticky top-0 z-10 flex items-center h-16 bg-white/80 dark:bg-[#020617]/80 backdrop-blur-md px-4 sm:px-6 border-b border-slate-200 dark:border-white/10">
                 <div className="flex-1 flex justify-start">
-                    <button onClick={onClose} className="flex items-center gap-1 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white transition-colors p-2 -ml-2 rounded-md">
+                    <button onClick={onClose} className="flex items-center gap-1 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-white transition-colors p-2 -ml-2 rounded-md">
                         <ArrowLeftIcon className="h-5 w-5" />
                         <span className="text-sm font-medium">Voltar</span>
                     </button>

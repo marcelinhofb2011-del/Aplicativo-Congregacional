@@ -14,7 +14,8 @@ import {
     User, 
     Users,
     ChevronRight,
-    Search
+    Search,
+    Megaphone
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -28,10 +29,13 @@ interface NotificationOverlayProps {
     notifications: AppNotification[];
 }
 
-const NotificationCategoryIcon: React.FC<{ type: NotificationType }> = ({ type }) => {
+const NotificationCategoryIcon: React.FC<{ type: NotificationType; isAnnouncement?: boolean }> = ({ type, isAnnouncement }) => {
+    if (isAnnouncement) {
+        return <Megaphone className="w-5 h-5 text-amber-500 dark:text-amber-400" />;
+    }
     switch (type) {
         case NotificationType.DESIGNATION:
-            return <User className="w-5 h-5 text-indigo-500" />;
+            return <User className="w-5 h-5 text-primary" />;
         case NotificationType.SCHEDULE_CHANGE:
             return <Calendar className="w-5 h-5 text-blue-500" />;
         case NotificationType.IMPORTANT_ALERT:
@@ -130,7 +134,7 @@ const NotificationOverlay: React.FC<NotificationOverlayProps> = ({ isOpen, onClo
                             <div className="flex items-center justify-between mb-8">
                                 <div className="space-y-1">
                                     <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">Atividade</h2>
-                                    <p className="text-[10px] text-indigo-500 font-bold uppercase tracking-[0.2em]">Fluxo de Notificações</p>
+                                    <p className="text-[10px] text-primary dark:text-amber-500 font-bold uppercase tracking-[0.2em]">Fluxo de Notificações</p>
                                 </div>
                                 <button
                                     id="close-notifications"
@@ -149,7 +153,7 @@ const NotificationOverlay: React.FC<NotificationOverlayProps> = ({ isOpen, onClo
                                     placeholder="Buscar..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-white/5 border-none rounded-[20px] text-sm text-slate-900 dark:text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium"
+                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-white/5 border-none rounded-[20px] text-sm text-slate-900 dark:text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
                                 />
                             </div>
                         </div>
@@ -174,9 +178,9 @@ const NotificationOverlay: React.FC<NotificationOverlayProps> = ({ isOpen, onClo
                                     >
                                         <div className="flex gap-5">
                                             <div className={`h-12 w-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${
-                                                n.isRead ? 'bg-slate-50 dark:bg-white/5 text-slate-400' : 'bg-indigo-500/10 text-indigo-500'
+                                                n.isRead ? 'bg-slate-50 dark:bg-white/5 text-slate-400' : 'bg-primary/10 text-primary dark:text-amber-500'
                                             }`}>
-                                                <NotificationCategoryIcon type={n.type} />
+                                                <NotificationCategoryIcon type={n.type} isAnnouncement={n.isAnnouncement} />
                                             </div>
 
                                             <div className="flex-1 min-w-0 pr-8">
@@ -200,7 +204,7 @@ const NotificationOverlay: React.FC<NotificationOverlayProps> = ({ isOpen, onClo
                                                     {!n.isRead && (
                                                         <button
                                                             onClick={() => handleMarkRead(n.id)}
-                                                            className="text-[10px] font-black text-indigo-500 hover:text-indigo-600 uppercase tracking-widest"
+                                                            className="text-[10px] font-black text-primary dark:text-amber-500 hover:text-primary-dark dark:hover:text-amber-600 uppercase tracking-widest"
                                                         >
                                                             Marcar Lida
                                                         </button>
@@ -218,28 +222,30 @@ const NotificationOverlay: React.FC<NotificationOverlayProps> = ({ isOpen, onClo
                                         </div>
 
                                         {/* Actions Overlay */}
-                                        <div className="absolute top-6 right-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button
-                                                onClick={() => handleTogglePin(n)}
-                                                className={`p-2 rounded-xl transition-colors ${
-                                                    n.isPinned 
-                                                    ? 'bg-amber-500/20 text-amber-500' 
-                                                    : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-400'
-                                                }`}
-                                            >
-                                                {n.isPinned ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(n.id)}
-                                                className="p-2 hover:bg-rose-500/10 text-slate-400 hover:text-rose-500 rounded-xl transition-colors"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
+                                        {!n.isAnnouncement && (
+                                            <div className="absolute top-6 right-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    onClick={() => handleTogglePin(n)}
+                                                    className={`p-2 rounded-xl transition-colors ${
+                                                        n.isPinned 
+                                                        ? 'bg-amber-500/20 text-amber-500' 
+                                                        : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-400'
+                                                    }`}
+                                                >
+                                                    {n.isPinned ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(n.id)}
+                                                    className="p-2 hover:bg-rose-500/10 text-slate-400 hover:text-rose-500 rounded-xl transition-colors"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        )}
 
                                         {/* Unread indicator */}
                                         {!n.isRead && (
-                                            <div className="absolute top-7 left-0 w-1.5 h-1.5 bg-indigo-500 rounded-full"></div>
+                                            <div className="absolute top-7 left-0 w-1.5 h-1.5 bg-primary dark:bg-amber-500 rounded-full"></div>
                                         )}
                                     </motion.div>
                                 ))
@@ -251,7 +257,7 @@ const NotificationOverlay: React.FC<NotificationOverlayProps> = ({ isOpen, onClo
                             <button
                                 id="mark-all-read"
                                 onClick={handleMarkAllRead}
-                                className="w-full py-4 bg-indigo-500 text-white rounded-[20px] text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:grayscale"
+                                className="w-full py-4 bg-primary hover:bg-primary-dark text-white rounded-[20px] text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:grayscale"
                                 disabled={unreadCount === 0}
                             >
                                 Limpar Todas

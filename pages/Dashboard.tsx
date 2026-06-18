@@ -247,6 +247,32 @@ const Dashboard: React.FC = () => {
 
     const unreadCount = notifications.filter(n => !n.isRead).length + unreadAnnouncementsCount;
 
+    const mergedNotifications = React.useMemo(() => {
+        const lastCheckAnn = localStorage.getItem(`lastCheck_announcements_${user?.uid}`) || '0';
+        const lastCheckAnnTime = new Date(lastCheckAnn).getTime();
+
+        const mappedAnnouncements = announcements.map(ann => ({
+            id: ann.id,
+            userUid: user?.uid || '',
+            title: ann.title,
+            description: ann.body,
+            type: 'alert' as any,
+            createdAt: ann.createdAt,
+            date: ann.createdAt,
+            isRead: new Date(ann.createdAt).getTime() <= lastCheckAnnTime,
+            isPinned: ann.isPinned || false,
+            isAnnouncement: true
+        }));
+
+        const all = [...notifications, ...mappedAnnouncements];
+        
+        return all.sort((a, b) => {
+            if (a.isPinned && !b.isPinned) return -1;
+            if (!a.isPinned && b.isPinned) return 1;
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+    }, [notifications, announcements, user, isNotificationOpen]);
+
     useEffect(() => {
         const lastCheckAnn = localStorage.getItem(`lastCheck_announcements_${user?.uid}`) || '0';
         
@@ -603,7 +629,7 @@ const Dashboard: React.FC = () => {
         : '';
 
     return (
-        <div className="min-h-screen bg-white dark:bg-[#07060b] text-slate-900 dark:text-slate-100 font-sans selection:bg-indigo-500/30 overflow-x-hidden transition-colors duration-300 pb-24">
+        <div className="min-h-screen bg-white dark:bg-[#07060b] text-slate-900 dark:text-slate-100 font-sans selection:bg-primary/30 overflow-x-hidden transition-colors duration-300 pb-24">
             {/* New Header */}
             <header className="px-6 h-16 flex items-center justify-between fixed top-0 left-0 right-0 bg-primary border-b border-primary-dark z-50 transform-gpu transition-all shadow-md">
                 <div 
@@ -783,18 +809,46 @@ const Dashboard: React.FC = () => {
 
                 {/* Midweek Meeting Section */}
                 <section className="space-y-8 py-12 border-b-4 border-slate-900 dark:border-white/20 transition-all duration-300">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
-                            <div className="h-12 w-12 bg-primary rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                            <div className="h-12 w-12 bg-primary rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary/20 shrink-0">
                                 <BookOpen className="h-6 w-6" />
                             </div>
                             <h4 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Meio de Semana</h4>
                         </div>
+                        {nextLifeMinistry && (
+                            <button 
+                                onClick={() => setViewingSchedule({
+                                    id: nextLifeMinistry.id,
+                                    type: 'Vida e Ministério',
+                                    title: nextLifeMinistry.week,
+                                    date: nextLifeMinistry.date,
+                                    details: '',
+                                    fullData: nextLifeMinistry,
+                                    displayMode: 'full'
+                                })}
+                                className="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-primary dark:text-amber-500 border border-slate-100 dark:border-slate-800 transition-all shadow-sm active:scale-95 whitespace-nowrap cursor-pointer"
+                            >
+                                <span>Visualizar Programação</span>
+                                <ChevronRight className="h-4 w-4" />
+                            </button>
+                        )}
                     </div>
 
                     <div className="space-y-1">
                         {/* Integrated Block */}
-                        <div className="py-6 border-b border-slate-900 dark:border-white/10 flex items-center justify-between group cursor-pointer active:opacity-70 transition-opacity">
+                        <div 
+                            onClick={() => nextLifeMinistry && setViewingSchedule({
+                                id: nextLifeMinistry.id,
+                                type: 'Vida e Ministério',
+                                title: nextLifeMinistry.week,
+                                date: nextLifeMinistry.date,
+                                details: '',
+                                fullData: nextLifeMinistry,
+                                displayMode: 'full'
+                            })}
+                            className="py-6 border-b border-slate-900 dark:border-white/10 flex items-center justify-between group cursor-pointer active:opacity-70 transition-opacity"
+                        >
                             <div className="space-y-1">
                                 <p className="text-[10px] font-black text-primary dark:text-amber-500 uppercase tracking-widest">PRESIDENTE</p>
                                 <p className="text-xl font-bold text-slate-900 dark:text-white">{nextMidweekAssignment?.president || nextLifeMinistry?.president || 'Não definido'}</p>
@@ -802,7 +856,18 @@ const Dashboard: React.FC = () => {
                             <ChevronRight className="h-5 w-5 text-slate-300 dark:text-slate-700" />
                         </div>
 
-                        <div className="grid grid-cols-1 gap-1">
+                        <div 
+                            onClick={() => nextLifeMinistry && setViewingSchedule({
+                                id: nextLifeMinistry.id,
+                                type: 'Vida e Ministério',
+                                title: nextLifeMinistry.week,
+                                date: nextLifeMinistry.date,
+                                details: '',
+                                fullData: nextLifeMinistry,
+                                displayMode: 'full'
+                            })}
+                            className="grid grid-cols-1 gap-1 cursor-pointer"
+                        >
                             <PartListItem icon={<LayoutGrid className="h-5 w-5" />} label="Tesouro da Palavra" value={nextLifeMinistry?.treasuresTheme?.speaker || 'Não definido'} />
                             <PartListItem icon={<Gem className="h-5 w-5" />} label="Joias Espirituais" value={nextLifeMinistry?.spiritualGems?.speaker || 'Não definido'} />
                             <PartListItem icon={<Book className="h-5 w-5" />} label="Leitura da Bíblia" value={nextLifeMinistry?.bibleReading?.student || 'Não definido'} />
@@ -822,7 +887,7 @@ const Dashboard: React.FC = () => {
                 {/* Weekend Meeting Section */}
                 <section className="space-y-8 py-12 border-b-4 border-slate-900 dark:border-white/20 transition-all duration-300">
                     <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 bg-primary rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                        <div className="h-12 w-12 bg-primary rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary/20 shrink-0">
                             <Home className="h-6 w-6" />
                         </div>
                         <h4 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Fim de Semana</h4>
@@ -988,7 +1053,7 @@ const Dashboard: React.FC = () => {
                 isOpen={isNotificationOpen} 
                 onClose={() => setIsNotificationOpen(false)} 
                 userUid={user?.uid || ''} 
-                notifications={notifications}
+                notifications={mergedNotifications}
             />
 
             <ScheduleDetailModal
@@ -1181,7 +1246,7 @@ const SearchOverlay: React.FC<{
                                 value={query}
                                 onChange={(e) => onQueryChange(e.target.value)}
                                 placeholder="Digite seu nome..."
-                                className="w-full h-16 pl-14 pr-6 bg-white dark:bg-slate-800 rounded-3xl text-slate-900 dark:text-white font-bold text-lg border-none focus:ring-4 focus:ring-indigo-500/50 transition-all placeholder:text-slate-400"
+                                className="w-full h-16 pl-14 pr-6 bg-white dark:bg-slate-800 rounded-3xl text-slate-900 dark:text-white font-bold text-lg border-none focus:ring-4 focus:ring-primary/50 transition-all placeholder:text-slate-400"
                             />
                         </div>
 
@@ -1204,13 +1269,13 @@ const SearchOverlay: React.FC<{
                                     >
                                         <div className="flex items-center justify-between mb-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-400">
+                                                <div className="p-2 bg-primary/10 rounded-xl text-primary dark:text-amber-500">
                                                     {res.type === 'Vida e Ministério' ? <BookOpen className="h-5 w-5" /> : 
                                                      res.type === 'Designações' ? <Users className="h-5 w-5" /> :
                                                       res.type === 'Limpeza' ? <Droplets className="h-5 w-5" /> :
                                                       <Calendar className="h-5 w-5" />}
                                                 </div>
-                                                <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{res.type}</span>
+                                                <span className="text-[10px] font-black text-primary dark:text-amber-500 uppercase tracking-widest">{res.type}</span>
                                             </div>
                                             <span className="text-xs font-bold text-slate-500">
                                                 {res.date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'UTC' })}
@@ -1249,7 +1314,7 @@ const MiniAssignmentItem: React.FC<{ icon: React.ReactNode, label: string, value
 const PartListItem: React.FC<{ icon: React.ReactNode, label: string, value: string }> = ({ icon, label, value }) => (
     <div className="flex items-center justify-between group cursor-pointer active:opacity-70 py-4 border-b border-slate-50 dark:border-white/[0.02] last:border-0 transition-all">
         <div className="flex items-center gap-4">
-            <div className="p-2.5 bg-slate-50 dark:bg-white/[0.03] rounded-xl text-slate-400 dark:text-slate-600 group-hover:text-indigo-500 transition-all">
+            <div className="p-2.5 bg-slate-50 dark:bg-white/[0.03] rounded-xl text-slate-400 dark:text-slate-600 group-hover:text-primary dark:group-hover:text-amber-500 transition-all">
                 {icon}
             </div>
             <p className="text-base font-bold text-slate-600 dark:text-slate-400 transition-colors">{label}</p>
@@ -1271,12 +1336,12 @@ const AssignmentBullet: React.FC<{ label: string, value: string, color: string }
 const PartIcon: React.FC<{ icon: React.ReactNode; label: string; active?: boolean; onClick?: () => void }> = ({ icon, label, active, onClick }) => (
     <button 
         onClick={onClick}
-        className={`p-3 rounded-2xl flex flex-col items-center gap-2 transition-all ${active ? 'bg-indigo-500/10 border border-indigo-500/20' : 'hover:bg-slate-100 dark:hover:bg-white/5'} cursor-pointer outline-none focus:ring-1 focus:ring-indigo-500/50`}
+        className={`p-3 rounded-2xl flex flex-col items-center gap-2 transition-all ${active ? 'bg-primary/10 border border-primary/20' : 'hover:bg-slate-100 dark:hover:bg-white/5'} cursor-pointer outline-none focus:ring-1 focus:ring-primary/50`}
     >
-        <div className={`transition-all ${active ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-600'}`}>
+        <div className={`transition-all ${active ? 'text-primary dark:text-amber-500' : 'text-slate-400 dark:text-slate-600'}`}>
             {React.cloneElement(icon as React.ReactElement, { className: "h-5 w-5" })}
         </div>
-        <span className={`text-[8px] font-bold uppercase tracking-widest ${active ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-600'}`}>{label}</span>
+        <span className={`text-[8px] font-bold uppercase tracking-widest ${active ? 'text-primary dark:text-amber-500' : 'text-slate-400 dark:text-slate-600'}`}>{label}</span>
     </button>
 );
 

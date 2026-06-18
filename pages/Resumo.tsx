@@ -77,7 +77,7 @@ const Resumo: React.FC = () => {
             <div className="bg-primary p-4 sm:p-6 lg:p-8">
                 <div className="max-w-4xl mx-auto">
                     <h2 className="text-2xl font-bold text-white">Resumo e Estatísticas</h2>
-                    <p className="mt-1 text-blue-100">Veja gráficos sobre a assistência e atividade de campo.</p>
+                    <p className="mt-1 text-amber-100">Veja gráficos sobre a assistência e atividade de campo.</p>
                 </div>
             </div>
             <div className="p-4 sm:p-6 lg:p-8">

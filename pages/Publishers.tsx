@@ -140,7 +140,7 @@ const Publishers: React.FC = () => {
                     <div className="flex justify-between items-center">
                         <div>
                             <h2 className="text-2xl font-bold text-white">Pasta de Publicadores</h2>
-                            <p className="mt-1 text-blue-100">Gerencie os perfis de todos os publicadores. Total: {publishers.length}</p>
+                            <p className="mt-1 text-amber-100">Gerencie os perfis de todos os publicadores. Total: {publishers.length}</p>
                         </div>
                         <div className="flex items-center space-x-2">
                             <button

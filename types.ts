@@ -41,6 +41,7 @@ export interface AppNotification extends BaseRecord {
     isRead: boolean;
     isPinned: boolean;
     link?: string; // Path to navigate to on click
+    isAnnouncement?: boolean;
 }
 
 

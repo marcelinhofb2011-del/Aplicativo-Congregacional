@@ -74,7 +74,7 @@ const AnnouncementsWidget: React.FC<AnnouncementsWidgetProps> = ({ announcements
             );
         }
         return (
-            <div className="relative w-full h-96 md:h-80 bg-gradient-to-tr from-sky-400 to-primary dark:from-sky-800 dark:to-blue-900 rounded-3xl shadow-xl overflow-hidden text-white group">
+            <div className="relative w-full h-96 md:h-80 bg-gradient-to-tr from-primary-dark to-primary dark:from-[#351401] dark:to-primary-dark rounded-3xl shadow-xl overflow-hidden text-white group">
                 <div className="flex transition-transform duration-700 ease-in-out h-full" style={{ transform: `translateX(-${currentIndex * 100}%)` }}>
                     {sortedAnnouncements.map((ann) => {
                         const hasImages = ann.images && ann.images.length > 0;
@@ -92,7 +92,7 @@ const AnnouncementsWidget: React.FC<AnnouncementsWidgetProps> = ({ announcements
                                         </span>
                                     )}
                                     <h4 className="font-bold text-xl lg:text-2xl mb-2 line-clamp-2">{ann.title}</h4>
-                                    <p className="text-sm text-blue-100 line-clamp-3 md:line-clamp-4 lg:line-clamp-5">{ann.body}</p>
+                                    <p className="text-sm text-amber-100 line-clamp-3 md:line-clamp-4 lg:line-clamp-5">{ann.body}</p>
                                 </div>
                             </div>
                         );

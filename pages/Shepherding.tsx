@@ -106,7 +106,7 @@ const Shepherding: React.FC = () => {
                 <div className="flex justify-between items-center">
                     <div>
                         <h2 className="text-2xl font-bold text-white">Registros de Pastoreio</h2>
-                        <p className="mt-1 text-blue-100">Agende e acompanhe as visitas de pastoreio.</p>
+                        <p className="mt-1 text-amber-100">Agende e acompanhe as visitas de pastoreio.</p>
                     </div>
                     {!isReadOnly && isServant && (
                         <button onClick={() => handleOpenModal(null)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-white/20 hover:bg-white/30">

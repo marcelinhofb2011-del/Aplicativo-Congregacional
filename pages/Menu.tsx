@@ -46,9 +46,9 @@ const Menu: React.FC = () => {
             <div className="max-w-xl mx-auto">
                 <div className="grid grid-cols-3 gap-4 sm:gap-5">
                                         {MENU_GRID_ITEMS.filter((item) => {
-                        // Deixar Secretário e Análise (resumo) apenas para responsáveis (SERVANT)
+                        // Deixar Secretário, Análise (resumo) e lista total do Ministério apenas para responsáveis (SERVANT)
                         if (user.role === UserRole.PUBLISHER) {
-                            if (item.path === '/secretario' || item.path === '/resumo') {
+                            if (item.path === '/secretario' || item.path === '/resumo' || item.path === '/vida-e-ministerio') {
                                 return false;
                             }
                         }

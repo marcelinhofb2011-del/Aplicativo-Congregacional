@@ -208,7 +208,7 @@ const Conductors: React.FC = () => {
                 <div className="flex justify-between items-center">
                     <div>
                         <h2 className="text-2xl font-bold text-white">Dirigentes</h2>
-                        <p className="mt-1 text-blue-100">Gerencie os dirigentes para as saídas de campo e reuniões.</p>
+                        <p className="mt-1 text-amber-100">Gerencie os dirigentes para as saídas de campo e reuniões.</p>
                     </div>
                     {!isReadOnly && isServant && (
                         <button 

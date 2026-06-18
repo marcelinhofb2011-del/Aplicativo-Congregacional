@@ -86,7 +86,7 @@ const Territories: React.FC = () => {
         <>
             <div className="bg-primary p-4 sm:p-6 lg:p-8">
                 <h2 className="text-2xl font-bold text-white">Controle de Territórios</h2>
-                <p className="mt-1 text-blue-100">
+                <p className="mt-1 text-amber-100">
                     Visualize o status, solicite ou gerencie os territórios da congregação.
                 </p>
             </div>

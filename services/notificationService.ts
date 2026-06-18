@@ -40,7 +40,7 @@ export const notificationService = {
                         date: data.date instanceof Timestamp ? data.date.toDate().toISOString() : data.date,
                     } as AppNotification;
                 })
-                .filter(n => n.isActive) // Filter in memory
+                .filter(n => n.isActive !== false) // Filter in memory (missing defaults to true)
                 .sort((a, b) => {
                     // Sort in memory: Pinned first, then by createdAt desc
                     if (a.isPinned && !b.isPinned) return -1;
