@@ -8,6 +8,17 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Hide bottom navigation bar when modal is open to prevent virtual keyboard pushing it up */
+body.modal-open .bottom-nav-container {
+  display: none !important;
+}
+
+/* Ensure modal container is touch-scrolling friendly and isolates touch events from the locked body */
+body.modal-open .fixed.inset-0.overflow-y-auto {
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
 .font-outfit {
   font-family: var(--font-outfit);
 }

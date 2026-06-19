@@ -61,32 +61,42 @@ const AttendanceAnalysis: React.FC = () => {
 
         const now = new Date();
         let startDate: Date;
-        let endDate: Date = new Date();
+        let endDate: Date;
         let prevStartDate: Date;
         let prevEndDate: Date;
 
         if (customPeriod) {
             const [sYear, sMonth] = customPeriod.start.split('-').map(Number);
             const [eYear, eMonth] = customPeriod.end.split('-').map(Number);
-            startDate = new Date(Date.UTC(sYear, sMonth - 1, 1));
-            endDate = new Date(Date.UTC(eYear, eMonth, 0));
+            startDate = new Date(Date.UTC(sYear, sMonth - 1, 1, 0, 0, 0, 0));
+            endDate = new Date(Date.UTC(eYear, eMonth, 0, 23, 59, 59, 999));
             
             const diffMonths = (eYear - sYear) * 12 + (eMonth - sMonth) + 1;
             prevEndDate = new Date(startDate);
             prevEndDate.setUTCDate(0);
+            prevEndDate.setUTCHours(23, 59, 59, 999);
+            
             prevStartDate = new Date(prevEndDate);
             prevStartDate.setUTCMonth(prevEndDate.getUTCMonth() - diffMonths + 1);
             prevStartDate.setUTCDate(1);
+            prevStartDate.setUTCHours(0, 0, 0, 0);
         } else {
             startDate = new Date();
             startDate.setUTCMonth(now.getUTCMonth() - periodMonths + 1);
             startDate.setUTCDate(1);
+            startDate.setUTCHours(0, 0, 0, 0);
+            
+            endDate = new Date();
+            endDate.setUTCHours(23, 59, 59, 999);
             
             prevEndDate = new Date(startDate);
             prevEndDate.setUTCDate(0);
+            prevEndDate.setUTCHours(23, 59, 59, 999);
+            
             prevStartDate = new Date(prevEndDate);
             prevStartDate.setUTCMonth(prevEndDate.getUTCMonth() - periodMonths + 1);
             prevStartDate.setUTCDate(1);
+            prevStartDate.setUTCHours(0, 0, 0, 0);
         }
 
         const current = records.filter(r => {

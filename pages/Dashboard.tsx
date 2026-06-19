@@ -11,9 +11,10 @@ import {
     Announcement,
     FirstSundayConductor,
     MeetingSchedule,
-    AppNotification
+    AppNotification,
+    CalendarNote
 } from '../types';
-import { getAnnouncements, cleanupExpiredRecords } from '../services/firestoreService';
+import { getAnnouncements, cleanupExpiredRecords, getCalendarNotes, updateCalendarNote } from '../services/firestoreService';
 import { notificationService } from '../services/notificationService';
 import { assignmentNotificationService } from '../services/assignmentNotificationService';
 import ScheduleDetailModal from '../components/ScheduleDetailModal';
@@ -51,7 +52,8 @@ import {
     Play,
     Droplets,
     Tv,
-    Pencil
+    Pencil,
+    CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from '../contexts/ThemeContext';
@@ -153,6 +155,18 @@ const Dashboard: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<UpcomingEvent[]>([]);
     const [isReportReminderOpen, setIsReportReminderOpen] = useState(false);
+    const [calendarNotes, setCalendarNotes] = useState<CalendarNote[]>([]);
+
+    const handleCompleteNote = async (noteId: string) => {
+        if (!user) return;
+        try {
+            await updateCalendarNote(noteId, { isCompleted: true }, user.uid);
+            const notes = await getCalendarNotes(user.uid);
+            setCalendarNotes(notes);
+        } catch (error) {
+            console.error("Error completing note from dashboard:", error);
+        }
+    };
 
     const getPreviousMonthName = () => {
         const today = new Date();
@@ -300,6 +314,33 @@ const Dashboard: React.FC = () => {
         }
         setIsNotificationOpen(false);
     };
+
+    useEffect(() => {
+        if (user) {
+            getCalendarNotes(user.uid)
+                .then(notes => setCalendarNotes(notes))
+                .catch(err => console.error("Error loading calendar notes for dashboard:", err));
+        }
+    }, [user]);
+
+    const upcomingNotes = React.useMemo(() => {
+        if (!user || calendarNotes.length === 0) return [];
+        const today = getBrazilToday();
+        today.setUTCHours(0, 0, 0, 0);
+
+        return calendarNotes.filter(note => {
+            if (note.isCompleted) return false;
+            if (!note.date) return false;
+
+            const noteDateObj = parseDateAsUTC(note.date);
+            noteDateObj.setUTCHours(0, 0, 0, 0);
+
+            const diffTime = noteDateObj.getTime() - today.getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // 0 = today, 1 = tomorrow, 2 = day after tomorrow
+
+            return diffDays >= 0 && diffDays <= 2;
+        });
+    }, [calendarNotes, user]);
 
     useEffect(() => {
         const fetchAnnouncements = async () => {
@@ -690,6 +731,93 @@ const Dashboard: React.FC = () => {
                         Sua programação semanal e designações em um só lugar.
                     </p>
                 </section>
+
+                {/* Alertas de Compromisso Próximo (Agenda) */}
+                {upcomingNotes.length > 0 && (
+                    <motion.section 
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="p-5 bg-gradient-to-r from-amber-500/10 via-amber-600/5 to-transparent border border-amber-500/20 rounded-3xl space-y-4"
+                    >
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 bg-amber-500 rounded-2xl flex items-center justify-center text-white relative shadow-md shadow-amber-500/20">
+                                    <span className="absolute inset-0 bg-amber-500 rounded-2xl animate-ping opacity-25"></span>
+                                    <Bell className="h-5 w-5 relative" />
+                                </div>
+                                <div>
+                                    <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-none">Compromisso Próximo!</h4>
+                                    <p className="text-[11px] text-amber-600 dark:text-amber-400 font-bold tracking-widest uppercase mt-1">Agenda Pessoal</p>
+                                </div>
+                            </div>
+                            <Link 
+                                to="/calendario" 
+                                className="text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 hover:underline transition-all"
+                            >
+                                Ver Agenda <ChevronRight className="h-3.5 w-3.5" />
+                            </Link>
+                        </div>
+
+                        <div className="space-y-2.5">
+                            {upcomingNotes.map((note) => {
+                                const today = getBrazilToday();
+                                today.setUTCHours(0, 0, 0, 0);
+                                const noteDateObj = parseDateAsUTC(note.date);
+                                noteDateObj.setUTCHours(0, 0, 0, 0);
+                                const diffTime = noteDateObj.getTime() - today.getTime();
+                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                                let relativeDayStr = "";
+                                if (diffDays === 0) relativeDayStr = "Hoje";
+                                else if (diffDays === 1) relativeDayStr = "Amanhã";
+                                else relativeDayStr = `Em 2 dias (${parseDateAsUTC(note.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })})`;
+
+                                return (
+                                    <div 
+                                        key={note.id} 
+                                        className="flex items-start justify-between gap-3 p-4 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm hover:border-amber-500/20 transition-all duration-300"
+                                    >
+                                        <div className="space-y-1 min-w-0 flex-1">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border shrink-0 ${
+                                                    note.category === 'SAÚDE' ? 'bg-blue-50/80 text-blue-600 border-blue-200 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-800/30' :
+                                                    note.category === 'VIAGEM' ? 'bg-emerald-50/80 text-emerald-600 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-800/30' :
+                                                    note.category === 'LEMBRETE' ? 'bg-amber-50/80 text-amber-600 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-800/30' :
+                                                    'bg-slate-50/80 text-slate-600 border-slate-200 dark:bg-slate-800/50 dark:text-slate-400 dark:border-slate-700/50'
+                                                }`}>
+                                                    {note.category}
+                                                </span>
+                                                <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                                                    diffDays === 0 ? 'bg-rose-500/10 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400' :
+                                                    diffDays === 1 ? 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400' :
+                                                    'bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400'
+                                                }`}>
+                                                    {relativeDayStr}
+                                                </span>
+                                                {note.time && (
+                                                    <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1">
+                                                        <Clock className="h-3 w-3" /> {note.time}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <h5 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight font-sans line-clamp-1">{note.title}</h5>
+                                            {note.description && (
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium font-sans leading-snug line-clamp-2">{note.description}</p>
+                                            )}
+                                        </div>
+                                        <button
+                                            onClick={() => handleCompleteNote(note.id)}
+                                            className="h-10 w-10 rounded-xl bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-emerald-500/10 flex items-center justify-center shrink-0 border border-slate-100 dark:border-white/5 hover:border-emerald-500/20 transition-all font-bold group"
+                                            title="Marcar como concluído"
+                                        >
+                                            <CheckCircle2 className="h-5 w-5" />
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </motion.section>
+                )}
 
                 {/* Announcements Section */}
                 {announcements.length > 0 && (

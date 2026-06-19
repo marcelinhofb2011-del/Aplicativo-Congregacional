@@ -26,7 +26,7 @@ const BottomNav: React.FC = () => {
     const itemsToShow = BOTTOM_NAV_ITEMS;
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-50 h-16 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-white/10 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_-10px_30px_rgba(0,0,0,0.3)] transform-gpu">
+        <div className="fixed bottom-0 left-0 right-0 z-50 h-16 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-white/10 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_-10px_30px_rgba(0,0,0,0.3)] transform-gpu bottom-nav-container">
             <nav className="max-w-2xl mx-auto h-full flex justify-around items-center px-4">
                 {itemsToShow.map((item) => {
                     const targetPath = (item.path === '/pioneiro' && user.role === UserRole.PUBLISHER)
