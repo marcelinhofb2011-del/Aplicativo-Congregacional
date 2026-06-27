@@ -193,20 +193,20 @@ const ReportList: React.FC = () => {
                    {isLoading ? (
                         <p className="p-4 text-center">Carregando relatórios...</p>
                    ) : (
-                     <ul className="divide-y divide-slate-200 dark:divide-slate-700">
+                      <ul className="divide-y divide-slate-200 dark:divide-slate-700">
                         {filteredReports.length > 0 ? filteredReports.map(report => (
-                            <li key={report.id} className="p-4 group hover:bg-slate-50 dark:hover:bg-slate-700/50 flex justify-between items-center">
+                            <li key={report.id} className="p-4 group hover:bg-slate-50 dark:hover:bg-slate-700/50 flex justify-between items-center transition-colors">
                                 <div className="cursor-pointer flex-grow" onClick={() => setSelectedReport(report)}>
-                                    <p className="font-semibold text-primary">{report.publisherName}</p>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                                        Grupo: {report.group} | Data: {new Date(report.date).toLocaleDateString('pt-BR', {timeZone:'UTC'})}
+                                    <p className="font-bold text-base text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-amber-400 transition-colors">{report.publisherName}</p>
+                                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-medium">
+                                        Grupo: <span className="font-semibold text-slate-800 dark:text-slate-200">{report.group}</span> | Data: <span className="font-semibold text-slate-800 dark:text-slate-200">{new Date(report.date).toLocaleDateString('pt-BR', {timeZone:'UTC'})}</span>
                                     </p>
                                 </div>
-                                <div className="flex items-center space-x-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex items-center space-x-2 opacity-85 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                     {isServant && (
                                         <>
-                                            <button onClick={(e) => { e.stopPropagation(); handleEdit(report); }} className="p-2 text-slate-500 hover:text-amber-500" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
-                                            <button onClick={(e) => { e.stopPropagation(); handleDelete(report); }} className="p-2 text-slate-500 hover:text-red-500" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); handleEdit(report); }} className="p-2.5 text-slate-500 hover:text-amber-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all" aria-label="Editar"><PencilIcon className="h-5 w-5" /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); handleDelete(report); }} className="p-2.5 text-slate-500 hover:text-red-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl transition-all" aria-label="Excluir"><TrashIcon className="h-5 w-5" /></button>
                                         </>
                                     )}
                                 </div>

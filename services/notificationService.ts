@@ -98,6 +98,25 @@ export const notificationService = {
         await batch.commit();
     },
 
+    // Clear all notifications (set isActive to false)
+    clearAllNotifications: async (userUid: string) => {
+        const db = getDbInstance();
+        const q = query(
+            collection(db, COLLECTION_NAME),
+            where('userUid', '==', userUid)
+        );
+        const snapshot = await getDocs(q);
+        const batch = writeBatch(db);
+        
+        snapshot.docs
+            .filter(d => d.data().isActive !== false)
+            .forEach((d) => {
+                batch.update(d.ref, { isActive: false, updatedAt: Timestamp.now() });
+            });
+        
+        await batch.commit();
+    },
+
     // Toggle pin
     togglePin: async (notificationId: string, isPinned: boolean) => {
         const db = getDbInstance();

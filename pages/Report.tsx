@@ -184,7 +184,7 @@ const Report: React.FC = () => {
                     <form onSubmit={handleSubmitReport} className="space-y-8 relative z-10">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase font-sans ml-1">Publicador</label>
+                                <label className="text-[10px] font-extrabold tracking-[0.2em] text-slate-600 dark:text-slate-300 uppercase font-sans ml-1">Publicador</label>
                                 <div className="relative">
                                     <input 
                                         type="text" 
@@ -217,7 +217,7 @@ const Report: React.FC = () => {
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase font-sans ml-1">Grupo</label>
+                                <label className="text-[10px] font-extrabold tracking-[0.2em] text-slate-600 dark:text-slate-300 uppercase font-sans ml-1">Grupo</label>
                                 <select
                                     value={group}
                                     onChange={e => setGroup(e.target.value as '1' | '2' | '3' | '')}
@@ -234,7 +234,7 @@ const Report: React.FC = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase font-sans ml-1">Mês do Relatório</label>
+                                <label className="text-[10px] font-extrabold tracking-[0.2em] text-slate-600 dark:text-slate-300 uppercase font-sans ml-1">Mês do Relatório</label>
                                 <div className="relative">
                                     <input 
                                         type="month" 
@@ -247,26 +247,26 @@ const Report: React.FC = () => {
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase font-sans ml-1">Privilégio</label>
+                                <label className="text-[10px] font-extrabold tracking-[0.2em] text-slate-600 dark:text-slate-300 uppercase font-sans ml-1">Privilégio</label>
                                 <div className="flex flex-col sm:flex-row gap-2 p-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl">
                                     <button 
                                         type="button"
                                         onClick={() => setPrivilege('PUBLISHER')}
-                                        className={`flex-1 py-3 px-3 rounded-xl text-xs font-bold transition-all ${privilege === 'PUBLISHER' ? 'bg-white dark:bg-slate-700 text-primary dark:text-amber-500 shadow-sm' : 'text-slate-400'}`}
+                                        className={`flex-1 py-3 px-3 rounded-xl text-xs font-extrabold transition-all ${privilege === 'PUBLISHER' ? 'bg-white dark:bg-slate-700 text-primary dark:text-amber-500 shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
                                     >
                                         Publicador
                                     </button>
                                     <button 
                                         type="button"
                                         onClick={() => setPrivilege('PIONEER_AUXILIARY')}
-                                        className={`flex-1 py-3 px-3 rounded-xl text-xs font-bold transition-all ${privilege === 'PIONEER_AUXILIARY' ? 'bg-white dark:bg-slate-700 text-primary dark:text-amber-500 shadow-sm' : 'text-slate-400'}`}
+                                        className={`flex-1 py-3 px-3 rounded-xl text-xs font-extrabold transition-all ${privilege === 'PIONEER_AUXILIARY' ? 'bg-white dark:bg-slate-700 text-primary dark:text-amber-500 shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
                                     >
                                         Pioneiro Auxiliar
                                     </button>
                                     <button 
                                         type="button"
                                         onClick={() => setPrivilege('PIONEER_REGULAR')}
-                                        className={`flex-1 py-3 px-3 rounded-xl text-xs font-bold transition-all ${privilege === 'PIONEER_REGULAR' ? 'bg-white dark:bg-slate-700 text-primary dark:text-amber-500 shadow-sm' : 'text-slate-400'}`}
+                                        className={`flex-1 py-3 px-3 rounded-xl text-xs font-extrabold transition-all ${privilege === 'PIONEER_REGULAR' ? 'bg-white dark:bg-slate-700 text-primary dark:text-amber-500 shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
                                     >
                                         Pioneiro Regular
                                     </button>
@@ -277,38 +277,38 @@ const Report: React.FC = () => {
                         {privilege !== 'PUBLISHER' ? (
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase font-sans ml-1">Horas</label>
+                                    <label className="text-[10px] font-extrabold text-slate-600 dark:text-slate-300 uppercase font-sans ml-1">Horas</label>
                                     <input type="number" min="0" value={hours} onChange={e => setHours(e.target.value === '' ? '' : parseInt(e.target.value))} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl px-4 py-3 text-slate-800 dark:text-white font-medium focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-sans" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase font-sans ml-1">Minutos</label>
+                                    <label className="text-[10px] font-extrabold text-slate-600 dark:text-slate-300 uppercase font-sans ml-1">Minutos</label>
                                     <input type="number" min="0" max="59" value={minutes} onChange={e => setMinutes(e.target.value === '' ? '' : parseInt(e.target.value))} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl px-4 py-3 text-slate-800 dark:text-white font-medium focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-sans" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase font-sans ml-1">Revisitas</label>
+                                    <label className="text-[10px] font-extrabold text-slate-600 dark:text-slate-300 uppercase font-sans ml-1">Revisitas</label>
                                     <input type="number" min="0" value={revisits} onChange={e => setRevisits(e.target.value === '' ? '' : parseInt(e.target.value))} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl px-4 py-3 text-slate-800 dark:text-white font-medium focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-sans" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase font-sans ml-1">Estudos</label>
+                                    <label className="text-[10px] font-extrabold text-slate-600 dark:text-slate-300 uppercase font-sans ml-1">Estudos</label>
                                     <input type="number" min="0" value={studies} onChange={e => setStudies(e.target.value === '' ? '' : parseInt(e.target.value))} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl px-4 py-3 text-slate-800 dark:text-white font-medium focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-sans" />
                                 </div>
                             </div>
                         ) : (
                             <div className="space-y-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase font-sans ml-1">Participou no ministério?</label>
+                                    <label className="text-[10px] font-extrabold tracking-[0.2em] text-slate-600 dark:text-slate-300 uppercase font-sans ml-1">Participou no ministério?</label>
                                     <div className="flex gap-4 p-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl w-fit">
                                         <button 
                                             type="button"
                                             onClick={() => setHasParticipated(true)}
-                                            className={`py-2 px-6 rounded-xl text-sm font-bold transition-all ${hasParticipated === true ? 'bg-white dark:bg-slate-700 text-primary dark:text-amber-500 shadow-sm' : 'text-slate-400'}`}
+                                            className={`py-2 px-6 rounded-xl text-sm font-extrabold transition-all ${hasParticipated === true ? 'bg-white dark:bg-slate-700 text-primary dark:text-amber-500 shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
                                         >
                                             Sim
                                         </button>
                                         <button 
                                             type="button"
                                             onClick={() => setHasParticipated(false)}
-                                            className={`py-2 px-6 rounded-xl text-sm font-bold transition-all ${hasParticipated === false ? 'bg-white dark:bg-slate-700 text-primary dark:text-amber-500 shadow-sm' : 'text-slate-400'}`}
+                                            className={`py-2 px-6 rounded-xl text-sm font-extrabold transition-all ${hasParticipated === false ? 'bg-white dark:bg-slate-700 text-primary dark:text-amber-500 shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
                                         >
                                             Não
                                         </button>
@@ -317,11 +317,11 @@ const Report: React.FC = () => {
                                 {hasParticipated && (
                                      <div className="grid grid-cols-2 gap-6">
                                          <div className="space-y-2">
-                                             <label className="text-[10px] font-bold text-slate-400 uppercase font-sans ml-1">Revisitas</label>
+                                             <label className="text-[10px] font-extrabold text-slate-600 dark:text-slate-300 uppercase font-sans ml-1">Revisitas</label>
                                              <input type="number" min="0" value={revisits} onChange={e => setRevisits(e.target.value === '' ? '' : parseInt(e.target.value))} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl px-5 py-4 text-slate-800 dark:text-white font-medium focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-sans" />
                                          </div>
                                          <div className="space-y-2">
-                                             <label className="text-[10px] font-bold text-slate-400 uppercase font-sans ml-1">Estudos</label>
+                                             <label className="text-[10px] font-extrabold text-slate-600 dark:text-slate-300 uppercase font-sans ml-1">Estudos</label>
                                              <input type="number" min="0" value={studies} onChange={e => setStudies(e.target.value === '' ? '' : parseInt(e.target.value))} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl px-5 py-4 text-slate-800 dark:text-white font-medium focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-sans" />
                                          </div>
                                      </div>
@@ -330,7 +330,7 @@ const Report: React.FC = () => {
                         )}
                         
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase font-sans ml-1">Observação</label>
+                            <label className="text-[10px] font-extrabold tracking-[0.2em] text-slate-600 dark:text-slate-300 uppercase font-sans ml-1">Observação</label>
                             <textarea 
                                 value={notes} 
                                 onChange={e => setNotes(e.target.value)} 

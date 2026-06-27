@@ -156,6 +156,7 @@ const Dashboard: React.FC = () => {
     const [searchResults, setSearchResults] = useState<UpcomingEvent[]>([]);
     const [isReportReminderOpen, setIsReportReminderOpen] = useState(false);
     const [calendarNotes, setCalendarNotes] = useState<CalendarNote[]>([]);
+    const [dismissedNotificationIds, setDismissedNotificationIds] = useState<string[]>([]);
 
     const handleCompleteNote = async (noteId: string) => {
         if (!user) return;
@@ -192,42 +193,124 @@ const Dashboard: React.FC = () => {
         }
 
         const normalizedQuery = searchQuery.toLowerCase().trim();
-        
-        const allPossibleEvents: UpcomingEvent[] = schedules.map(s => {
+
+        // Helper to get matched roles
+        const getMatchedRolesDescription = (s: any, query: string, defaultDesc: string): string => {
+            const matched: string[] = [];
+            const q = query.toLowerCase();
+
+            const check = (name: string | undefined, role: string) => {
+                if (name && name.toLowerCase().includes(q)) {
+                    matched.push(`${role}: ${name}`);
+                }
+            };
+
+            if ('week' in s) {
+                check(s.president, 'Presidente');
+                check(s.initialPrayer, 'Oração Inicial');
+                check(s.treasuresTheme?.speaker, 'Tesouros (Orador)');
+                check(s.spiritualGems?.speaker, 'Joias (Orador)');
+                check(s.bibleReading?.student, 'Leitura da Bíblia');
+                
+                if (s.studentParts) {
+                    s.studentParts.forEach((part: any, idx: number) => {
+                        check(part.student, `Estudante Parte ${idx + 1}`);
+                        check(part.helper, `Ajudante Parte ${idx + 1}`);
+                    });
+                }
+                
+                if (s.christianLifeParts) {
+                    s.christianLifeParts.forEach((part: any, idx: number) => {
+                        check(part.speaker, `Vida Cristã Parte ${idx + 1}`);
+                    });
+                }
+                
+                if (s.congregationBibleStudy) {
+                    check(s.congregationBibleStudy.conductor, 'Estudo Bíblico (Dirigente)');
+                    check(s.congregationBibleStudy.reader, 'Estudo Bíblico (Leitor)');
+                }
+                
+                check(s.finalPrayer, 'Oração Final');
+            } else if (('president' in s || 'reader' in s || 'indicator1' in s || 'audio' in s) && !('speakerName' in s) && !('month' in s) && !('group' in s)) {
+                check(s.president, 'Presidente');
+                check(s.reader, 'Leitor');
+                check(s.indicator1, 'Indicador 1');
+                check(s.indicator2, 'Indicador 2');
+                check(s.audio, 'Áudio');
+                check(s.video, 'Vídeo');
+                check(s.mic1, 'Microfone 1');
+                check(s.mic2, 'Microfone 2');
+            } else if ('speakerName' in s && 'theme' in s) {
+                check(s.speakerName, 'Orador');
+            } else if ('conductorName' in s) {
+                check(s.conductorName, 'Dirigente');
+            } else if ('conductor' in s) {
+                check(s.conductor, 'Dirigente');
+            }
+            
+            if ('reader' in s && !('week' in s) && !('president' in s)) {
+                check(s.reader, 'Leitor');
+            }
+
+            if (matched.length > 0) {
+                return matched.join(' • ');
+            }
+
+            return defaultDesc;
+        };
+
+        const results = schedules.map(s => {
             const date = parseDateAsUTC(s.date);
             const day = date.getUTCDay();
 
-            if ('week' in s) return { date, type: 'Vida e Ministério' as const, title: s.week, description: `Presidente: ${s.president || 'Não definido'}`, fullData: s };
-            
-            if (('president' in s || 'reader' in s || 'indicator1' in s || 'audio' in s) && !('week' in s) && !('speakerName' in s) && !('month' in s) && !('group' in s)) {
-                const title = (day === 0 || day === 6) ? 'Fim de Semana' : 'Meio de Semana';
-                return { date, type: 'Designações' as const, title: `Designações ${title}`, description: `Presidente: ${s.president || 'Não definido'}`, fullData: s };
-            }
-            
-            if ('group' in s && 'endDate' in s) {
+            let type: UpcomingEvent['type'] = 'Designações';
+            let title = '';
+            let defaultDesc = '';
+
+            if ('week' in s) {
+                type = 'Vida e Ministério';
+                title = s.week;
+                defaultDesc = `Presidente: ${s.president || 'Não definido'}`;
+            } else if (('president' in s || 'reader' in s || 'indicator1' in s || 'audio' in s) && !('week' in s) && !('speakerName' in s) && !('month' in s) && !('group' in s)) {
+                type = 'Designações';
+                const titleSuf = (day === 0 || day === 6) ? 'Fim de Semana' : 'Meio de Semana';
+                title = `Designações ${titleSuf}`;
+                defaultDesc = `Presidente: ${s.president || 'Não definido'}`;
+            } else if ('group' in s && 'endDate' in s) {
                 const cleaning = s as CleaningSchedule;
                 const responsable = CLEANING_GROUPS[cleaning.group] || 'Equipe';
-                return { 
-                    date, 
-                    type: 'Limpeza' as const, 
-                    title: cleaning.group, 
-                    description: `Período: ${parseDateAsUTC(cleaning.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })} a ${parseDateAsUTC(cleaning.endDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })} • Responsáveis: ${responsable}`, 
-                    fullData: cleaning 
-                };
+                type = 'Limpeza';
+                title = cleaning.group;
+                defaultDesc = `Período: ${parseDateAsUTC(cleaning.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })} a ${parseDateAsUTC(cleaning.endDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })} • Responsáveis: ${responsable}`;
+            } else if ('conductorName' in s && !('month' in s)) {
+                type = 'Serviço de Campo';
+                title = 'Saída de campo';
+                defaultDesc = `Dirigente: ${s.conductorName}`;
+            } else if ('speakerName' in s && 'theme' in s) {
+                type = 'Discurso Público';
+                title = s.theme;
+                defaultDesc = `Orador: ${s.speakerName}`;
+            } else if ('conductorName' in s && 'month' in s) {
+                type = 'Dirigente 1º Dom';
+                title = 'Dirigente 1º Domingo';
+                defaultDesc = `Dirigente: ${s.conductorName}`;
+            } else if ('modality' in s && 'locationOrLink' in s) {
+                type = 'Reunião';
+                title = `Reunião ${s.modality}`;
+                defaultDesc = `Presidente: ${s.president || 'Não definido'}`;
+            } else {
+                return null;
             }
-            if ('conductorName' in s && !('month' in s)) return { date, type: 'Serviço de Campo' as const, title: 'Saída de campo', description: `Dirigente: ${s.conductorName}`, fullData: s };
-            if ('speakerName' in s && 'theme' in s) return { date, type: 'Discurso Público' as const, title: s.theme, description: `Orador: ${s.speakerName}`, fullData: s };
-            if ('conductorName' in s && 'month' in s) return { date, type: 'Dirigente 1º Dom' as const, title: 'Dirigente 1º Domingo', description: `Dirigente: ${s.conductorName}`, fullData: s };
-            if ('modality' in s && 'locationOrLink' in s) return { date, type: 'Reunião' as const, title: `Reunião ${s.modality}`, description: `Presidente: ${s.president || 'Não definido'}`, fullData: s };
-            
-            return null;
-        }).filter((e): e is UpcomingEvent => e !== null);
 
-        const results = allPossibleEvents.filter(event => {
-            const data = event.fullData as any;
+            // Check if any of the searchable name fields contain the query
+            const data = s as any;
             const fieldsToSearch = [
                 data.president,
                 data.reader,
+                data.conductor,
+                data.conductorName,
+                data.initialPrayer,
+                data.finalPrayer,
                 data.indicator1,
                 data.indicator2,
                 data.audio,
@@ -235,17 +318,36 @@ const Dashboard: React.FC = () => {
                 data.mic1,
                 data.mic2,
                 data.speakerName,
-                data.conductorName,
                 data.treasuresTheme?.speaker,
                 data.spiritualGems?.speaker,
                 data.bibleReading?.student,
+                data.congregationBibleStudy?.conductor,
+                data.congregationBibleStudy?.reader,
+                data.brotherName,
+                data.responsibleElder1,
+                data.responsibleElder2,
+                ...(data.studentParts || []).flatMap((part: any) => [part.student, part.helper]),
+                ...(data.christianLifeParts || []).map((part: any) => part.speaker),
                 ...(data.assignedUids || [])
             ];
 
-            return fieldsToSearch.some(field => 
+            const matches = fieldsToSearch.some(field => 
                 typeof field === 'string' && field.toLowerCase().includes(normalizedQuery)
             );
-        }).sort((a, b) => b.date.getTime() - a.date.getTime());
+
+            if (!matches) return null;
+
+            const description = getMatchedRolesDescription(s, normalizedQuery, defaultDesc);
+
+            return {
+                date,
+                type,
+                title,
+                description,
+                fullData: s
+            };
+        }).filter((e): e is UpcomingEvent => e !== null)
+          .sort((a, b) => b.date.getTime() - a.date.getTime());
 
         setSearchResults(results);
     }, [searchQuery, schedules]);
@@ -258,6 +360,42 @@ const Dashboard: React.FC = () => {
             return () => unsubscribe();
         }
     }, [user]);
+
+    useEffect(() => {
+        if (user) {
+            const saved = localStorage.getItem(`dismissed_notifications_${user.uid}`);
+            setDismissedNotificationIds(saved ? JSON.parse(saved) : []);
+        } else {
+            setDismissedNotificationIds([]);
+        }
+    }, [user]);
+
+    const handleDismissNotification = (id: string) => {
+        if (!user) return;
+        const newDismissed = [...dismissedNotificationIds, id];
+        setDismissedNotificationIds(newDismissed);
+        localStorage.setItem(`dismissed_notifications_${user.uid}`, JSON.stringify(newDismissed));
+    };
+
+    const handleDismissAllNotifications = (ids: string[]) => {
+        if (!user) return;
+        const newDismissed = Array.from(new Set([...dismissedNotificationIds, ...ids]));
+        setDismissedNotificationIds(newDismissed);
+        localStorage.setItem(`dismissed_notifications_${user.uid}`, JSON.stringify(newDismissed));
+    };
+
+    const handleResultClick = (res: UpcomingEvent) => {
+        setIsSearchOpen(false);
+        setSearchQuery('');
+        setViewingSchedule({
+            id: res.fullData.id || '',
+            type: res.type,
+            title: res.title,
+            date: res.date.toISOString(),
+            details: res.description,
+            fullData: res.fullData
+        });
+    };
 
     const unreadCount = notifications.filter(n => !n.isRead).length + unreadAnnouncementsCount;
 
@@ -280,22 +418,26 @@ const Dashboard: React.FC = () => {
 
         const all = [...notifications, ...mappedAnnouncements];
         
-        return all.sort((a, b) => {
+        const activeNotifications = all.filter(n => !dismissedNotificationIds.includes(n.id));
+        
+        return activeNotifications.sort((a, b) => {
             if (a.isPinned && !b.isPinned) return -1;
             if (!a.isPinned && b.isPinned) return 1;
             return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         });
-    }, [notifications, announcements, user, isNotificationOpen]);
+    }, [notifications, announcements, user, isNotificationOpen, dismissedNotificationIds]);
 
     useEffect(() => {
         const lastCheckAnn = localStorage.getItem(`lastCheck_announcements_${user?.uid}`) || '0';
         
         const lastCheckAnnDate = new Date(lastCheckAnn);
 
-        const newAnns = announcements.filter(ann => new Date(ann.createdAt).getTime() > lastCheckAnnDate.getTime());
+        const newAnns = announcements
+            .filter(ann => !dismissedNotificationIds.includes(ann.id))
+            .filter(ann => new Date(ann.createdAt).getTime() > lastCheckAnnDate.getTime());
 
         setUnreadAnnouncementsCount(newAnns.length);
-    }, [announcements, schedules, user]);
+    }, [announcements, schedules, user, dismissedNotificationIds]);
 
     const handleOpenNotifications = () => {
         setIsNotificationOpen(!isNotificationOpen);
@@ -1175,6 +1317,7 @@ const Dashboard: React.FC = () => {
                 query={searchQuery}
                 onQueryChange={setSearchQuery}
                 results={searchResults}
+                onResultClick={handleResultClick}
             />
 
             <NotificationOverlay 
@@ -1182,6 +1325,8 @@ const Dashboard: React.FC = () => {
                 onClose={() => setIsNotificationOpen(false)} 
                 userUid={user?.uid || ''} 
                 notifications={mergedNotifications}
+                onDismiss={handleDismissNotification}
+                onDismissAll={handleDismissAllNotifications}
             />
 
             <ScheduleDetailModal
@@ -1345,7 +1490,10 @@ const SearchOverlay: React.FC<{
     query: string;
     onQueryChange: (q: string) => void;
     results: UpcomingEvent[];
-}> = ({ isOpen, onClose, query, onQueryChange, results }) => {
+    onResultClick: (res: UpcomingEvent) => void;
+}> = ({ isOpen, onClose, query, onQueryChange, results, onResultClick }) => {
+    const today = getBrazilToday();
+
     return (
         <AnimatePresence>
             {isOpen && (
@@ -1353,14 +1501,14 @@ const SearchOverlay: React.FC<{
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[60] bg-slate-900/40 dark:bg-black/80 backdrop-blur-md flex flex-col p-6 overflow-y-auto"
+                    className="fixed inset-0 z-[60] bg-white dark:bg-slate-950 flex flex-col p-6 overflow-y-auto"
                 >
                     <div className="w-full max-w-2xl mx-auto space-y-6 pt-12 pb-32">
                         <div className="flex items-center justify-between mb-2">
-                            <h2 className="text-2xl font-bold text-white">Buscar Designação</h2>
+                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Buscar Designação</h2>
                             <button 
                                 onClick={onClose}
-                                className="p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all"
+                                className="p-3 bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 rounded-full text-slate-900 dark:text-white transition-all"
                             >
                                 <LogOut className="h-6 w-6 rotate-180" />
                             </button>
@@ -1374,49 +1522,66 @@ const SearchOverlay: React.FC<{
                                 value={query}
                                 onChange={(e) => onQueryChange(e.target.value)}
                                 placeholder="Digite seu nome..."
-                                className="w-full h-16 pl-14 pr-6 bg-white dark:bg-slate-800 rounded-3xl text-slate-900 dark:text-white font-bold text-lg border-none focus:ring-4 focus:ring-primary/50 transition-all placeholder:text-slate-400"
+                                className="w-full h-16 pl-14 pr-6 bg-slate-100 dark:bg-slate-800 rounded-3xl text-slate-900 dark:text-white font-bold text-lg border-none focus:ring-4 focus:ring-primary/50 transition-all placeholder:text-slate-400"
                             />
                         </div>
 
                         <div className="space-y-4">
                             {query.trim() === '' ? (
                                 <div className="text-center py-20">
-                                    <div className="inline-flex h-20 w-20 bg-white/5 rounded-[32px] items-center justify-center text-slate-400 mb-6">
+                                    <div className="inline-flex h-20 w-20 bg-slate-100 dark:bg-white/5 rounded-[32px] items-center justify-center text-slate-400 mb-6">
                                         <Search className="h-10 w-10" />
                                     </div>
-                                    <p className="text-slate-400 font-medium">Digite seu nome para encontrar suas próximas designações</p>
+                                    <p className="text-slate-500 dark:text-slate-400 font-medium">Digite seu nome para encontrar suas próximas designações</p>
                                 </div>
                             ) : results.length > 0 ? (
-                                results.map((res, i) => (
-                                    <motion.div 
-                                        key={`${res.type}-${i}`}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: i * 0.05 }}
-                                        className="py-8 border-b border-white/5 active:opacity-70 transition-opacity"
-                                    >
-                                        <div className="flex items-center justify-between mb-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-primary/10 rounded-xl text-primary dark:text-amber-500">
-                                                    {res.type === 'Vida e Ministério' ? <BookOpen className="h-5 w-5" /> : 
-                                                     res.type === 'Designações' ? <Users className="h-5 w-5" /> :
-                                                      res.type === 'Limpeza' ? <Droplets className="h-5 w-5" /> :
-                                                      <Calendar className="h-5 w-5" />}
+                                results.map((res, i) => {
+                                    const isFutureOrToday = res.date.getTime() >= today.getTime();
+                                    return (
+                                        <motion.div 
+                                            key={`${res.type}-${i}`}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: i * 0.05 }}
+                                            onClick={() => onResultClick(res)}
+                                            className={`py-6 px-5 border-b border-slate-100 dark:border-white/5 rounded-3xl -mx-5 cursor-pointer active:opacity-70 transition-all ${
+                                                isFutureOrToday 
+                                                    ? 'bg-emerald-50/50 dark:bg-emerald-500/5 hover:bg-emerald-100/50 dark:hover:bg-emerald-500/10 border-l-4 border-l-emerald-500 dark:border-l-emerald-400 shadow-sm' 
+                                                    : 'opacity-60 hover:opacity-90 hover:bg-slate-50 dark:hover:bg-white/[0.03]'
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 bg-primary/10 rounded-xl text-primary dark:text-amber-500">
+                                                        {res.type === 'Vida e Ministério' ? <BookOpen className="h-5 w-5" /> : 
+                                                         res.type === 'Designações' ? <Users className="h-5 w-5" /> :
+                                                          res.type === 'Limpeza' ? <Droplets className="h-5 w-5" /> :
+                                                          <Calendar className="h-5 w-5" />}
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] font-black text-primary dark:text-amber-500 uppercase tracking-widest">{res.type}</span>
+                                                        <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md w-fit mt-1 uppercase tracking-wider ${
+                                                            isFutureOrToday 
+                                                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-400' 
+                                                                : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                                                        }`}>
+                                                            {isFutureOrToday ? 'Próxima' : 'Histórico'}
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                <span className="text-[10px] font-black text-primary dark:text-amber-500 uppercase tracking-widest">{res.type}</span>
+                                                <span className="text-xs font-bold text-slate-400 dark:text-slate-500">
+                                                    {res.date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'UTC' })}
+                                                </span>
                                             </div>
-                                            <span className="text-xs font-bold text-slate-500">
-                                                {res.date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'UTC' })}
-                                            </span>
-                                        </div>
-                                        <h4 className="text-2xl font-bold text-white mb-2">{res.title}</h4>
-                                        <p className="text-base text-slate-400 font-medium">{res.description}</p>
-                                    </motion.div>
-                                ))
+                                            <h4 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{res.title}</h4>
+                                            <p className="text-base text-slate-600 dark:text-slate-400 font-medium">{res.description}</p>
+                                        </motion.div>
+                                    );
+                                })
                             ) : (
                                 <div className="text-center py-20">
-                                    <div className="inline-flex h-20 w-20 bg-rose-500/10 rounded-[32px] items-center justify-center text-rose-400 mb-6 font-bold text-3xl">!</div>
-                                    <p className="text-slate-400 font-medium">Nenhuma designação encontrada para "{query}"</p>
+                                    <div className="inline-flex h-20 w-20 bg-rose-500/10 rounded-[32px] items-center justify-center text-rose-500 dark:text-rose-400 mb-6 font-bold text-3xl">!</div>
+                                    <p className="text-slate-500 dark:text-slate-400 font-medium">Nenhuma designação encontrada para "{query}"</p>
                                 </div>
                             )}
                         </div>

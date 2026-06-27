@@ -647,21 +647,21 @@ const Pioneer: React.FC = () => {
                 </button>
                 <div className="text-center">
                     <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Relatório de Serviço</h1>
-                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Pioneiros & Publicadores</p>
+                    <p className="text-xs text-slate-700 dark:text-slate-300 font-extrabold uppercase tracking-wider">Pioneiros & Publicadores</p>
                 </div>
                 <div className="w-10"></div> {/* Spacer balance */}
             </header>
 
             {/* Main Interactive Category Switcher directly on top */}
-            <section className="bg-slate-100 dark:bg-slate-900/60 p-1.5 rounded-2xl flex relative mb-6 border border-slate-200/50 dark:border-white/5 transition-colors">
+            <section className="bg-slate-200 dark:bg-slate-900 p-1.5 rounded-2xl flex relative mb-6 border border-slate-300 dark:border-slate-800 transition-colors">
                 {(['Publicador', 'Pioneiro Auxiliar', 'Pioneiro Regular'] as const).map((role) => (
                     <button
                         key={role}
                         onClick={() => handleRoleChange(role)}
                         className={`flex-1 py-2.5 text-center text-xs font-black rounded-xl transition-all duration-300 ${
                             currentRole === role
-                            ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-md shadow-slate-900/5'
-                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            ? 'bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-md shadow-slate-950/20'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-955 dark:hover:text-white'
                         }`}
                     >
                         {role === 'Publicador' ? 'Publicador' : role === 'Pioneiro Auxiliar' ? 'Auxiliar' : 'Regular'}
@@ -670,18 +670,18 @@ const Pioneer: React.FC = () => {
             </section>
 
             {/* Month selector reference */}
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-5 mb-8 transition-all">
+            <div className="flex items-center justify-between border-b border-slate-300 dark:border-slate-800 pb-5 mb-8 transition-all">
                 <button 
                     onClick={() => handleMonthChange('prev')} 
-                    className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 transition-colors"
+                    className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700"
                 >
                     <ChevronLeftIcon className="h-4 w-4" />
                 </button>
                 <div className="text-center">
-                    <p className="text-lg font-extrabold text-slate-800 dark:text-white capitalize">
+                    <p className="text-lg font-black text-slate-950 dark:text-white capitalize">
                         {new Date(selectedMonth + '-01T12:00:00').toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}
                     </p>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Mês de Referência</p>
+                    <p className="text-[10px] font-extrabold text-slate-600 dark:text-slate-300 uppercase tracking-widest mt-0.5">Mês de Referência</p>
                 </div>
                 <button 
                     onClick={() => handleMonthChange('next')} 
@@ -715,18 +715,18 @@ const Pioneer: React.FC = () => {
                                         <CheckIcon className="h-6 w-6" />
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-black text-emerald-600 dark:text-emerald-400">Relatório Enviado! 🌟</h3>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Sua atividade mensal foi enviada com sucesso ao Secretário.</p>
+                                        <h3 className="text-lg font-black text-emerald-700 dark:text-emerald-400">Relatório Enviado! 🌟</h3>
+                                        <p className="text-xs text-slate-700 dark:text-slate-300 mt-1">Sua atividade mensal foi enviada com sucesso ao Secretário.</p>
                                     </div>
                                     
-                                    <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 rounded-2xl p-4 text-left grid grid-cols-2 gap-3 divide-x divide-slate-100 dark:divide-white/5">
+                                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-left grid grid-cols-2 gap-3 divide-x divide-slate-200 dark:divide-slate-800">
                                         <div className="text-center">
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Pregação</p>
-                                            <p className="text-lg font-black text-slate-800 dark:text-white">{participated ? 'Participei' : 'Não Participei'}</p>
+                                            <p className="text-[10px] font-extrabold text-slate-600 dark:text-slate-300 uppercase">Pregação</p>
+                                            <p className="text-lg font-black text-slate-900 dark:text-white">{participated ? 'Participei' : 'Não Participei'}</p>
                                         </div>
                                         <div className="text-center">
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Estudos</p>
-                                            <p className="text-lg font-black text-slate-800 dark:text-white">{reportStudies}</p>
+                                            <p className="text-[10px] font-extrabold text-slate-600 dark:text-slate-300 uppercase">Estudos</p>
+                                            <p className="text-lg font-black text-slate-900 dark:text-white">{reportStudies}</p>
                                         </div>
                                     </div>
 
@@ -761,14 +761,14 @@ const Pioneer: React.FC = () => {
 
                                     {/* Participated Field */}
                                     <div className="space-y-4">
-                                        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest">Participou no serviço este mês?</label>
+                                        <label className="block text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest">Participou no serviço este mês?</label>
                                         <div className="grid grid-cols-2 gap-3">
                                             <button
                                                 onClick={() => setParticipated(true)}
                                                 className={`py-3.5 text-center font-extrabold rounded-2xl border-2 transition-all ${
                                                     participated === true
                                                     ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/10'
-                                                    : 'bg-white dark:bg-slate-900 border-slate-250 dark:border-white/5 text-slate-500 hover:bg-slate-50'
+                                                    : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-750'
                                                 }`}
                                             >
                                                 Sim, Participei
@@ -781,7 +781,7 @@ const Pioneer: React.FC = () => {
                                                 className={`py-3.5 text-center font-extrabold rounded-2xl border-2 transition-all ${
                                                     participated === false
                                                     ? 'bg-rose-500 border-rose-500 text-white shadow-lg shadow-rose-500/10'
-                                                    : 'bg-white dark:bg-slate-900 border-slate-250 dark:border-white/5 text-slate-500 hover:bg-slate-50'
+                                                    : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-750'
                                                 }`}
                                             >
                                                 Não Participei
@@ -797,7 +797,7 @@ const Pioneer: React.FC = () => {
                                                 className="space-y-6"
                                             >
                                                 {/* Bible Studies Selector */}
-                                                <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl">
+                                                <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/55 p-4 rounded-2xl">
                                                     <div>
                                                         <h4 className="font-extrabold text-slate-800 dark:text-white text-sm">Estudos Bíblicos</h4>
                                                         <p className="text-[10px] text-slate-400">Dirigidos no mês</p>
@@ -820,7 +820,7 @@ const Pioneer: React.FC = () => {
                                                 </div>
 
                                                 {/* Optional Hours Input */}
-                                                <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl">
+                                                <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/55 p-4 rounded-2xl">
                                                     <div>
                                                         <h4 className="font-extrabold text-slate-800 dark:text-white text-sm">Horas (Opcional)</h4>
                                                         <p className="text-[10px] text-slate-400">Tempo dedicado à pregação</p>
@@ -1173,7 +1173,7 @@ const Pioneer: React.FC = () => {
                                             </div>
 
                                             <div className="space-y-2">
-                                                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest">Observações adicionais</label>
+                                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Observações adicionais</label>
                                                 <textarea
                                                     value={reportNotes}
                                                     onChange={(e) => setReportNotes(e.target.value)}
