@@ -12,6 +12,7 @@ import {
     getCalendarEvents
 } from '../services/firestoreService';
 import { CalendarNote, CalendarEvent } from '../types';
+import { getBrazilianHolidays } from '../utils/dateUtils';
 import { 
     ChevronLeft, 
     ChevronRight, 
@@ -52,6 +53,48 @@ const Calendar: React.FC = () => {
         category: 'NOTAS' as CalendarNote['category'],
         date: new Date().toISOString().split('T')[0]
     });
+
+    const [showHolidays, setShowHolidays] = useState(() => {
+        const saved = localStorage.getItem('calendar_show_holidays');
+        return saved !== null ? JSON.parse(saved) : true;
+    });
+
+    useEffect(() => {
+        localStorage.setItem('calendar_show_holidays', JSON.stringify(showHolidays));
+    }, [showHolidays]);
+
+    const holidays = useMemo(() => {
+        return getBrazilianHolidays(currentMonth.getFullYear());
+    }, [currentMonth]);
+
+    const getHolidayForDate = (day: number, month: number, year: number) => {
+        if (!showHolidays) return undefined;
+        const yearHolidays = year === currentMonth.getFullYear() ? holidays : getBrazilianHolidays(year);
+        const monthStr = String(month + 1).padStart(2, '0');
+        const dayStr = String(day).padStart(2, '0');
+        const dateStr = `${year}-${monthStr}-${dayStr}`;
+        return yearHolidays.find(h => h.date === dateStr);
+    };
+
+    const monthHolidays = useMemo(() => {
+        if (!showHolidays) return [];
+        return holidays.filter(h => {
+            const [, m, ] = h.date.split('-').map(Number);
+            return m - 1 === currentMonth.getMonth();
+        });
+    }, [holidays, currentMonth, showHolidays]);
+
+    const selectedDateHoliday = useMemo(() => {
+        if (!showHolidays) return undefined;
+        const year = selectedDate.getFullYear();
+        const month = selectedDate.getMonth();
+        const day = selectedDate.getDate();
+        const monthStr = String(month + 1).padStart(2, '0');
+        const dayStr = String(day).padStart(2, '0');
+        const dateStr = `${year}-${monthStr}-${dayStr}`;
+        const yearHolidays = year === currentMonth.getFullYear() ? holidays : getBrazilianHolidays(year);
+        return yearHolidays.find(h => h.date === dateStr);
+    }, [selectedDate, currentMonth, holidays, showHolidays]);
 
     useEffect(() => {
         if (user) {
@@ -337,7 +380,8 @@ const Calendar: React.FC = () => {
                         
                         {daysInMonth.map((d, i) => {
                             const { notes: dayNotes, events: dayEvents } = getDayContent(d.day, d.month, d.year);
-                            const hasContent = dayNotes.length > 0 || dayEvents.length > 0;
+                            const holiday = getHolidayForDate(d.day, d.month, d.year);
+                            const hasContent = dayNotes.length > 0 || dayEvents.length > 0 || holiday !== undefined;
                             const isSel = isSelected(d.day, d.month, d.year);
                             const isTdy = isToday(d.day, d.month, d.year);
 
@@ -345,15 +389,20 @@ const Calendar: React.FC = () => {
                                 <button
                                     key={i}
                                     onClick={() => setSelectedDate(new Date(d.year, d.month, d.day))}
-                                    className={`relative h-10 w-10 mx-auto flex items-center justify-center rounded-xl text-sm font-black transition-all
+                                    className={`relative h-10 w-10 mx-auto flex items-center justify-center rounded-xl text-sm font-black transition-all focus:outline-none
                                         ${!d.isCurrentMonth ? 'text-slate-350 dark:text-slate-700' : 'text-slate-700 dark:text-slate-300'}
                                         ${isSel ? 'bg-amber-500 dark:bg-amber-500 text-slate-950 dark:text-slate-950 shadow-lg shadow-amber-500/25' : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'}
                                         ${isTdy && !isSel ? 'border-2 border-amber-500 dark:border-amber-500 text-amber-600 dark:text-amber-500' : ''}
+                                        ${holiday && d.isCurrentMonth && !isSel ? 'text-rose-500 dark:text-rose-400 bg-rose-50/50 dark:bg-rose-950/10 hover:bg-rose-100/50 dark:hover:bg-rose-950/20' : ''}
                                     `}
+                                    title={holiday ? holiday.name : undefined}
                                 >
                                     {d.day}
                                     {hasContent && (
-                                        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-1 items-center">
+                                        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5 items-center justify-center">
+                                            {holiday && (
+                                                <div className="w-1 h-1 rounded-full bg-rose-500 dark:bg-rose-400" />
+                                            )}
                                             {dayNotes.length > 0 && (
                                                 <div className="flex items-center">
                                                     <div className="w-1 h-1 rounded-full bg-blue-400" />
@@ -376,6 +425,56 @@ const Calendar: React.FC = () => {
                             );
                         })}
                     </div>
+
+                    {/* Holiday Toggle Switch */}
+                    <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-800/60 mt-6">
+                        <div className="flex items-center gap-2">
+                            <CalendarIcon className="w-4 h-4 text-rose-500" />
+                            <span className="text-xs font-black text-slate-600 dark:text-slate-400 tracking-tight">Feriados Brasileiros</span>
+                        </div>
+                        <button
+                            onClick={() => setShowHolidays(!showHolidays)}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                                showHolidays ? 'bg-rose-500' : 'bg-slate-200 dark:bg-slate-800'
+                            }`}
+                        >
+                            <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                    showHolidays ? 'translate-x-6' : 'translate-x-1'
+                                }`}
+                            />
+                        </button>
+                    </div>
+
+                    {/* Holidays List of the Month */}
+                    {showHolidays && monthHolidays.length > 0 && (
+                        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800/60">
+                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-2">
+                                Feriados de {monthName.split(' de ')[0]}
+                            </span>
+                            <div className="flex flex-wrap gap-2">
+                                {monthHolidays.map((h, index) => {
+                                    const [y, m, d] = h.date.split('-').map(Number);
+                                    const hDate = new Date(y, m - 1, d);
+                                    const isSel = selectedDate.getDate() === d && selectedDate.getMonth() === m - 1 && selectedDate.getFullYear() === y;
+                                    return (
+                                        <button
+                                            key={index}
+                                            onClick={() => setSelectedDate(hDate)}
+                                            className={`px-3 py-1.5 border rounded-xl text-left transition-all flex items-center gap-2 text-xs focus:outline-none ${
+                                                isSel
+                                                    ? 'bg-rose-500 text-white border-rose-500 dark:bg-rose-500 dark:text-slate-950 dark:border-rose-500 shadow-md shadow-rose-500/20'
+                                                    : 'bg-rose-50 hover:bg-rose-100/70 dark:bg-rose-950/10 dark:hover:bg-rose-950/20 border-rose-100 dark:border-rose-900/20 text-slate-700 dark:text-slate-300'
+                                            }`}
+                                        >
+                                            <span className={`font-black ${isSel ? 'text-white dark:text-slate-950' : 'text-rose-500'}`}>{d}</span>
+                                            <span className="font-bold">{h.name}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
                 </motion.div>
 
                 {/* Summary Cards */}
@@ -410,6 +509,24 @@ const Calendar: React.FC = () => {
                             {showAll ? 'Ver por dia' : 'Ver todos'}
                         </button>
                     </div>
+
+                    {/* Selected Date Holiday Information */}
+                    {selectedDateHoliday && !showAll && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-rose-50 dark:bg-rose-950/10 border border-rose-100 dark:border-rose-900/30 p-5 rounded-3xl flex items-center gap-4 transition-all"
+                        >
+                            <div className="w-12 h-12 rounded-2xl bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-rose-500/20">
+                                <CalendarIcon className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <span className="text-[10px] font-black text-rose-500 dark:text-rose-450 uppercase tracking-widest block">Feriado</span>
+                                <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-tight">{selectedDateHoliday.name}</h4>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 font-semibold">{selectedDateHoliday.description || 'Feriado Nacional'}</p>
+                            </div>
+                        </motion.div>
+                    )}
 
                     <div className="space-y-4">
                         {isLoading ? (
