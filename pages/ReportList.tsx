@@ -19,7 +19,8 @@ const ReportList: React.FC = () => {
     const [selectedGroup, setSelectedGroup] = useState('all');
     const [selectedMonth, setSelectedMonth] = useState(() => {
         const today = new Date();
-        return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+        const prevMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        return `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
     });
     
     // State for modals

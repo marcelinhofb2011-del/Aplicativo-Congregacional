@@ -9,7 +9,6 @@ import {
     DocumentTextIcon,
     PublicTalkIcon, 
     BusIcon,
-    ChartBarIcon,
     ConductorIcon,
     SettingsIcon,
     MegaphoneIcon,
@@ -22,7 +21,6 @@ import {
 const MENU_GRID_ITEMS = [
     { path: '/calendario', label: 'Calendário', icon: CalendarSolidIcon, color: 'text-blue-500' },
     { path: '/pioneiro', label: 'Relatório', icon: BookOpenIcon, color: 'text-teal-500' },
-    { path: '/resumo', label: 'Análise', icon: ChartBarIcon, color: 'text-indigo-500' },
     { path: '/anuncios', label: 'Anúncios', icon: MegaphoneIcon, color: 'text-sky-500' },
     { path: '/vida-e-ministerio', label: 'Ministério', icon: LifeMinistryIcon, color: 'text-green-500' },
     { path: '/designacoes', label: 'Designações', icon: AssignmentsIcon, color: 'text-orange-500' },
@@ -46,17 +44,15 @@ const Menu: React.FC = () => {
             <div className="max-w-xl mx-auto">
                 <div className="grid grid-cols-3 gap-4 sm:gap-5">
                                         {MENU_GRID_ITEMS.filter((item) => {
-                        // Deixar Secretário, Análise (resumo) e lista total do Ministério apenas para responsáveis (SERVANT)
+                        // Deixar Secretário e lista total do Ministério apenas para responsáveis (SERVANT)
                         if (user.role === UserRole.PUBLISHER) {
-                            if (item.path === '/secretario' || item.path === '/resumo' || item.path === '/vida-e-ministerio') {
+                            if (item.path === '/secretario' || item.path === '/vida-e-ministerio') {
                                 return false;
                             }
                         }
                         return true;
                     }).map((item) => {
-                        const targetPath = (item.path === '/pioneiro' && user.role === UserRole.PUBLISHER)
-                            ? '/relatorio'
-                            : item.path;
+                        const targetPath = item.path;
 
                         return (
                             <Link

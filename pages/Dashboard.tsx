@@ -1462,7 +1462,7 @@ const Dashboard: React.FC = () => {
                             </div>
                             <div className="flex flex-col gap-2 pt-2">
                                 <Link 
-                                    to="/relatorio"
+                                    to="/pioneiro"
                                     onClick={() => setIsReportReminderOpen(false)}
                                     className="w-full py-4 px-4 bg-primary text-white font-bold rounded-2xl hover:bg-primary-dark transition-all shadow-lg shadow-primary/20 active:scale-95 text-sm font-sans flex items-center justify-center gap-2"
                                 >

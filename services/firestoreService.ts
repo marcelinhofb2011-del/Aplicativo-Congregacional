@@ -284,8 +284,9 @@ export const getMonthlyReports = (userUid: string) => {
 
 export const addMonthlyReport = (data: any, userUid: string) => {
     const db = getDbInstance();
-    const docId = `${userUid}_${data.year}_${data.month}`;
-    const docRef = doc(db, "relatorios_pregacao", docId);
+    const colRef = collection(db, "relatorios_pregacao");
+    const docRef = doc(colRef);
+    const docId = docRef.id;
     
     const now = new Date().toISOString();
     const record = {
