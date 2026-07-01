@@ -31,6 +31,7 @@ import Announcements from './pages/Announcements';
 import SpeechRecord from './pages/SpeechRecord';
 import Pioneer from './pages/Pioneer';
 import Calendar from './pages/Calendar';
+import PioneerPlanning from './pages/PioneerPlanning';
 
 
 
@@ -96,6 +97,7 @@ const AppContent: React.FC = () => {
                         <Route element={<RoleProtectedRoute roles={[UserRole.PUBLISHER, UserRole.SERVANT]} />}>
                             <Route path="dashboard" element={<Dashboard />} />
                             <Route path="pioneiro/*" element={<Pioneer />} />
+                            <Route path="planejamento-pioneiro" element={<PioneerPlanning />} />
                             <Route path="calendario" element={<Calendar />} />
                             <Route path="relatorio" element={<Report />} />
                             <Route path="assistencia" element={<Attendance />} />

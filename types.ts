@@ -406,6 +406,25 @@ export interface PioneerRecord extends BaseRecord {
     activities: PioneerActivity[];
 }
 
+export interface PioneerPlanningConfig extends BaseRecord {
+    monthlyGoal: number;
+    quarterlyGoal?: number;
+    annualGoal?: number;
+    preachingDays: number[]; // 0-6 (Sunday to Saturday)
+    vacations: { id: string; startDate: string; endDate: string; description: string }[];
+}
+
+export interface PioneerDailyRecord extends BaseRecord {
+    date: string; // YYYY-MM-DD
+    hours: number;
+    minutes: number;
+    studies: number;
+    revisits?: number;
+    videos?: number;
+    publications?: number;
+    notes?: string;
+}
+
 export interface CalendarNote extends BaseRecord {
     date: string; // ISO date string
     time?: string; // HH:mm

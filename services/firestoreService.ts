@@ -14,6 +14,7 @@ import {
     setDoc,
     updateDoc,
     doc,
+    getDoc,
     deleteDoc,
     limit,
     Timestamp,
@@ -23,7 +24,7 @@ import {
 import { 
     LifeMinistrySchedule, FieldServiceReport, AttendanceRecord, Territory, BusTicket, Assignment, 
     CleaningSchedule, FieldServiceMeeting, ConductorMeeting, ShepherdingVisit, PublicTalkSchedule, BaseRecord, PublisherProfile, Announcement, PioneerRecord,
-    MonthlyFieldServiceReport, MeetingSchedule, FirstSundayConductor, CalendarNote, CalendarEvent
+    MonthlyFieldServiceReport, MeetingSchedule, FirstSundayConductor, CalendarNote, CalendarEvent, PioneerPlanningConfig, PioneerDailyRecord
 } from '../types';
 
 
@@ -333,6 +334,51 @@ export const setPioneerRecord = (data: PioneerRecord) => {
 export const deletePioneerRecord = (id: string) => {
     const db = getDbInstance();
     return deleteDoc(doc(db, 'planejamento_pioneiro', id));
+};
+
+// --- PIONEER PLANNING INDEPENDENT MODULE ---
+export const getPioneerPlanningConfig = async (userUid: string): Promise<PioneerPlanningConfig | null> => {
+    const db = getDbInstance();
+    const docRef = doc(db, 'pioneer_config', userUid);
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) return null;
+    return fromFirestore<PioneerPlanningConfig>(snap as any);
+};
+
+export const savePioneerPlanningConfig = async (userUid: string, configData: Omit<PioneerPlanningConfig, 'id' | keyof BaseRecord>): Promise<void> => {
+    const db = getDbInstance();
+    const docRef = doc(db, 'pioneer_config', userUid);
+    await setDoc(docRef, {
+        ...configData,
+        createdBy: userUid,
+        createdAt: Timestamp.now(),
+        updatedBy: userUid,
+        updatedAt: Timestamp.now(),
+        isActive: true,
+    });
+};
+
+export const getPioneerDailyRecords = async (userUid: string): Promise<PioneerDailyRecord[]> => {
+    const db = getDbInstance();
+    const q = query(
+        collection(db, 'pioneer_daily_records'),
+        where('createdBy', '==', userUid),
+        where('isActive', '==', true)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => fromFirestore<PioneerDailyRecord>(doc));
+};
+
+export const addPioneerDailyRecord = async (record: Omit<PioneerDailyRecord, 'id' | keyof BaseRecord>, userUid: string): Promise<PioneerDailyRecord> => {
+    return addBaseRecord<PioneerDailyRecord>('pioneer_daily_records', record, userUid);
+};
+
+export const updatePioneerDailyRecord = async (id: string, record: Partial<PioneerDailyRecord>, userUid: string): Promise<void> => {
+    return updateBaseRecord<PioneerDailyRecord>('pioneer_daily_records', id, record, userUid);
+};
+
+export const deletePioneerDailyRecord = async (id: string): Promise<void> => {
+    return deleteBaseRecord('pioneer_daily_records', id);
 };
 
 // Calendar Notes

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { UserRole } from '../types';
+import { UserRole, PublisherProfile } from '../types';
+import { getPublisherProfileByUid } from '../services/firestoreService';
 import { 
     LifeMinistryIcon, 
     AssignmentsIcon, 
@@ -21,6 +22,7 @@ import {
 const MENU_GRID_ITEMS = [
     { path: '/calendario', label: 'Calendário', icon: CalendarSolidIcon, color: 'text-blue-500' },
     { path: '/pioneiro', label: 'Relatório', icon: BookOpenIcon, color: 'text-teal-500' },
+    { path: '/planejamento-pioneiro', label: 'Planejamento', icon: CalendarDaysIcon, color: 'text-amber-500', isPioneerOnly: true },
     { path: '/anuncios', label: 'Anúncios', icon: MegaphoneIcon, color: 'text-sky-500' },
     { path: '/vida-e-ministerio', label: 'Ministério', icon: LifeMinistryIcon, color: 'text-green-500' },
     { path: '/designacoes', label: 'Designações', icon: AssignmentsIcon, color: 'text-orange-500' },
@@ -30,20 +32,36 @@ const MENU_GRID_ITEMS = [
     { path: '/discurso-publico', label: 'Discursos', icon: PublicTalkIcon, color: 'text-indigo-600' },
     { path: '/passagens', label: 'Passagens', icon: BusIcon, color: 'text-amber-600' },
     { path: '/configuracoes', label: 'Ajustes', icon: SettingsIcon, color: 'text-slate-600' },
-
 ];
 
 
 const Menu: React.FC = () => {
-        const { user } = useAuth();
+    const { user } = useAuth();
+    const [profile, setProfile] = useState<PublisherProfile | null>(null);
+
+    useEffect(() => {
+        if (user) {
+            getPublisherProfileByUid(user.uid)
+                .then((data) => {
+                    if (data) setProfile(data);
+                })
+                .catch((err) => console.error('Erro ao carregar perfil:', err));
+        }
+    }, [user]);
 
     if (!user) return null;
 
+    const isPioneerUser = profile?.isRegularPioneer || profile?.isAuxiliaryPioneer || user.role === UserRole.SERVANT;
+
     return (
-                <div className="p-4 sm:p-6 lg:p-8">
+        <div className="p-4 sm:p-6 lg:p-8">
             <div className="max-w-xl mx-auto">
                 <div className="grid grid-cols-3 gap-4 sm:gap-5">
-                                        {MENU_GRID_ITEMS.filter((item) => {
+                    {MENU_GRID_ITEMS.filter((item) => {
+                        // Ocultar planejamento para quem não é pioneiro
+                        if (item.isPioneerOnly && !isPioneerUser) {
+                            return false;
+                        }
                         // Deixar Secretário e lista total do Ministério apenas para responsáveis (SERVANT)
                         if (user.role === UserRole.PUBLISHER) {
                             if (item.path === '/secretario' || item.path === '/vida-e-ministerio') {
