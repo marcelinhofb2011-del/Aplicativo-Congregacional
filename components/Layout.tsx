@@ -13,7 +13,8 @@ const Layout: React.FC = () => {
     if (!user) return null;
 
     return (
-        <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+        <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-[#0b0f19] transition-colors duration-300 relative overflow-hidden">
+            
             {showHeader && <Header />}
             
             <main className={`flex-1 overflow-x-hidden animate-fade-in pb-24 ${showHeader ? 'pt-16' : 'pt-0'}`}>

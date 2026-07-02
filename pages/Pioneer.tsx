@@ -153,49 +153,16 @@ const Pioneer: React.FC = () => {
     };
   }, [monthReports]);
 
-  // Trigger auto-fill when formMonth or formIsPioneer changes in the open form
-  useEffect(() => {
-    if (isFormOpen && formIsPioneer && formMonth && user) {
-      const loadAndPrefillForSelectedMonth = async () => {
-        try {
-          const records = await getPioneerDailyRecords(user.uid);
-          const monthRecords = records.filter(r => r.date.startsWith(formMonth));
-          if (monthRecords.length > 0) {
-            let totalMinutes = 0;
-            let totalStudiesMax = 0;
-            let totalRevisits = 0;
-            monthRecords.forEach(r => {
-              totalMinutes += (r.hours || 0) * 60 + (r.minutes || 0);
-              totalStudiesMax = Math.max(totalStudiesMax, r.studies || 0);
-              totalRevisits += r.revisits || 0;
-            });
-            const h = Math.floor(totalMinutes / 60);
-            const m = totalMinutes % 60;
-            setFormHours(h);
-            setFormMinutes(m);
-            setFormStudies(totalStudiesMax);
-            setFormRevisits(totalRevisits);
-            setToastMessage(`Valores atualizados com base nos registros diários de ${formMonth}! 🤖`);
-          } else {
-            setFormHours(0);
-            setFormMinutes(0);
-            setFormStudies(0);
-            setFormRevisits(0);
-          }
-        } catch (e) {
-          console.error("Error prefilling for month:", e);
-        }
-      };
-      loadAndPrefillForSelectedMonth();
-    }
-  }, [formMonth, formIsPioneer, isFormOpen, user]);
-
   // Opens a fresh empty form
   const handleOpenNewForm = async () => {
     setFormMonth(selectedMonth);
     setFormGroup("");
     setFormParticipated(true);
     setFormNotes("");
+    setFormHours(0);
+    setFormMinutes(0);
+    setFormStudies(0);
+    setFormRevisits(0);
     setIsFormOpen(true);
 
     if (!user) return;
@@ -206,54 +173,14 @@ const Pioneer: React.FC = () => {
         setFormName(profile.name || "");
         const isPioneer = profile.isRegularPioneer || profile.isAuxiliaryPioneer;
         setFormIsPioneer(isPioneer);
-        
-        if (isPioneer) {
-          const records = await getPioneerDailyRecords(user.uid);
-          const monthRecords = records.filter(r => r.date.startsWith(selectedMonth));
-          if (monthRecords.length > 0) {
-            let totalMinutes = 0;
-            let totalStudiesMax = 0;
-            let totalRevisits = 0;
-            monthRecords.forEach(r => {
-              totalMinutes += (r.hours || 0) * 60 + (r.minutes || 0);
-              totalStudiesMax = Math.max(totalStudiesMax, r.studies || 0);
-              totalRevisits += r.revisits || 0;
-            });
-            const h = Math.floor(totalMinutes / 60);
-            const m = totalMinutes % 60;
-            setFormHours(h);
-            setFormMinutes(m);
-            setFormStudies(totalStudiesMax);
-            setFormRevisits(totalRevisits);
-            setToastMessage("Valores preenchidos automaticamente com base nos seus registros diários do planejador! 🤖✨");
-          } else {
-            setFormHours(0);
-            setFormMinutes(0);
-            setFormStudies(0);
-            setFormRevisits(0);
-          }
-        } else {
-          setFormHours(0);
-          setFormMinutes(0);
-          setFormStudies(0);
-          setFormRevisits(0);
-        }
       } else {
         setFormName("");
         setFormIsPioneer(false);
-        setFormHours(0);
-        setFormMinutes(0);
-        setFormStudies(0);
-        setFormRevisits(0);
       }
     } catch (e) {
-      console.error("Error auto-prefilling report form:", e);
+      console.error("Error loading publisher profile:", e);
       setFormName("");
       setFormIsPioneer(false);
-      setFormHours(0);
-      setFormMinutes(0);
-      setFormStudies(0);
-      setFormRevisits(0);
     }
   };
 

@@ -76,7 +76,7 @@ const Menu: React.FC = () => {
                             <Link
                                 key={item.path}
                                 to={targetPath}
-                                className="flex flex-col items-center justify-center text-center p-3 sm:p-4 rounded-2xl bg-white dark:bg-slate-800 shadow-md hover:shadow-xl hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-dark transition-all duration-300 aspect-square"
+                                className="flex flex-col items-center justify-center text-center p-3 sm:p-4 rounded-2xl bg-white/70 dark:bg-slate-900/65 backdrop-blur-md border border-white/40 dark:border-white/5 shadow-md hover:shadow-xl hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-dark transition-all duration-300 aspect-square"
                             >
                                 <item.icon className={`h-10 w-10 sm:h-12 sm:w-12 mb-2 ${item.color}`} />
                                 <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">{item.label}</span>

@@ -5,9 +5,10 @@ import {
     addMonthlyReport, 
     updateMonthlyReport, 
     getPublisherProfileByUid,
-    getPioneerRecordsByUser 
+    getPioneerDailyRecords,
+    getPioneerPlanningConfig
 } from '../services/firestoreService';
-import { MonthlyFieldServiceReport, PublisherProfile, PioneerRecord } from '../types';
+import { MonthlyFieldServiceReport, PublisherProfile, PioneerDailyRecord, PioneerPlanningConfig } from '../types';
 import Layout from '../components/Layout';
 import { PlusIcon, PencilIcon, CalendarDaysIcon, DocumentTextIcon } from '../components/icons/Icons';
 import Toast from '../components/Toast';
@@ -21,7 +22,8 @@ const MonthlyReport: React.FC = () => {
     const { user } = useAuth();
     const [reports, setReports] = useState<MonthlyFieldServiceReport[]>([]);
     const [profile, setProfile] = useState<PublisherProfile | null>(null);
-    const [pioneerRecords, setPioneerRecords] = useState<PioneerRecord[]>([]);
+    const [dailyRecords, setDailyRecords] = useState<PioneerDailyRecord[]>([]);
+    const [planningConfig, setPlanningConfig] = useState<PioneerPlanningConfig | null>(null);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingReport, setEditingReport] = useState<MonthlyFieldServiceReport | null>(null);
@@ -37,10 +39,11 @@ const MonthlyReport: React.FC = () => {
         if (!user) return;
         setLoading(true);
         try {
-            const [reportsData, profileData, pioneerData] = await Promise.all([
+            const [reportsData, profileData, recordsData, configData] = await Promise.all([
                 getMonthlyReports(user.uid),
                 getPublisherProfileByUid(user.uid),
-                getPioneerRecordsByUser(user.uid)
+                getPioneerDailyRecords(user.uid),
+                getPioneerPlanningConfig(user.uid)
             ]);
             const sortedReports = reportsData.sort((a, b) => {
                 if (a.year !== b.year) return b.year - a.year;
@@ -48,7 +51,8 @@ const MonthlyReport: React.FC = () => {
             });
             setReports(sortedReports);
             setProfile(profileData);
-            setPioneerRecords(pioneerData);
+            setDailyRecords(recordsData || []);
+            setPlanningConfig(configData);
         } catch (error) {
             console.error("Error loading report data:", error);
         } finally {
@@ -174,7 +178,8 @@ const MonthlyReport: React.FC = () => {
                     onSave={handleSave} 
                     initialData={editingReport}
                     isPioneer={isPioneer || false}
-                    pioneerRecords={pioneerRecords}
+                    dailyRecords={dailyRecords}
+                    planningConfig={planningConfig}
                 />
             )}
             <Toast message={toastMessage} onClear={() => setToastMessage('')} />
@@ -188,8 +193,9 @@ const ReportModal: React.FC<{
     onSave: (data: Partial<MonthlyFieldServiceReport>) => void;
     initialData: MonthlyFieldServiceReport | null;
     isPioneer: boolean;
-    pioneerRecords: PioneerRecord[];
-}> = ({ isOpen, onClose, onSave, initialData, isPioneer, pioneerRecords }) => {
+    dailyRecords: PioneerDailyRecord[];
+    planningConfig: PioneerPlanningConfig | null;
+}> = ({ isOpen, onClose, onSave, initialData, isPioneer, dailyRecords, planningConfig }) => {
     const [month, setMonth] = useState(initialData?.month || MONTHS[new Date().getMonth()]);
     const [year, setYear] = useState(initialData?.year || new Date().getFullYear());
     const [hours, setHours] = useState<number | ''>(initialData?.hours ?? '');
@@ -199,25 +205,69 @@ const ReportModal: React.FC<{
     const [hasParticipated, setHasParticipated] = useState(initialData?.hasParticipated ?? true);
     const [notes, setNotes] = useState(initialData?.notes || '');
 
-    const currentPioneerRecord = useMemo(() => {
+    // Convert month/year into YYYY-MM format
+    const selectedMonthStr = useMemo(() => {
         const monthIndex = MONTHS.indexOf(month) + 1;
-        const monthStr = `${year}-${String(monthIndex).padStart(2, '0')}`;
-        return pioneerRecords.find(r => r.month === monthStr);
-    }, [month, year, pioneerRecords]);
+        return `${year}-${String(monthIndex).padStart(2, '0')}`;
+    }, [month, year]);
 
-    const registeredHours = useMemo(() => {
-        if (!currentPioneerRecord) return 0;
-        const totalMinutes = currentPioneerRecord.activities.reduce((acc, act) => {
-            const studyMinutes = act.studies.reduce((sAcc, s) => sAcc + (s.hours * 60) + s.minutes, 0);
-            return acc + (act.hours * 60) + act.minutes + studyMinutes;
-        }, 0);
-        return totalMinutes / 60;
-    }, [currentPioneerRecord]);
+    // Recalculate daily activity statistics for the selected month dynamically
+    const monthlySummary = useMemo(() => {
+        const monthRecords = dailyRecords.filter(r => r.date.startsWith(selectedMonthStr));
+
+        let totalMinutes = 0;
+        let totalStudiesMax = 0;
+        let totalRevisits = 0;
+        let totalPublications = 0;
+
+        monthRecords.forEach(r => {
+            totalMinutes += (r.hours || 0) * 60 + (r.minutes || 0);
+            totalRevisits += r.revisits || 0;
+            totalPublications += r.publications || 0;
+            totalStudiesMax = Math.max(totalStudiesMax, r.studies || 0);
+        });
+
+        const calculatedHours = Number((totalMinutes / 60).toFixed(1));
+
+        return {
+            hours: calculatedHours,
+            studies: totalStudiesMax,
+            revisits: totalRevisits,
+            publications: totalPublications,
+            hasData: monthRecords.length > 0
+        };
+    }, [selectedMonthStr, dailyRecords]);
+
+    // Determine the user's monthly goal (either month-specific or general general goal)
+    const goalHours = useMemo(() => {
+        if (!planningConfig) return 0;
+        if (planningConfig.monthGoals && planningConfig.monthGoals[selectedMonthStr] !== undefined) {
+            return planningConfig.monthGoals[selectedMonthStr];
+        }
+        return planningConfig.monthlyGoal || 0;
+    }, [selectedMonthStr, planningConfig]);
 
     const goalPercentage = useMemo(() => {
-        if (!currentPioneerRecord || currentPioneerRecord.goalHours === 0) return 0;
-        return (registeredHours / currentPioneerRecord.goalHours) * 100;
-    }, [registeredHours, currentPioneerRecord]);
+        if (goalHours === 0) return 0;
+        return (monthlySummary.hours / goalHours) * 100;
+    }, [monthlySummary.hours, goalHours]);
+
+    // Sync input fields with planning records when month/year changes if editing a brand-new report
+    useEffect(() => {
+        if (!initialData) {
+            setHours(monthlySummary.hours || '');
+            setStudies(monthlySummary.studies || '');
+            setRevisits(monthlySummary.revisits || '');
+            setPublications(monthlySummary.publications || '');
+        }
+    }, [selectedMonthStr, initialData, monthlySummary]);
+
+    const handleImportFromPlanning = () => {
+        setHours(monthlySummary.hours || 0);
+        setStudies(monthlySummary.studies || 0);
+        setRevisits(monthlySummary.revisits || 0);
+        setPublications(monthlySummary.publications || 0);
+    };
 
     const handleSave = () => {
         if (!month || !year || studies === '' || revisits === '' || publications === '') {
@@ -249,6 +299,22 @@ const ReportModal: React.FC<{
                     </h3>
                 </div>
                 <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                    {/* Auto-import alert banner */}
+                    {monthlySummary.hasData && (
+                        <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-500/10 p-3 rounded-xl flex items-center justify-between gap-3 shadow-sm">
+                            <div className="text-xs text-slate-600 dark:text-slate-300 leading-normal">
+                                Encontramos registros para <span className="font-extrabold">{month} de {year}</span> no seu Planejamento.
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleImportFromPlanning}
+                                className="bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap shadow-sm shadow-amber-500/10"
+                            >
+                                Importar Dados
+                            </button>
+                        </div>
+                    )}
+
                     {!isPioneer && (
                         <div>
                             <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Participou no ministério?</label>
@@ -302,12 +368,12 @@ const ReportModal: React.FC<{
                         <textarea value={notes} onChange={e => setNotes(e.target.value)} className="input-style w-full" rows={2} />
                     </div>
 
-                    {isPioneer && currentPioneerRecord && (
+                    {isPioneer && goalHours > 0 && (
                         <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-700">
                             <p className="text-xs font-bold text-slate-500 uppercase mb-2">Resumo do Planejamento</p>
                             <div className="flex justify-between items-center mb-1">
                                 <span className="text-sm text-slate-600 dark:text-slate-400">Horas registradas:</span>
-                                <span className="text-sm font-bold text-slate-900 dark:text-white">{registeredHours.toFixed(1)}h</span>
+                                <span className="text-sm font-bold text-slate-900 dark:text-white">{monthlySummary.hours.toFixed(1)}h</span>
                             </div>
                             <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 mt-1">
                                 <div 
@@ -315,7 +381,7 @@ const ReportModal: React.FC<{
                                     style={{ width: `${Math.min(goalPercentage, 100)}%` }}
                                 />
                             </div>
-                            <p className="text-[10px] text-right text-slate-500 mt-1">{goalPercentage.toFixed(1)}% da meta ({currentPioneerRecord.goalHours}h)</p>
+                            <p className="text-[10px] text-right text-slate-500 mt-1">{goalPercentage.toFixed(1)}% da meta ({goalHours}h)</p>
                         </div>
                     )}
                 </div>

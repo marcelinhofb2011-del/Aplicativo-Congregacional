@@ -412,6 +412,7 @@ export interface PioneerPlanningConfig extends BaseRecord {
     annualGoal?: number;
     preachingDays: number[]; // 0-6 (Sunday to Saturday)
     vacations: { id: string; startDate: string; endDate: string; description: string }[];
+    monthGoals?: Record<string, number>; // month key "YYYY-MM" -> hours
 }
 
 export interface PioneerDailyRecord extends BaseRecord {

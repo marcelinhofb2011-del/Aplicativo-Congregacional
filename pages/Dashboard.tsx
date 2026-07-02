@@ -812,7 +812,7 @@ const Dashboard: React.FC = () => {
         : '';
 
     return (
-        <div className="min-h-screen bg-white dark:bg-[#07060b] text-slate-900 dark:text-slate-100 font-sans selection:bg-primary/30 overflow-x-hidden transition-colors duration-300 pb-24">
+        <div className="min-h-screen bg-transparent text-slate-900 dark:text-slate-100 font-sans selection:bg-primary/30 overflow-x-hidden transition-colors duration-300 pb-24">
             {/* New Header */}
             <header className="px-6 h-16 flex items-center justify-between fixed top-0 left-0 right-0 bg-primary border-b border-primary-dark z-50 transform-gpu transition-all shadow-md">
                 <div 
@@ -984,10 +984,9 @@ const Dashboard: React.FC = () => {
                                 {announcements.slice(0, 5).map((ann) => {
                                     const isNew = (Date.now() - new Date(ann.createdAt).getTime()) < 5 * 24 * 60 * 60 * 1000;
                                     return (
-                                        <motion.div 
+                                        <div 
                                             key={ann.id}
-                                            whileHover={{ y: -3 }}
-                                            className="min-w-[75%] sm:min-w-[280px] md:min-w-[300px] max-w-[320px] snap-start p-4 bg-white dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/60 rounded-2xl cursor-pointer hover:border-primary/20 dark:hover:border-primary/15 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden flex flex-col justify-between h-[142px]"
+                                            className="min-w-[75%] sm:min-w-[280px] md:min-w-[300px] max-w-[320px] snap-start p-4 bg-white dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/60 rounded-2xl cursor-pointer hover:border-primary/20 dark:hover:border-primary/15 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 relative overflow-hidden flex flex-col justify-between h-[142px] transform-gpu"
                                             onClick={() => setSelectedAnnouncementModal(ann)}
                                         >
                                             {/* Accent bar on the left */}
@@ -1022,7 +1021,7 @@ const Dashboard: React.FC = () => {
                                                 <span>Acessar conteúdo</span>
                                                 <ChevronRight className="h-3 w-3" />
                                             </div>
-                                        </motion.div>
+                                        </div>
                                     );
                                 })}
                             </div>
